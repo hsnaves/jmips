@@ -1,7 +1,10 @@
 package jmips.cpu;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 public class Utils {
-	private static final int[] leading_zeros = {
+	private static final int[] LEADING_ZEROS = {
 		8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
 		3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 		2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -20,7 +23,7 @@ public class Utils {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	};
 
-	private static final int[] leading_ones = {
+	private static final int[] LEADING_ONES = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -39,7 +42,7 @@ public class Utils {
 		4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 7, 8
 	};
 
-	private static final int[] trailing_zeros = {
+	private static final int[] TRAILING_ZEROS = {
 		8, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
 		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
 		5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
@@ -58,7 +61,7 @@ public class Utils {
 		4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
 	};
 
-	private static final int[] trailing_ones = {
+	private static final int[] TRAILING_ONES = {
 		0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4,
 		0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 5,
 		0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4,
@@ -77,59 +80,7 @@ public class Utils {
 		0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 8
 	};
 
-	public static int I_OP(int opcode) {
-		return (opcode >>> 26);
-	}
-
-	public static int I_FUNCT(int opcode) {
-		return opcode & 0x3F;
-	}
-
-	public static int I_RS(int opcode) {
-		return ((opcode >> 21) & 0x1F);
-	}
-
-	public static int I_RT(int opcode) {
-		return ((opcode >> 16) & 0x1F);
-	}
-
-	public static int I_RD(int opcode) {
-		return ((opcode >> 11) & 0x1F);
-	}
-
-	public static int I_SA(int opcode) {
-		return ((opcode >> 6) & 0x1F);
-	}
-
-	public static int I_IMM16(int opcode) {
-		return (int) ((short) opcode);
-	}
-
-	public static int I_IMM16U(int opcode) {
-		return opcode & 0xFFFF;
-	}
-
-	public static int I_BRANCH(int opcode, int pc) {
-		return pc + 4 + 4 * I_IMM16(opcode);
-	}
-
-	public static int I_JUMP(int opcode, int pc) {
-		return ((pc & 0xF0000000) | ((opcode & 0x3FFFFFF) << 2));
-	}
-
-	public static int I_SYSCALLCODE(int opcode) {
-		return ((opcode >> 6) & 0xFFFFF);
-	}
-
-	public static int I_TRAPCODE(int opcode) {
-		return ((opcode >> 6) & 0x3FF);
-	}
-
-	public static int I_WAITCODE(int opcode) {
-		return ((opcode >> 6) & 0x7FFFF);
-	}
-
-	public static int compare_unsigned(int a, int b) {
+	public static int compareUnsigned(int a, int b) {
 		if (a == b) return 0;
 		if (a < 0) {
 			if (b < 0) {
@@ -146,75 +97,106 @@ public class Utils {
 		}
 	}
 
-	public static int count_leading_zeros(int n) {
-		int k = leading_zeros[(n >> 24) & 0xFF];
+	public static int countLeadingZeros(int n) {
+		int k = LEADING_ZEROS[(n >> 24) & 0xFF];
 		int m = k;
 		if (k != 8) return m;
 
-		k = leading_zeros[(n >> 16) & 0xFF];
+		k = LEADING_ZEROS[(n >> 16) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = leading_zeros[(n >> 8) & 0xFF];
+		k = LEADING_ZEROS[(n >> 8) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = leading_zeros[n & 0xFF];
+		k = LEADING_ZEROS[n & 0xFF];
 		m += k;
 		return m;
 	}
 
-	public static int count_leading_ones(int n) {
-		int k = leading_ones[(n >> 24) & 0xFF];
+	public static int countLeadingOnes(int n) {
+		int k = LEADING_ONES[(n >> 24) & 0xFF];
 		int m = k;
 		if (k != 8) return m;
 
-		k = leading_ones[(n >> 16) & 0xFF];
+		k = LEADING_ONES[(n >> 16) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = leading_ones[(n >> 8) & 0xFF];
+		k = LEADING_ONES[(n >> 8) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = leading_ones[n & 0xFF];
+		k = LEADING_ONES[n & 0xFF];
 		m += k;
 		return m;
 	}
 
-	public static int count_trailing_zeros(int n) {
-		int k = trailing_zeros[n & 0xFF];
+	public static int countTrailingZeros(int n) {
+		int k = TRAILING_ZEROS[n & 0xFF];
 		int m = k;
 		if (k != 8) return m;
 
-		k = trailing_zeros[(n >> 8) & 0xFF];
+		k = TRAILING_ZEROS[(n >> 8) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = trailing_zeros[(n >> 16) & 0xFF];
+		k = TRAILING_ZEROS[(n >> 16) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = trailing_zeros[(n >> 24) & 0xFF];
+		k = TRAILING_ZEROS[(n >> 24) & 0xFF];
 		m += k;
 		return m;
 	}
 
-	public static int count_trailing_ones(int n) {
-		int k = trailing_ones[n & 0xFF];
+	public static int countTrailingOnes(int n) {
+		int k = TRAILING_ONES[n & 0xFF];
 		int m = k;
 		if (k != 8) return m;
 
-		k = trailing_ones[(n >> 8) & 0xFF];
+		k = TRAILING_ONES[(n >> 8) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = trailing_ones[(n >> 16) & 0xFF];
+		k = TRAILING_ONES[(n >> 16) & 0xFF];
 		m += k;
 		if (k != 8) return m;
 
-		k = trailing_ones[(n >> 24) & 0xFF];
+		k = TRAILING_ONES[(n >> 24) & 0xFF];
 		m += k;
 		return m;
 	}
+
+	public static int byteSwap(int n) {
+		int m = (n >> 24) & 0xFF;
+		m |= (n >> 8) & 0xFF00;
+		m |= (n << 8) & 0xFF0000;
+		m |= (n << 24);
+		return m;
+	}
+
+	public static int[] readFile(InputStream is, boolean bigEndian) throws IOException {
+		int[] opcodes = new int[is.available() / 4];
+		int i = 0;
+		while(is.available() >= 4) {
+			int op;
+			if (bigEndian) {
+				op = (is.read() & 0xFF) << 24;
+				op |= (is.read() & 0xFF) << 16;
+				op |= (is.read() & 0xFF) << 8;
+				op |= is.read() & 0xFF;
+			} else {
+				op = is.read() & 0xFF;
+				op |= (is.read() & 0xFF) << 8;
+				op |= (is.read() & 0xFF) << 16;
+				op |= (is.read() & 0xFF) << 24;
+			}
+			opcodes[i++] = op;
+		}
+		is.close();
+		return opcodes;
+	}
+
 }

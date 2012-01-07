@@ -2,8 +2,11 @@
 .global _start
 
 _start:
-    lui    $sp, %hi(_start + 0x04000000 - 4)
-    ori    $sp, $sp, %lo(_start + 0x04000000 - 4)
-    j      _main
+    lui    $sp, %hi(0x09000000)
+    ori    $sp, $sp, %lo(0x09000000)
+    jal    _main
     nop
 
+_loop:
+    j      _loop
+    nop

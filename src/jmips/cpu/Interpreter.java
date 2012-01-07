@@ -2,13 +2,65 @@ package jmips.cpu;
 
 public final class Interpreter {
 
+	public static int I_OP(int opcode) {
+		return (opcode >>> 26);
+	}
+
+	public static int I_FUNCT(int opcode) {
+		return opcode & 0x3F;
+	}
+
+	public static int I_RS(int opcode) {
+		return ((opcode >> 21) & 0x1F);
+	}
+
+	public static int I_RT(int opcode) {
+		return ((opcode >> 16) & 0x1F);
+	}
+
+	public static int I_RD(int opcode) {
+		return ((opcode >> 11) & 0x1F);
+	}
+
+	public static int I_SA(int opcode) {
+		return ((opcode >> 6) & 0x1F);
+	}
+
+	public static int I_IMM16(int opcode) {
+		return (int) ((short) opcode);
+	}
+
+	public static int I_IMM16U(int opcode) {
+		return opcode & 0xFFFF;
+	}
+
+	public static int I_BRANCH(int opcode, int pc) {
+		return pc + 4 + 4 * I_IMM16(opcode);
+	}
+
+	public static int I_JUMP(int opcode, int pc) {
+		return ((pc & 0xF0000000) | ((opcode & 0x3FFFFFF) << 2));
+	}
+
+	public static int I_SYSCALLCODE(int opcode) {
+		return ((opcode >> 6) & 0xFFFFF);
+	}
+
+	public static int I_TRAPCODE(int opcode) {
+		return ((opcode >> 6) & 0x3FF);
+	}
+
+	public static int I_WAITCODE(int opcode) {
+		return ((opcode >> 6) & 0x7FFFF);
+	}
+
 	public static void step(CpuState cpu) {
 		int opcode = cpu.read32(cpu.pc);
 
 		cpu.pc = cpu.next_pc;
 		cpu.next_pc = cpu.pc + 4;
 
-		switch (Utils.I_OP(opcode)) {
+		switch (I_OP(opcode)) {
 		case 0: stepSpecial(cpu, opcode); break;
 		case 1: stepRegImm(cpu, opcode); break;
 		case 2: j(cpu, opcode); break;
@@ -84,7 +136,7 @@ public final class Interpreter {
 	}
 
 	public static void stepSpecial(CpuState cpu, int opcode) {
-		switch(Utils.I_FUNCT(opcode)) {
+		switch(I_FUNCT(opcode)) {
 		case 0: sll(cpu, opcode); break;
 		case 1: invalid(cpu); break;
 		case 2: srl(cpu, opcode); break;
@@ -135,7 +187,7 @@ public final class Interpreter {
 	}
 
 	public static void stepSpecial2(CpuState cpu, int opcode) {
-		switch(Utils.I_FUNCT(opcode)) {
+		switch(I_FUNCT(opcode)) {
 		case 0: madd(cpu, opcode); break;
 		case 1: maddu(cpu, opcode); break;
 		case 2: mul(cpu, opcode); break;
@@ -149,7 +201,7 @@ public final class Interpreter {
 	}
 
 	public static void stepRegImm(CpuState cpu, int opcode) {
-		switch(Utils.I_RT(opcode)) {
+		switch(I_RT(opcode)) {
 		case 0: bltz(cpu, opcode); break;
 		case 1: bgez(cpu, opcode); break;
 		case 2: bltzl(cpu, opcode); break;
@@ -169,7 +221,7 @@ public final class Interpreter {
 	}
 
 	public static void stepCop0(CpuState cpu, int opcode) {
-		switch(Utils.I_RS(opcode)) {
+		switch(I_RS(opcode)) {
 		case 0: mfc0(cpu, opcode); break;
 		case 4: mtc0(cpu, opcode); break;
 		case 16:
@@ -193,7 +245,7 @@ public final class Interpreter {
 	}
 
 	public static void stepCop0Co(CpuState cpu, int opcode) {
-		switch(Utils.I_FUNCT(opcode)) {
+		switch(I_FUNCT(opcode)) {
 		case 1: tlbr(cpu, opcode); break;
 		case 2: tlbwi(cpu, opcode); break;
 		case 6: tlbwr(cpu, opcode); break;
@@ -206,60 +258,60 @@ public final class Interpreter {
 	}
 
 	public static void add(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs + rt;
 		if (check_overflow(cpu, rs, rt, result, true)) return;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void addi(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		int result = rs + imm;
 		if (check_overflow(cpu, rs, imm, result, true)) return;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void addiu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		int result = rs + imm;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void addu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs + rt;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void and(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs & rt;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void andi(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int immu = Utils.I_IMM16U(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int immu = I_IMM16U(opcode);
 		int result = rs & immu;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void beq(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs == rt) {
 			branch(cpu, opcode);
 		}
 	}
 
 	public static void beql(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs == rt) {
 			branch(cpu, opcode);
 		} else {
@@ -268,14 +320,14 @@ public final class Interpreter {
 	}
 
 	public static void bgez(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs >= 0) {
 			branch(cpu, opcode);
 		}
 	}
 
 	public static void bgezal(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		link(cpu);
 		if (rs >= 0) {
 			branch(cpu, opcode);
@@ -283,7 +335,7 @@ public final class Interpreter {
 	}
 
 	public static void bgezall(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		link(cpu);
 		if (rs >= 0) {
 			branch(cpu, opcode);
@@ -293,7 +345,7 @@ public final class Interpreter {
 	}
 
 	public static void bgezl(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs >= 0) {
 			branch(cpu, opcode);
 		} else {
@@ -302,14 +354,14 @@ public final class Interpreter {
 	}
 
 	public static void bgtz(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs > 0) {
 			branch(cpu, opcode);
 		}
 	}
 
 	public static void bgtzl(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs > 0) {
 			branch(cpu, opcode);
 		} else {
@@ -318,14 +370,14 @@ public final class Interpreter {
 	}
 
 	public static void blez(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs <= 0) {
 			branch(cpu, opcode);
 		}
 	}
 
 	public static void blezl(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs <= 0) {
 			branch(cpu, opcode);
 		} else {
@@ -334,14 +386,14 @@ public final class Interpreter {
 	}
 
 	public static void bltz(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs < 0) {
 			branch(cpu, opcode);
 		}
 	}
 
 	public static void bltzal(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		link(cpu);
 		if (rs < 0) {
 			branch(cpu, opcode);
@@ -349,7 +401,7 @@ public final class Interpreter {
 	}
 
 	public static void bltzall(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		link(cpu);
 		if (rs < 0) {
 			branch(cpu, opcode);
@@ -359,7 +411,7 @@ public final class Interpreter {
 	}
 
 	public static void bltzl(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		if (rs < 0) {
 			branch(cpu, opcode);
 		} else {
@@ -368,16 +420,16 @@ public final class Interpreter {
 	}
 
 	public static void bne(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs != rt) {
 			branch(cpu, opcode);
 		}
 	}
 
 	public static void bnel(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs != rt) {
 			branch(cpu, opcode);
 		} else {
@@ -394,15 +446,15 @@ public final class Interpreter {
 	}
 
 	public static void clo(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int result = Utils.count_leading_ones(rs);
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int result = Utils.countLeadingOnes(rs);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void clz(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int result = Utils.count_leading_zeros(rs);
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int result = Utils.countLeadingZeros(rs);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void deret(CpuState cpu, int opcode) {
@@ -410,15 +462,15 @@ public final class Interpreter {
 	}
 
 	public static void div(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RS(opcode)];
 		cpu.lo = rs / rt;
 		cpu.hi = rs % rt;
 	}
 
 	public static void divu(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = cpu.gpr[Utils.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rs = cpu.gpr[I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = cpu.gpr[I_RS(opcode)] & 0xFFFFFFFFL;
 		cpu.lo = (int) (rs / rt);
 		cpu.hi = (int) (rs % rt);
 	}
@@ -428,7 +480,7 @@ public final class Interpreter {
 	}
 
 	public static void j(CpuState cpu, int opcode) {
-		cpu.next_pc = Utils.I_JUMP(opcode, cpu.pc - 4);
+		cpu.next_pc = I_JUMP(opcode, cpu.pc - 4);
 	}
 
 	public static void jal(CpuState cpu, int opcode) {
@@ -437,52 +489,52 @@ public final class Interpreter {
 	}
 
 	public static void jalr(CpuState cpu, int opcode) {
-		link(cpu, Utils.I_RD(opcode));
+		link(cpu, I_RD(opcode));
 		jr(cpu, opcode);
 	}
 
 	public static void jr(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		cpu.next_pc = rs;
 	}
 
 	public static void lb(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = cpu.read8(address);
 		if (cpu.memory_ok) {
-			write_reg(cpu, Utils.I_RT(opcode), val);
+			write_reg(cpu, I_RT(opcode), val);
 		}
 	}
 
 	public static void lbu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = cpu.read8(address) & 0xFF;
 		if (cpu.memory_ok) {
-			write_reg(cpu, Utils.I_RT(opcode), val);
+			write_reg(cpu, I_RT(opcode), val);
 		}
 	}
 
 	public static void lh(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = cpu.read16(address);
 		if (cpu.memory_ok) {
-			write_reg(cpu, Utils.I_RT(opcode), val);
+			write_reg(cpu, I_RT(opcode), val);
 		}
 	}
 
 	public static void lhu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = cpu.read16(address) & 0xFFFF;
 		if (cpu.memory_ok) {
-			write_reg(cpu, Utils.I_RT(opcode), val);
+			write_reg(cpu, I_RT(opcode), val);
 		}
 	}
 
@@ -491,18 +543,18 @@ public final class Interpreter {
 	}
 
 	public static void lui(CpuState cpu, int opcode) {
-		int imm = Utils.I_IMM16(opcode);
+		int imm = I_IMM16(opcode);
 		int result = imm << 16;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void lw(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = cpu.read32(address);
 		if (cpu.memory_ok) {
-			write_reg(cpu, Utils.I_RT(opcode), val);
+			write_reg(cpu, I_RT(opcode), val);
 		}
 	}
 
@@ -515,8 +567,8 @@ public final class Interpreter {
 	}
 
 	public static void madd(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)];
-		long rt = cpu.gpr[Utils.I_RT(opcode)];
+		long rs = cpu.gpr[I_RS(opcode)];
+		long rt = cpu.gpr[I_RT(opcode)];
 		long hilo = (((long) cpu.hi) << 32) | ((long) cpu.lo);
 		long result = hilo + rs * rt;
 		cpu.lo = (int) result;
@@ -524,8 +576,8 @@ public final class Interpreter {
 	}
 
 	public static void maddu(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = cpu.gpr[Utils.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = cpu.gpr[I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = cpu.gpr[I_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) cpu.hi) << 32) | ((long) cpu.lo);
 		long result = hilo + rs * rt;
 		cpu.lo = (int) result;
@@ -537,32 +589,32 @@ public final class Interpreter {
 	}
 
 	public static void mfhi(CpuState cpu, int opcode) {
-		write_reg(cpu, Utils.I_RD(opcode), cpu.hi);
+		write_reg(cpu, I_RD(opcode), cpu.hi);
 	}
 
 	public static void mflo(CpuState cpu, int opcode) {
-		write_reg(cpu, Utils.I_RD(opcode), cpu.lo);
+		write_reg(cpu, I_RD(opcode), cpu.lo);
 	}
 
 	public static void movn(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rt != 0) {
-			int rs = cpu.gpr[Utils.I_RS(opcode)];
-			write_reg(cpu, Utils.I_RD(opcode), rs);
+			int rs = cpu.gpr[I_RS(opcode)];
+			write_reg(cpu, I_RD(opcode), rs);
 		}
 	}
 
 	public static void movz(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rt == 0) {
-			int rs = cpu.gpr[Utils.I_RS(opcode)];
-			write_reg(cpu, Utils.I_RD(opcode), rs);
+			int rs = cpu.gpr[I_RS(opcode)];
+			write_reg(cpu, I_RD(opcode), rs);
 		}
 	}
 
 	public static void msub(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)];
-		long rt = cpu.gpr[Utils.I_RT(opcode)];
+		long rs = cpu.gpr[I_RS(opcode)];
+		long rt = cpu.gpr[I_RT(opcode)];
 		long hilo = (((long) cpu.hi) << 32) | ((long) cpu.lo);
 		long result = hilo - rs * rt;
 		cpu.lo = (int) result;
@@ -570,8 +622,8 @@ public final class Interpreter {
 	}
 
 	public static void msubu(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = cpu.gpr[Utils.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = cpu.gpr[I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = cpu.gpr[I_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) cpu.hi) << 32) | ((long) cpu.lo);
 		long result = hilo - rs * rt;
 		cpu.lo = (int) result;
@@ -583,58 +635,58 @@ public final class Interpreter {
 	}
 
 	public static void mthi(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		cpu.hi = rs;
 	}
 
 	public static void mtlo(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		cpu.lo = rs;
 	}
 
 	public static void mul(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs * rt;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 		// cpu.hi = cpu.lo = 0; // Unpredictable
 	}
 
 	public static void mult(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)];
-		long rt = cpu.gpr[Utils.I_RT(opcode)];
+		long rs = cpu.gpr[I_RS(opcode)];
+		long rt = cpu.gpr[I_RT(opcode)];
 		long result = rs * rt;
 		cpu.lo = (int) result;
 		cpu.hi = (int) (result >> 32);
 	}
 
 	public static void multu(CpuState cpu, int opcode) {
-		long rs = cpu.gpr[Utils.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = cpu.gpr[Utils.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = cpu.gpr[I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = cpu.gpr[I_RT(opcode)] & 0xFFFFFFFFL;
 		long result = rs * rt;
 		cpu.lo = (int) result;
 		cpu.hi = (int) (result >> 32);
 	}
 
 	public static void nor(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = ~(rs | rt);
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void or(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs | rt;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void ori(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int immu = Utils.I_IMM16U(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int immu = I_IMM16U(opcode);
 		int result = rs | immu;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void pref(CpuState cpu, int opcode) {
@@ -642,10 +694,10 @@ public final class Interpreter {
 	}
 
 	public static void sb(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		cpu.write8(address, (byte) rt);
 	}
 
@@ -658,103 +710,103 @@ public final class Interpreter {
 	}
 
 	public static void sh(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		cpu.write16(address, (short) rt);
 	}
 
 	public static void sll(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int sa = Utils.I_SA(opcode);
+		int rt = cpu.gpr[I_RT(opcode)];
+		int sa = I_SA(opcode);
 		int result = rt << sa;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void sllv(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		int result = rt << rs;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void slt(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		int result = (rs < rt) ? 1 : 0;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void slti(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		int result = (rs < imm) ? 1 : 0;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void sltiu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
-		int result = (Utils.compare_unsigned(rs, imm) < 0) ? 1 : 0;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
+		int result = (Utils.compareUnsigned(rs, imm) < 0) ? 1 : 0;
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void sltu(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int result = (Utils.compare_unsigned(rs, rt) < 0) ? 1 : 0;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		int rt = cpu.gpr[I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int result = (Utils.compareUnsigned(rs, rt) < 0) ? 1 : 0;
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void sra(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int sa = Utils.I_SA(opcode);
+		int rt = cpu.gpr[I_RT(opcode)];
+		int sa = I_SA(opcode);
 		int result = rt >> sa;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void srav(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		int result = rt >> rs;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void srl(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int sa = Utils.I_SA(opcode);
+		int rt = cpu.gpr[I_RT(opcode)];
+		int sa = I_SA(opcode);
 		int result = rt >>> sa;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void srlv(CpuState cpu, int opcode) {
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
 		int result = rt >>> rs;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void sub(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs - rt;
 		if (check_overflow(cpu, rs, rt, result, false)) return;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void subu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs - rt;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void sw(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int offset = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		cpu.write32(address, rt);
 	}
 
@@ -775,49 +827,49 @@ public final class Interpreter {
 	}
 
 	public static void teq(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs == rt) {
 			trap(cpu);
 		}
 	}
 
 	public static void teqi(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		if (rs == imm) {
 			trap(cpu);
 		}
 	}
 
 	public static void tge(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs >= rt) {
 			trap(cpu);
 		}
 	}
 
 	public static void tgei(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		if (rs >= imm) {
 			trap(cpu);
 		}
 	}
 
 	public static void tgeiu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
-		if (Utils.compare_unsigned(rs, imm) >= 0) {
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
+		if (Utils.compareUnsigned(rs, imm) >= 0) {
 			trap(cpu);
 		}
 	}
 
 	public static void tgeu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		if (Utils.compare_unsigned(rs, rt) >= 0) {
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
+		if (Utils.compareUnsigned(rs, rt) >= 0) {
 			trap(cpu);
 		}
 	}
@@ -839,48 +891,48 @@ public final class Interpreter {
 	}
 
 	public static void tlt(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs < rt) {
 			trap(cpu);
 		}
 	}
 
 	public static void tlti(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		if (rs < imm) {
 			trap(cpu);
 		}
 	}
 
 	public static void tltiu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
-		if (Utils.compare_unsigned(rs, imm) < 0) {
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
+		if (Utils.compareUnsigned(rs, imm) < 0) {
 			trap(cpu);
 		}
 	}
 
 	public static void tltu(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
-		if (Utils.compare_unsigned(rs, rt) < 0) {
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
+		if (Utils.compareUnsigned(rs, rt) < 0) {
 			trap(cpu);
 		}
 	}
 
 	public static void tne(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		if (rs != rt) {
 			trap(cpu);
 		}
 	}
 
 	public static void tnei(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int imm = Utils.I_IMM16(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int imm = I_IMM16(opcode);
 		if (rs != imm) {
 			trap(cpu);
 		}
@@ -891,17 +943,17 @@ public final class Interpreter {
 	}
 
 	public static void xor(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int rt = cpu.gpr[Utils.I_RT(opcode)];
+		int rs = cpu.gpr[I_RS(opcode)];
+		int rt = cpu.gpr[I_RT(opcode)];
 		int result = rs ^ rt;
-		write_reg(cpu, Utils.I_RD(opcode), result);
+		write_reg(cpu, I_RD(opcode), result);
 	}
 
 	public static void xori(CpuState cpu, int opcode) {
-		int rs = cpu.gpr[Utils.I_RS(opcode)];
-		int immu = Utils.I_IMM16U(opcode);
+		int rs = cpu.gpr[I_RS(opcode)];
+		int immu = I_IMM16U(opcode);
 		int result = rs ^ immu;
-		write_reg(cpu, Utils.I_RT(opcode), result);
+		write_reg(cpu, I_RT(opcode), result);
 	}
 
 	public static void invalid(CpuState cpu) {
@@ -933,7 +985,7 @@ public final class Interpreter {
 	}
 
 	private static void branch(CpuState cpu, int opcode) {
-		cpu.next_pc = Utils.I_BRANCH(opcode, cpu.pc - 4);
+		cpu.next_pc = I_BRANCH(opcode, cpu.pc - 4);
 	}
 
 	private static void link(CpuState cpu) {
@@ -945,7 +997,7 @@ public final class Interpreter {
 	}
 
 	private static void skip_delay_slot(CpuState cpu) {
-		cpu.next_pc += 4;
+		cpu.pc += 4;
 	}
 
 	private static void trap(CpuState cpu) {

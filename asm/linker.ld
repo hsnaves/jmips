@@ -51,7 +51,7 @@ SECTIONS
 		_end = .;
 	} > ram
 
-	/DISCARD/ : { *(.reginfo) }
+	/DISCARD/ : { *(.reginfo) *(.interp) *(.note.*) }
 }
 
 PROVIDE(_fstack = ORIGIN(ram) + LENGTH(ram) - 4);

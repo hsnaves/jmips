@@ -8,32 +8,9 @@ import org.junit.Test;
 
 public class DisassembleTest {
 
-	private int[] readFile(String fileName, boolean bigEndian) throws Exception {
-		FileInputStream fis = new FileInputStream("asm/" + fileName);
-		int[] opcodes = new int[fis.available() / 4];
-		int i = 0;
-		while(fis.available() >= 4) {
-			int op;
-			if (bigEndian) {
-				op = (fis.read() & 0xFF) << 24;
-				op |= (fis.read() & 0xFF) << 16;
-				op |= (fis.read() & 0xFF) << 8;
-				op |= fis.read() & 0xFF;
-			} else {
-				op = fis.read() & 0xFF;
-				op |= (fis.read() & 0xFF) << 8;
-				op |= (fis.read() & 0xFF) << 16;
-				op |= (fis.read() & 0xFF) << 24;
-			}
-			opcodes[i++] = op;
-		}
-		fis.close();
-		return opcodes;
-	}
-
-	@Test
-	public void testDisassemble() throws Exception {
-		int[] opcodes = readFile("primes.bin", true);
+	private void disassemble(String fileName) throws Exception {
+		int[] opcodes = Utils.readFile(new FileInputStream("asm/ " + fileName), true);
+		System.out.println(fileName);
 		int pc = 0x08000000;
 		for(int i = 0; i < opcodes.length; i++) {
 			String line = Disassemble.disassemble(pc, opcodes[i]);
@@ -41,6 +18,17 @@ public class DisassembleTest {
 			System.out.println(line);
 			pc += 4;
 		}
+		System.out.println();
+	}
+
+	@Test
+	public void testDisassemblePrimes() throws Exception {
+		disassemble("primes.bin");
+	}
+
+	@Test
+	public void testDisassembleSha1() throws Exception {
+		disassemble("sha1.bin");
 	}
 
 }
