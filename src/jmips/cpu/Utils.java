@@ -2,6 +2,7 @@ package jmips.cpu;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 public class Utils {
 	private static final int[] LEADING_ZEROS = {
@@ -177,26 +178,14 @@ public class Utils {
 		return m;
 	}
 
-	public static int[] readFile(InputStream is, boolean bigEndian) throws IOException {
-		int[] opcodes = new int[is.available() / 4];
-		int i = 0;
-		while(is.available() >= 4) {
-			int op;
-			if (bigEndian) {
-				op = (is.read() & 0xFF) << 24;
-				op |= (is.read() & 0xFF) << 16;
-				op |= (is.read() & 0xFF) << 8;
-				op |= is.read() & 0xFF;
-			} else {
-				op = is.read() & 0xFF;
-				op |= (is.read() & 0xFF) << 8;
-				op |= (is.read() & 0xFF) << 16;
-				op |= (is.read() & 0xFF) << 24;
-			}
-			opcodes[i++] = op;
+	public static byte[] readFile(InputStream is) throws IOException {
+		byte[] data = new byte[is.available()];
+		int size = is.read(data);
+		if (size < data.length) {
+			data = Arrays.copyOf(data, size);
 		}
 		is.close();
-		return opcodes;
+		return data;
 	}
 
 }

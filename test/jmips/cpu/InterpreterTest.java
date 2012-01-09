@@ -12,11 +12,11 @@ import org.junit.Test;
 public class InterpreterTest {
 
 	private void load(CpuState cpu, String fileName) throws Exception {
-		int[] opcodes = Utils.readFile(new FileInputStream("asm/" + fileName), true);
+		byte[] data = Utils.readFile(new FileInputStream("asm/" + fileName));
 		int pc = 0x08000000;
-		for(int i = 0; i < opcodes.length; i++) {
-			cpu.write32(pc, opcodes[i]);
-			pc += 4;
+		for(int i = 0; i < data.length; i++) {
+			cpu.write8(pc, data[i]);
+			pc += 1;
 		}
 	}
 

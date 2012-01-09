@@ -1,16 +1,21 @@
 package jmips.serial;
 
+import java.awt.AWTKeyStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +51,7 @@ public class SwingTTY extends JComponent implements TTY {
 	}
 
 	public SwingTTY(int numRows, int numColumns, int totalRows) {
-		this.terminalFont = new Font("Monospaced", Font.TRUETYPE_FONT, 14);
+		this.terminalFont = new Font(Font.MONOSPACED, Font.PLAIN, 14);
 		this.numRows = numRows;
 		this.numColumns = numColumns;
 		this.totalRows = totalRows;
@@ -72,11 +77,11 @@ public class SwingTTY extends JComponent implements TTY {
 			public void keyTyped(KeyEvent event) {
 				appendByte((byte) event.getKeyChar());
 			}
-			
+
 			@Override
 			public void keyReleased(KeyEvent event) {
 			}
-			
+
 			@Override
 			public void keyPressed(KeyEvent event) {
 				if (event.isControlDown()) {
@@ -130,20 +135,38 @@ public class SwingTTY extends JComponent implements TTY {
 				}
 			}
 		});
+		this.addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent event) {
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent event) {
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent event) {
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent event) {
+			}
+			
+			@Override
+			public void mouseClicked(MouseEvent event) {
+				requestFocusInWindow();
+			}
+		});
+		setFocusable(true);
+		setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.<AWTKeyStroke> emptySet());
+		setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, Collections.<AWTKeyStroke> emptySet());
+		//setFocusCycleRoot(true);
 	}
 
 	private void appendByte(byte b) {
 		inputBytes.add(b);
-	}
-
-	@Override
-	public boolean isFocusable() {
-		return true;
-	}
-
-	@Override
-	public boolean isManagingFocus() {
-		return true;
+		write(b);
 	}
 
 	public void open() {
