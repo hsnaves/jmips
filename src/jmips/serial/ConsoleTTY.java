@@ -8,6 +8,7 @@ public class ConsoleTTY implements TTY {
 
 	@Override
 	public void write(byte b) {
+		// Incomplete implementation here
 		System.out.print((char) b);
 	}
 

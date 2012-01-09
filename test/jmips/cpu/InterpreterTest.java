@@ -28,9 +28,10 @@ public class InterpreterTest {
 		cpu.registerDevice(uart, 0x30000000);
 		cpu.reset();
 
-		load(cpu, "sha1.bin");
+		load(cpu, "sum.bin");
 
-		for(int i = 0; i < 800000000; i++) {
+		System.out.println("Running sum.bin ...");
+		for(int i = 0; i < 41000000; i++) {
 			//System.out.println(Disassemble.disassemble(cpu.pc, cpu.read32(cpu.pc)));
 			Interpreter.step(cpu);
 			//System.out.println(String.format("sp = 0x%08X", cpu.gpr[29]));

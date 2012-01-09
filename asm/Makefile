@@ -13,6 +13,7 @@ CRT = crt.o
 SERIAL = serial.o
 BINS += sha1.bin
 BINS += primes.bin
+BINS += sum.bin
 
 all: build
 
