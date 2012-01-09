@@ -4,6 +4,7 @@ import java.util.LinkedList;
 
 import jmips.cpu.CpuState;
 import jmips.cpu.IODevice;
+import jmips.serial.TTY;
 
 public class Uart16550 implements IODevice {
 

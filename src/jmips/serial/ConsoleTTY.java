@@ -1,8 +1,7 @@
-package jmips;
+package jmips.serial;
 
 import java.io.IOException;
 
-import jmips.dev.TTY;
 
 public class ConsoleTTY implements TTY {
 

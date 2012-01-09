@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.FileInputStream;
 
-import jmips.ConsoleTTY;
+import jmips.serial.ConsoleTTY;
 import jmips.dev.Uart16550;
 
 import org.junit.Test;
