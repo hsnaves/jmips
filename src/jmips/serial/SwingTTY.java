@@ -45,6 +45,7 @@ public class SwingTTY extends JComponent implements TTY {
 	private final TerminalCharacter[][] characterMap;
 	private final Timer cursorTimer;
 	private final AtomicBoolean cursorBlink = new AtomicBoolean(true);
+	private boolean echoEnabled;
 
 	public SwingTTY() {
 		this(40, 120, 1000);
@@ -164,9 +165,13 @@ public class SwingTTY extends JComponent implements TTY {
 		//setFocusCycleRoot(true);
 	}
 
+	public void setEchoEnabled(boolean echoEnabled) {
+		this.echoEnabled = echoEnabled;
+	}
+
 	private void appendByte(byte b) {
 		inputBytes.add(b);
-		write(b);
+		if (echoEnabled) write(b);
 	}
 
 	public void open() {
