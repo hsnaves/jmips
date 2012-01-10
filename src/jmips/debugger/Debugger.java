@@ -40,6 +40,7 @@ public class Debugger extends JFrame implements ActionListener {
 	private JMenuItem exitMenuItem;
 
 	private DisassemblePanel disassemblePanel;
+	private GPRTable gprTable;
 	private SwingTTY tty;
 
 	private JFileChooser fileChooser;
@@ -55,6 +56,7 @@ public class Debugger extends JFrame implements ActionListener {
 		setJMenuBar(getMainMenuBar());
 		add(getMainToolBar(), BorderLayout.PAGE_START);
 		add(getDisassemblePanel(), BorderLayout.CENTER);
+		add(getGPRTable(), BorderLayout.EAST);
 		add(getTTY(), BorderLayout.SOUTH);
 		pack();
 	}
@@ -146,6 +148,13 @@ public class Debugger extends JFrame implements ActionListener {
 			disassemblePanel = new DisassemblePanel(cpu);
 		}
 		return disassemblePanel;
+	}
+
+	private GPRTable getGPRTable() {
+		if (gprTable == null) {
+			gprTable = new GPRTable(cpu);
+		}
+		return gprTable;
 	}
 
 	private SwingTTY getTTY() {

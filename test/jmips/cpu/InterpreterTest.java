@@ -2,8 +2,6 @@ package jmips.cpu;
 
 import static org.junit.Assert.*;
 
-import java.io.FileInputStream;
-
 import jmips.serial.ConsoleTTY;
 import jmips.dev.Uart16550;
 
@@ -11,31 +9,175 @@ import org.junit.Test;
 
 public class InterpreterTest {
 
-	private void load(CpuState cpu, String fileName) throws Exception {
-		byte[] data = Utils.readFile(new FileInputStream("asm/" + fileName));
-		int pc = 0x08000000;
-		for(int i = 0; i < data.length; i++) {
-			cpu.write8(pc, data[i]);
-			pc += 1;
-		}
+	private static final int RAM_BASE = 0x08000000;
+	private static final int RAM_SIZE = 64 * 1024 * 1024;
+	private static final int UART_BASE = 0x30000000;
+
+	private CpuState createCpu() {
+		CpuState cpu = new CpuState(RAM_BASE, RAM_SIZE);
+		Uart16550 uart = new Uart16550(cpu, new ConsoleTTY(), 1);
+
+		cpu.registerDevice(uart, UART_BASE);
+		return cpu;
 	}
 
 	@Test
-	public void test() throws Exception {
-		CpuState cpu = new CpuState(0x08000000, 64 * 1024 * 1024);
-		Uart16550 uart = new Uart16550(cpu, new ConsoleTTY(), 1);
+	public void testADD() {
+		CpuState cpu = createCpu();
 
-		cpu.registerDevice(uart, 0x30000000);
 		cpu.reset();
+		cpu.write32(RAM_BASE, 0x00851020); // add $v0,$a0,$a1
+		cpu.gpr[CpuState.GPR_A0] = 1;
+		cpu.gpr[CpuState.GPR_A1] = 2;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(3, cpu.gpr[CpuState.GPR_V0]);
 
-		load(cpu, "sum.bin");
+		cpu.reset();
+		cpu.gpr[CpuState.GPR_A0] = 0x7FFFFFFF;
+		cpu.gpr[CpuState.GPR_A1] = 2;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		// TODO
+		//assertEquals(RAM_BASE + 4, cpu.pc);
+		//assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(0, cpu.gpr[CpuState.GPR_V0]);
+	}
 
-		System.out.println("Running sum.bin ...");
-		for(int i = 0; i < 41000000; i++) {
-			//System.out.println(Disassemble.disassemble(cpu.pc, cpu.read32(cpu.pc)));
-			Interpreter.step(cpu);
-			//System.out.println(String.format("sp = 0x%08X", cpu.gpr[29]));
-		}
+	@Test
+	public void testADDI() {
+		CpuState cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x20820003); // addi $v0,$a0,3
+		cpu.gpr[CpuState.GPR_A0] = 1;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(4, cpu.gpr[CpuState.GPR_V0]);
+
+		cpu.reset();
+		cpu.gpr[CpuState.GPR_A0] = 0x7FFFFFFF;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		// TODO
+		//assertEquals(RAM_BASE + 4, cpu.pc);
+		//assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(0, cpu.gpr[CpuState.GPR_V0]);
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x2082FFFE); // addi $v0,$a0,-2
+		cpu.gpr[CpuState.GPR_A0] = 1;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(-1, cpu.gpr[CpuState.GPR_V0]);
+
+	
+		cpu.reset();
+		cpu.gpr[CpuState.GPR_A0] = 0x80000000;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		// TODO
+		//assertEquals(RAM_BASE + 4, cpu.pc);
+		//assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(0, cpu.gpr[CpuState.GPR_V0]);
+	}
+
+	@Test
+	public void testADDIU() {
+		CpuState cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x24820004); //  addiu $v0,$a0,4
+		cpu.gpr[CpuState.GPR_A0] = 2;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(6, cpu.gpr[CpuState.GPR_V0]);
+
+		cpu.reset();
+		cpu.gpr[CpuState.GPR_A0] = 0x7FFFFFFF;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals((int) 0x80000003, cpu.gpr[CpuState.GPR_V0]);
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x2482FFFD); // addiu $v0,$a0,-3
+		cpu.gpr[CpuState.GPR_A0] = 5;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(2, cpu.gpr[CpuState.GPR_V0]);
+
+		cpu.reset();
+		cpu.gpr[CpuState.GPR_A0] = 0x80000000;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(0x7FFFFFFD, cpu.gpr[CpuState.GPR_V0]);
+	}
+
+	@Test
+	public void testADDU() {
+		CpuState cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x00851021); // addu $v0,$a0,$a1
+		cpu.gpr[CpuState.GPR_A0] = 1;
+		cpu.gpr[CpuState.GPR_A1] = 10;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(11, cpu.gpr[CpuState.GPR_V0]);
+
+		cpu.reset();
+		cpu.gpr[CpuState.GPR_A0] = 0x7FFFFFFF;
+		cpu.gpr[CpuState.GPR_A1] = 3;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals((int) 0x80000002, cpu.gpr[CpuState.GPR_V0]);
+	}
+
+	@Test
+	public void testAND() {
+		CpuState cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x00851024); // and $v0,$a0,$a1
+		cpu.gpr[CpuState.GPR_A0] = 0xFF00FF00;
+		cpu.gpr[CpuState.GPR_A1] = 0x12345678;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(0x12005600, cpu.gpr[CpuState.GPR_V0]);
+	}
+
+	@Test
+	public void testANDI() {
+		CpuState cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(RAM_BASE, 0x30829132); // andi $v0,$a0,0x9132
+		cpu.gpr[CpuState.GPR_A0] = 0xFFFFFF00;
+		cpu.gpr[CpuState.GPR_V0] = 0;
+		Interpreter.step(cpu);
+		assertEquals(RAM_BASE + 4, cpu.pc);
+		assertEquals(RAM_BASE + 8, cpu.next_pc);
+		assertEquals(0x00009100, cpu.gpr[CpuState.GPR_V0]);
 	}
 
 }

@@ -54,7 +54,7 @@ public final class DisassemblePanel extends JPanel {
 	private class ExpandableListModel implements ListModel {
 		@Override
 		public int getSize() {
-			return 24;
+			return 17;
 		}
 
 		@Override

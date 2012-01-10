@@ -8,6 +8,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -219,6 +220,8 @@ public class SwingTTY extends JComponent implements TTY {
 		final Graphics2D graphics2D = (Graphics2D) g.create();
 		graphics2D.setFont(terminalFont);
 		graphics2D.setColor(Color.BLACK);
+		graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+		                            RenderingHints.VALUE_ANTIALIAS_ON);
 
 		final FontMetrics fontMetrics = getGraphics().getFontMetrics(terminalFont);
 		final int charWidth = fontMetrics.charWidth(' ');
