@@ -41,11 +41,15 @@ public final class CpuState {
 	public final int[] gpr = new int[32];
 	public int hi, lo;
 	public int pc, next_pc;
+	public boolean delay_slot;
 
 	private final Ram ram;
 	private final int ram_base;
 
 	public boolean memory_ok;
+	public boolean halted;
+
+	public final Coprocessor0 cop0;
 
 	private final List<IODevice> devices = new ArrayList<IODevice>();
 	private final List<Integer> deviceOffsets = new ArrayList<Integer>();
@@ -54,6 +58,7 @@ public final class CpuState {
 	public CpuState(int ram_base, int ram_size) {
 		this.ram_base = ram_base;
 		this.ram = new Ram(ram_size);
+		this.cop0 = new Coprocessor0(this);
 	}
 
 	public void registerDevice(IODevice device, int offset) {
@@ -189,7 +194,6 @@ public final class CpuState {
 		Arrays.fill(gpr, 0);
 		hi = lo = 0;
 		memory_ok = true;
-
 		pc = 0x08000000;
 		next_pc = pc + 4;
 	}

@@ -57,6 +57,7 @@ public final class Interpreter {
 	public static void step(CpuState cpu) {
 		int opcode = cpu.read32(cpu.pc);
 
+		cpu.delay_slot = false;
 		cpu.pc = cpu.next_pc;
 		cpu.next_pc = cpu.pc + 4;
 
@@ -442,7 +443,7 @@ public final class Interpreter {
 	}
 
 	public static void cache(CpuState cpu, int opcode) {
-		//TODO
+		// No cache emulation is done
 	}
 
 	public static void clo(CpuState cpu, int opcode) {
@@ -481,6 +482,7 @@ public final class Interpreter {
 
 	public static void j(CpuState cpu, int opcode) {
 		cpu.next_pc = I_JUMP(opcode, cpu.pc - 4);
+		cpu.delay_slot = true;
 	}
 
 	public static void jal(CpuState cpu, int opcode) {
@@ -496,6 +498,7 @@ public final class Interpreter {
 	public static void jr(CpuState cpu, int opcode) {
 		int rs = cpu.gpr[I_RS(opcode)];
 		cpu.next_pc = rs;
+		cpu.delay_slot = true;
 	}
 
 	public static void lb(CpuState cpu, int opcode) {
@@ -819,7 +822,7 @@ public final class Interpreter {
 	}
 
 	public static void sync(CpuState cpu, int opcode) {
-		//TODO
+		// No cache emulation is done
 	}
 
 	public static void syscall(CpuState cpu, int opcode) {
@@ -939,7 +942,7 @@ public final class Interpreter {
 	}
 
 	public static void wait(CpuState cpu, int opcode) {
-		//TODO
+		cpu.halted = true;
 	}
 
 	public static void xor(CpuState cpu, int opcode) {
@@ -986,6 +989,7 @@ public final class Interpreter {
 
 	private static void branch(CpuState cpu, int opcode) {
 		cpu.next_pc = I_BRANCH(opcode, cpu.pc - 4);
+		cpu.delay_slot = true;
 	}
 
 	private static void link(CpuState cpu) {
