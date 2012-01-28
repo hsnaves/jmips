@@ -7,7 +7,7 @@ import jmips.dev.Uart16550;
 
 import org.junit.Test;
 
-public class InterpreterTest {
+public class CpuTest {
 
 	private static final int RAM_BASE = 0x08000000;
 	private static final int RAM_SIZE = 64 * 1024 * 1024;
