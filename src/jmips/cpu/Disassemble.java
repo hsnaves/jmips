@@ -24,118 +24,118 @@ public class Disassemble {
 
 
 	private static void disassembleSyscallAndBreak(StringBuilder sb, int opcode) {
-		int code = Interpreter.I_SYSCALLCODE(opcode);
+		int code = Cpu.I_SYSCALLCODE(opcode);
 		if (code != 0) sb.append(String.format("0x%X", code));
 	}
 
 	private static void disassembleSync(StringBuilder sb, int opcode) {
-		int code = Interpreter.I_SA(opcode);
+		int code = Cpu.I_SA(opcode);
 		if (code != 0) sb.append(String.format("0x%X", code));
 	}
 
 	private static void disassembleWait(StringBuilder sb, int opcode) {
-		int code = Interpreter.I_WAITCODE(opcode);
+		int code = Cpu.I_WAITCODE(opcode);
 		if (code != 0) sb.append(String.format("0x%X", code));
 	}
 
 	private static void disassembleJump(StringBuilder sb, int pc, int opcode) {
-		sb.append(String.format("0x%08X", Interpreter.I_JUMP(opcode, pc)));
+		sb.append(String.format("0x%08X", Cpu.I_JUMP(opcode, pc)));
 	}
 
 	private static void disassembleLoadStore(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(Interpreter.I_IMM16(opcode));
-		sb.append("(").append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(")");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(Cpu.I_IMM16(opcode));
+		sb.append("(").append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(")");
 	}
 
 	private static void disassembleBranch(StringBuilder sb, int pc, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
-		sb.append(String.format("0x%08X", Interpreter.I_BRANCH(opcode, pc)));
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
+		sb.append(String.format("0x%08X", Cpu.I_BRANCH(opcode, pc)));
 	}
 
 	private static void disassembleBranch2(StringBuilder sb, int pc, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(String.format("0x%08X", Interpreter.I_BRANCH(opcode, pc)));
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(String.format("0x%08X", Cpu.I_BRANCH(opcode, pc)));
 	}
 
 	private static void disassembleBranch3(StringBuilder sb, int pc, int opcode) {
-		sb.append(String.format("0x%08X", Interpreter.I_BRANCH(opcode, pc)));
+		sb.append(String.format("0x%08X", Cpu.I_BRANCH(opcode, pc)));
 	}
 
 	private static void disassemble3Registers(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]);
 	}
 
 	private static void disassemble2Registers(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]);
 	}
 
 	private static void disassemble2Registers2(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]);
 	}
 
 	private static void disassemble2Registers3(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]);
 	}
 
 	private static void disassemble2RegistersImmediate(StringBuilder sb, int opcode, boolean signed) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
 		if (signed) {
-			sb.append(Interpreter.I_IMM16(opcode));
+			sb.append(Cpu.I_IMM16(opcode));
 		} else {
-			sb.append(String.format("0x%04X", Interpreter.I_IMM16U(opcode)));
+			sb.append(String.format("0x%04X", Cpu.I_IMM16U(opcode)));
 		}
 	}
 
 	private static void disassembleLi(StringBuilder sb, int opcode, boolean signed) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
 		if (signed) {
-			sb.append(Interpreter.I_IMM16(opcode));
+			sb.append(Cpu.I_IMM16(opcode));
 		} else {
-			sb.append(String.format("0x%04X", Interpreter.I_IMM16U(opcode)));
+			sb.append(String.format("0x%04X", Cpu.I_IMM16U(opcode)));
 		}
 	}
 
 	private static void disassembleJumpRegisterAndLink(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]);
 	}
 
 	private static void disassembleJumpRegister(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]);
 	}
 
 	private static void disassembleShift(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]);
 	}
 
 	private static void disassembleShiftImmediate(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(Interpreter.I_SA(opcode));
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(Cpu.I_SA(opcode));
 	}
 
 	private static void disassembleMoveFrom(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RD(opcode)]);
 	}
 
 	private static void disassembleMoveTo(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]);
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]);
 	}
 
 	private static void disassembleMoveFromToCop0(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		int sel = Interpreter.I_COP0SEL(opcode);
-		int rd = Interpreter.I_RD(opcode);
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		int sel = Cpu.I_COP0SEL(opcode);
+		int rd = Cpu.I_RD(opcode);
 		if (sel == 1 && (rd == Coprocessor0.COP0_CONFIG || rd == Coprocessor0.COP0_TAGLO)) {
 			if (rd == Coprocessor0.COP0_CONFIG)
 				sb.append("Config1");
@@ -147,33 +147,33 @@ public class Disassemble {
 	}
 
 	private static void disassembleTrap(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(String.format("0x%4X", Interpreter.I_TRAPCODE(opcode)));
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(String.format("0x%4X", Cpu.I_TRAPCODE(opcode)));
 	}
 
 	private static void disassembleTrapImmediate(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
-		sb.append(Interpreter.I_IMM16(opcode));
+		sb.append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(", ");
+		sb.append(Cpu.I_IMM16(opcode));
 	}
 
 	private static void disassembleLui(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(String.format("0x%04X", Interpreter.I_IMM16U(opcode)));
+		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
+		sb.append(String.format("0x%04X", Cpu.I_IMM16U(opcode)));
 	}
 
 	private static void disassembleCache(StringBuilder sb, int opcode) {
 		// TODO
-		sb.append(Interpreter.I_RT(opcode)).append(", ");
-		sb.append(Interpreter.I_IMM16(opcode));
-		sb.append("(").append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(")");
+		sb.append(Cpu.I_RT(opcode)).append(", ");
+		sb.append(Cpu.I_IMM16(opcode));
+		sb.append("(").append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(")");
 	}
 
 	private static void disassemblePref(StringBuilder sb, int opcode) {
 		// TODO
-		sb.append(Interpreter.I_RT(opcode)).append(", ");
-		sb.append(Interpreter.I_IMM16(opcode));
-		sb.append("(").append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(")");
+		sb.append(Cpu.I_RT(opcode)).append(", ");
+		sb.append(Cpu.I_IMM16(opcode));
+		sb.append("(").append(REGISTER_NAMES[Cpu.I_RS(opcode)]).append(")");
 	}
 
 	private static void disassembleReserved(StringBuilder sb) {
@@ -186,7 +186,7 @@ public class Disassemble {
 
 
 	private static void disassembleSpecial(StringBuilder sb, int pc, int opcode) {
-		switch(Interpreter.I_FUNCT(opcode)) {
+		switch(Cpu.I_FUNCT(opcode)) {
 		case 0:
 			if (opcode == 0) printInsn(sb, "nop");
 			else if (opcode == 0x00000040) printInsn(sb, "ssnop");
@@ -381,7 +381,7 @@ public class Disassemble {
 	}
 
 	private static void disassembleSpecial2(StringBuilder sb, int pc, int opcode) {
-		switch(Interpreter.I_FUNCT(opcode)) {
+		switch(Cpu.I_FUNCT(opcode)) {
 		case 0:
 			printInsn(sb, "madd");
 			disassemble2Registers(sb, opcode);
@@ -421,7 +421,7 @@ public class Disassemble {
 	}
 
 	private static void disassembleRegImm(StringBuilder sb, int pc, int opcode) {
-		switch(Interpreter.I_RT(opcode)) {
+		switch(Cpu.I_RT(opcode)) {
 		case 0:
 			printInsn(sb, "bltz");
 			disassembleBranch(sb, pc, opcode);
@@ -495,7 +495,7 @@ public class Disassemble {
 	}
 
 	private static void disassembleCop0Co(StringBuilder sb, int pc, int opcode) {
-		switch(Interpreter.I_FUNCT(opcode)) {
+		switch(Cpu.I_FUNCT(opcode)) {
 		case 1:
 			printInsn(sb, "tlbr");
 			break;
@@ -525,7 +525,7 @@ public class Disassemble {
 	}
 
 	private static void disassembleCop0(StringBuilder sb, int pc, int opcode) {
-		switch(Interpreter.I_RS(opcode)) {
+		switch(Cpu.I_RS(opcode)) {
 		case 0:
 			printInsn(sb, "mfc0");
 			disassembleMoveFromToCop0(sb, opcode);
@@ -562,7 +562,7 @@ public class Disassemble {
 	public static String disassemble(int pc, int opcode) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(String.format("0x%08X: ", pc));
-		switch (Interpreter.I_OP(opcode)) {
+		switch (Cpu.I_OP(opcode)) {
 		case 0:
 			disassembleSpecial(sb, pc, opcode);
 			break;

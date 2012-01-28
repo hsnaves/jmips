@@ -30,7 +30,7 @@ public class InterpreterTest {
 		cpu.gpr[Cpu.GPR_A0] = 1;
 		cpu.gpr[Cpu.GPR_A1] = 2;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(3, cpu.gpr[Cpu.GPR_V0]);
@@ -39,7 +39,7 @@ public class InterpreterTest {
 		cpu.gpr[Cpu.GPR_A0] = 0x7FFFFFFF;
 		cpu.gpr[Cpu.GPR_A1] = 2;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		// TODO
 		//assertEquals(RAM_BASE + 4, cpu.pc);
 		//assertEquals(RAM_BASE + 8, cpu.next_pc);
@@ -54,7 +54,7 @@ public class InterpreterTest {
 		cpu.write32(RAM_BASE, 0x20820003); // addi $v0,$a0,3
 		cpu.gpr[Cpu.GPR_A0] = 1;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(4, cpu.gpr[Cpu.GPR_V0]);
@@ -62,7 +62,7 @@ public class InterpreterTest {
 		cpu.reset();
 		cpu.gpr[Cpu.GPR_A0] = 0x7FFFFFFF;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		// TODO
 		//assertEquals(RAM_BASE + 4, cpu.pc);
 		//assertEquals(RAM_BASE + 8, cpu.next_pc);
@@ -72,7 +72,7 @@ public class InterpreterTest {
 		cpu.write32(RAM_BASE, 0x2082FFFE); // addi $v0,$a0,-2
 		cpu.gpr[Cpu.GPR_A0] = 1;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(-1, cpu.gpr[Cpu.GPR_V0]);
@@ -81,7 +81,7 @@ public class InterpreterTest {
 		cpu.reset();
 		cpu.gpr[Cpu.GPR_A0] = 0x80000000;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		// TODO
 		//assertEquals(RAM_BASE + 4, cpu.pc);
 		//assertEquals(RAM_BASE + 8, cpu.next_pc);
@@ -96,7 +96,7 @@ public class InterpreterTest {
 		cpu.write32(RAM_BASE, 0x24820004); //  addiu $v0,$a0,4
 		cpu.gpr[Cpu.GPR_A0] = 2;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(6, cpu.gpr[Cpu.GPR_V0]);
@@ -104,7 +104,7 @@ public class InterpreterTest {
 		cpu.reset();
 		cpu.gpr[Cpu.GPR_A0] = 0x7FFFFFFF;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals((int) 0x80000003, cpu.gpr[Cpu.GPR_V0]);
@@ -113,7 +113,7 @@ public class InterpreterTest {
 		cpu.write32(RAM_BASE, 0x2482FFFD); // addiu $v0,$a0,-3
 		cpu.gpr[Cpu.GPR_A0] = 5;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(2, cpu.gpr[Cpu.GPR_V0]);
@@ -121,7 +121,7 @@ public class InterpreterTest {
 		cpu.reset();
 		cpu.gpr[Cpu.GPR_A0] = 0x80000000;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(0x7FFFFFFD, cpu.gpr[Cpu.GPR_V0]);
@@ -136,7 +136,7 @@ public class InterpreterTest {
 		cpu.gpr[Cpu.GPR_A0] = 1;
 		cpu.gpr[Cpu.GPR_A1] = 10;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(11, cpu.gpr[Cpu.GPR_V0]);
@@ -145,7 +145,7 @@ public class InterpreterTest {
 		cpu.gpr[Cpu.GPR_A0] = 0x7FFFFFFF;
 		cpu.gpr[Cpu.GPR_A1] = 3;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals((int) 0x80000002, cpu.gpr[Cpu.GPR_V0]);
@@ -160,7 +160,7 @@ public class InterpreterTest {
 		cpu.gpr[Cpu.GPR_A0] = 0xFF00FF00;
 		cpu.gpr[Cpu.GPR_A1] = 0x12345678;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(0x12005600, cpu.gpr[Cpu.GPR_V0]);
@@ -174,7 +174,7 @@ public class InterpreterTest {
 		cpu.write32(RAM_BASE, 0x30829132); // andi $v0,$a0,0x9132
 		cpu.gpr[Cpu.GPR_A0] = 0xFFFFFF00;
 		cpu.gpr[Cpu.GPR_V0] = 0;
-		Interpreter.step(cpu);
+		cpu.step();
 		assertEquals(RAM_BASE + 4, cpu.pc);
 		assertEquals(RAM_BASE + 8, cpu.next_pc);
 		assertEquals(0x00009100, cpu.gpr[Cpu.GPR_V0]);
