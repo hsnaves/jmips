@@ -5,7 +5,7 @@ public final class Ram {
 	private final int[] memory;
 
 	public Ram(int size) {
-		this.size = size & (~0x3);
+		this.size = size & (~3); // Always aligned by 4
 		memory = new int[this.size >> 2];
 	}
 

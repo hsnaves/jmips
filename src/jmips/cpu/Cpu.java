@@ -1,8 +1,6 @@
 package jmips.cpu;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public final class Cpu {
 
@@ -40,173 +38,7 @@ public final class Cpu {
 	public static final int GPR_FP = 30;
 	public static final int GPR_RA = 31;
 
-	public final int[] gpr = new int[32];
-	public int hi, lo;
-	public int pc, next_pc;
-	public boolean delay_slot, next_delay_slot;
-
-	private final Ram ram;
-	private final int ram_base;
-
-	public boolean memory_ok;
-	public boolean halted;
-
-	public final Coprocessor0 cop0;
-
-	private final List<IODevice> devices = new ArrayList<IODevice>();
-	private final List<Integer> deviceOffsets = new ArrayList<Integer>();
-	private final List<Integer> deviceSizes = new ArrayList<Integer>();
-
-	public Cpu(int ram_base, int ram_size) {
-		this.ram_base = ram_base;
-		this.ram = new Ram(ram_size);
-		this.cop0 = new Coprocessor0(this);
-	}
-
-	public void registerDevice(IODevice device, int offset) {
-		devices.add(device);
-		deviceOffsets.add(offset);
-		deviceSizes.add(device.size());
-	}
-
-	private int findDevice(int address) {
-		for(int i = 0; i < deviceOffsets.size(); i++) {
-			int offset = deviceOffsets.get(i);
-			int size = deviceSizes.get(i);
-			if ((address >= offset) && (address < offset + size)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private boolean isMainMemory(int address) {
-		return ((address >= ram_base) && (address < ram_base + ram.size()));
-	}
-
-	public byte read8(int address) {
-		if (isMainMemory(address)) {
-			memory_ok = true;
-			return ram.read8(address - ram_base);
-		} else {
-			int devno = findDevice(address);
-			if (devno != -1) {
-				int offset = deviceOffsets.get(devno);
-				IODevice dev = devices.get(devno);
-				byte b = dev.read8(address - offset);
-				memory_ok = !dev.bus_error();
-				return b;
-			} else {
-				memory_ok = false;
-				return 0;
-			}
-		}
-	}
-
-	public short read16(int address) {
-		if (isMainMemory(address)) {
-			memory_ok = true;
-			return ram.read16(address - ram_base, true);
-		} else {
-			int devno = findDevice(address);
-			if (devno != -1) {
-				int offset = deviceOffsets.get(devno);
-				IODevice dev = devices.get(devno);
-				short s = dev.read16(address - offset, true);
-				memory_ok = !dev.bus_error();
-				return s;
-			} else {
-				memory_ok = false;
-				return 0;
-			}
-		}
-	}
-
-	public int read32(int address) {
-		if (isMainMemory(address)) {
-			memory_ok = true;
-			return ram.read32(address - ram_base, true);
-		} else {
-			int devno = findDevice(address);
-			if (devno != -1) {
-				int offset = deviceOffsets.get(devno);
-				IODevice dev = devices.get(devno);
-				int v = dev.read32(address - offset, true);
-				memory_ok = !dev.bus_error();
-				return v;
-			} else {
-				memory_ok = false;
-				return 0;
-			}
-		}
-	}
-
-	public void write8(int address, byte value) {
-		if (isMainMemory(address)) {
-			memory_ok = true;
-			ram.write8(address - ram_base, value);
-		} else {
-			int devno = findDevice(address);
-			if (devno != -1) {
-				int offset = deviceOffsets.get(devno);
-				IODevice dev = devices.get(devno);
-				dev.write8(address - offset, value);
-				memory_ok = !dev.bus_error();
-			} else {
-				memory_ok = false;
-			}
-		}
-	}
-
-	public void write16(int address, short value) {
-		if (isMainMemory(address)) {
-			memory_ok = true;
-			ram.write16(address - ram_base, value, true);
-		} else {
-			int devno = findDevice(address);
-			if (devno != -1) {
-				int offset = deviceOffsets.get(devno);
-				IODevice dev = devices.get(devno);
-				dev.write16(address - offset, value, true);
-				memory_ok = !dev.bus_error();
-			} else {
-				memory_ok = false;
-			}
-		}
-	}
-
-	public void write32(int address, int value) {
-		if (isMainMemory(address)) {
-			memory_ok = true;
-			ram.write32(address - ram_base, value, true);
-		} else {
-			int devno = findDevice(address);
-			if (devno != -1) {
-				int offset = deviceOffsets.get(devno);
-				IODevice dev = devices.get(devno);
-				dev.write32(address - offset, value, true);
-				memory_ok = !dev.bus_error();
-			} else {
-				memory_ok = false;
-			}
-		}
-	}
-
-	public void reset() {
-		Arrays.fill(gpr, 0);
-		hi = lo = 0;
-		memory_ok = true;
-		pc = 0x08000000;
-		next_pc = pc + 4;
-	}
-
-	public void raiseIrq(int irqno) {
-	}
-
-	public void lowerIrq(int irqno) {
-	}
-
-
+	/* Auxiliary functions to decode the opcode */
 	public static int I_OP(int opcode) {
 		return (opcode >>> 26);
 	}
@@ -263,8 +95,47 @@ public final class Cpu {
 		return (opcode & 0x07);
 	}
 
+	/* Instance fields */
+	private final int[] gpr = new int[32];
+	public int hi, lo;
+	public int pc, next_pc;
+	public boolean delay_slot, next_delay_slot;
+
+	public boolean halted;
+
+	public final Coprocessor0 cop0;
+	private final MemoryManager mm;
+
+	public Cpu(int ramOffset, int ramSize) {
+		this.cop0 = new Coprocessor0(this);
+		this.mm = new MemoryManager(ramOffset, ramSize);
+	}
+
+
+	public void reset() {
+		Arrays.fill(gpr, 0);
+		hi = lo = 0;
+		pc = 0x08000000;
+		next_pc = pc + 4;
+	}
+
+	public void raiseIrq(int irqno) {
+	}
+
+	public void lowerIrq(int irqno) {
+	}
+
+	public void setGpr(int regno, int val) {
+		if (regno != GPR_ZR) gpr[regno] = val;
+	}
+
+	public int getGpr(int regno) {
+		return gpr[regno];
+	}
+
+
 	public void step() {
-		int opcode = read32(pc);
+		int opcode = mm.read32(pc);
 
 		delay_slot = false;
 		pc = next_pc;
@@ -475,7 +346,7 @@ public final class Cpu {
 		int rt = gpr[I_RT(opcode)];
 		int result = rs + rt;
 		if (check_overflow(rs, rt, result, true)) return;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void addi(int opcode) {
@@ -483,35 +354,35 @@ public final class Cpu {
 		int imm = I_IMM16(opcode);
 		int result = rs + imm;
 		if (check_overflow(rs, imm, result, true)) return;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void addiu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		int result = rs + imm;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void addu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs + rt;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void and(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs & rt;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void andi(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int immu = I_IMM16U(opcode);
 		int result = rs & immu;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void beq(int opcode) {
@@ -661,13 +532,13 @@ public final class Cpu {
 	private void clo(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int result = Utils.countLeadingOnes(rs);
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void clz(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int result = Utils.countLeadingZeros(rs);
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void deret(int opcode) {
@@ -717,9 +588,9 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read8(address);
-		if (memory_ok) {
-			write_reg(I_RT(opcode), val);
+		int val = mm.read8(address);
+		if (mm.success()) {
+			setGpr(I_RT(opcode), val);
 		}
 	}
 
@@ -727,9 +598,9 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read8(address) & 0xFF;
-		if (memory_ok) {
-			write_reg(I_RT(opcode), val);
+		int val = mm.read8(address) & 0xFF;
+		if (mm.success()) {
+			setGpr(I_RT(opcode), val);
 		}
 	}
 
@@ -737,9 +608,9 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read16(address);
-		if (memory_ok) {
-			write_reg(I_RT(opcode), val);
+		int val = mm.read16(address);
+		if (mm.success()) {
+			setGpr(I_RT(opcode), val);
 		}
 	}
 
@@ -747,9 +618,9 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read16(address) & 0xFFFF;
-		if (memory_ok) {
-			write_reg(I_RT(opcode), val);
+		int val = mm.read16(address) & 0xFFFF;
+		if (mm.success()) {
+			setGpr(I_RT(opcode), val);
 		}
 	}
 
@@ -760,16 +631,16 @@ public final class Cpu {
 	private void lui(int opcode) {
 		int imm = I_IMM16(opcode);
 		int result = imm << 16;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void lw(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read32(address);
-		if (memory_ok) {
-			write_reg(I_RT(opcode), val);
+		int val = mm.read32(address);
+		if (mm.success()) {
+			setGpr(I_RT(opcode), val);
 		}
 	}
 
@@ -804,18 +675,18 @@ public final class Cpu {
 	}
 
 	private void mfhi(int opcode) {
-		write_reg(I_RD(opcode), hi);
+		setGpr(I_RD(opcode), hi);
 	}
 
 	private void mflo(int opcode) {
-		write_reg(I_RD(opcode), lo);
+		setGpr(I_RD(opcode), lo);
 	}
 
 	private void movn(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		if (rt != 0) {
 			int rs = gpr[I_RS(opcode)];
-			write_reg(I_RD(opcode), rs);
+			setGpr(I_RD(opcode), rs);
 		}
 	}
 
@@ -823,7 +694,7 @@ public final class Cpu {
 		int rt = gpr[I_RT(opcode)];
 		if (rt == 0) {
 			int rs = gpr[I_RS(opcode)];
-			write_reg(I_RD(opcode), rs);
+			setGpr(I_RD(opcode), rs);
 		}
 	}
 
@@ -863,7 +734,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs * rt;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 		// hi = lo = 0; // Unpredictable
 	}
 
@@ -887,21 +758,21 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = ~(rs | rt);
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void or(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs | rt;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void ori(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int immu = I_IMM16U(opcode);
 		int result = rs | immu;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void pref(int opcode) {
@@ -913,7 +784,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		write8(address, (byte) rt);
+		mm.write8(address, (byte) rt);
 	}
 
 	private void sc(int opcode) {
@@ -929,77 +800,77 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		write16(address, (short) rt);
+		mm.write16(address, (short) rt);
 	}
 
 	private void sll(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int sa = I_SA(opcode);
 		int result = rt << sa;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void sllv(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int rs = gpr[I_RS(opcode)];
 		int result = rt << rs;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void slt(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int rs = gpr[I_RS(opcode)];
 		int result = (rs < rt) ? 1 : 0;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void slti(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		int result = (rs < imm) ? 1 : 0;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void sltiu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		int result = (Utils.compareUnsigned(rs, imm) < 0) ? 1 : 0;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void sltu(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int rs = gpr[I_RS(opcode)];
 		int result = (Utils.compareUnsigned(rs, rt) < 0) ? 1 : 0;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void sra(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int sa = I_SA(opcode);
 		int result = rt >> sa;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void srav(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int rs = gpr[I_RS(opcode)];
 		int result = rt >> rs;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void srl(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int sa = I_SA(opcode);
 		int result = rt >>> sa;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void srlv(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int rs = gpr[I_RS(opcode)];
 		int result = rt >>> rs;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void sub(int opcode) {
@@ -1007,14 +878,14 @@ public final class Cpu {
 		int rt = gpr[I_RT(opcode)];
 		int result = rs - rt;
 		if (check_overflow(rs, rt, result, false)) return;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void subu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs - rt;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void sw(int opcode) {
@@ -1022,7 +893,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		write32(address, rt);
+		mm.write32(address, rt);
 	}
 
 	private void swl(int opcode) {
@@ -1161,14 +1032,14 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs ^ rt;
-		write_reg(I_RD(opcode), result);
+		setGpr(I_RD(opcode), result);
 	}
 
 	private void xori(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int immu = I_IMM16U(opcode);
 		int result = rs ^ immu;
-		write_reg(I_RT(opcode), result);
+		setGpr(I_RT(opcode), result);
 	}
 
 	private void invalid() {
@@ -1195,10 +1066,6 @@ public final class Cpu {
 		return overflow;
 	}
 
-	private void write_reg(int regno, int val) {
-		if (regno != GPR_ZR) gpr[regno] = val;
-	}
-
 	private void branch(int opcode) {
 		next_pc = I_BRANCH(opcode, pc - 4);
 		delay_slot = true;
@@ -1209,7 +1076,7 @@ public final class Cpu {
 	}
 
 	private void link(int regno) {
-		write_reg(regno, pc + 4);
+		setGpr(regno, pc + 4);
 	}
 
 	private void skip_delay_slot() {

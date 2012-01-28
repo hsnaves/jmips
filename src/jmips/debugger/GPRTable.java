@@ -69,7 +69,7 @@ public class GPRTable extends JTable {
 		setValueAt(String.format("0x%08X", cpu.hi), 1, 1);
 		setValueAt(String.format("0x%08X", cpu.pc), 1, 3);
 		for(int i = 0; i < 32; i++) {
-			setValueAt(String.format("0x%08X", cpu.gpr[i]), 2 + (i / 2), 1 + 2 * (i % 2));
+			setValueAt(String.format("0x%08X", cpu.getGpr(i)), 2 + (i / 2), 1 + 2 * (i % 2));
 		}
 	}
 }
