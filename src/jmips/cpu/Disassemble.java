@@ -134,7 +134,16 @@ public class Disassemble {
 
 	private static void disassembleMoveFromToCop0(StringBuilder sb, int opcode) {
 		sb.append(REGISTER_NAMES[Interpreter.I_RT(opcode)]).append(", ");
-		sb.append(COP0_REGISTER_NAMES[Interpreter.I_RD(opcode)]);
+		int sel = Interpreter.I_COP0SEL(opcode);
+		int rd = Interpreter.I_RD(opcode);
+		if (sel == 1 && (rd == Coprocessor0.COP0_CONFIG || rd == Coprocessor0.COP0_TAGLO)) {
+			if (rd == Coprocessor0.COP0_CONFIG)
+				sb.append("Config1");
+			else
+				sb.append("DataLo");
+		} else {
+			sb.append(COP0_REGISTER_NAMES[rd]);
+		}
 	}
 
 	private static void disassembleTrap(StringBuilder sb, int opcode) {

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class CpuState {
+public final class Cpu {
+
 	/* Register constants */
 	public static final int GPR_ZR = 0;
 	public static final int GPR_AT = 1;
@@ -56,7 +57,7 @@ public final class CpuState {
 	private final List<Integer> deviceOffsets = new ArrayList<Integer>();
 	private final List<Integer> deviceSizes = new ArrayList<Integer>();
 
-	public CpuState(int ram_base, int ram_size) {
+	public Cpu(int ram_base, int ram_size) {
 		this.ram_base = ram_base;
 		this.ram = new Ram(ram_size);
 		this.cop0 = new Coprocessor0(this);

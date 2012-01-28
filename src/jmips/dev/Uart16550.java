@@ -2,7 +2,7 @@ package jmips.dev;
 
 import java.util.LinkedList;
 
-import jmips.cpu.CpuState;
+import jmips.cpu.Cpu;
 import jmips.cpu.IODevice;
 import jmips.serial.TTY;
 
@@ -37,7 +37,7 @@ public class Uart16550 implements IODevice {
 
 	private final TTY tty;
 	private final int irq;
-	private final CpuState cpu;
+	private final Cpu cpu;
 
 	private int divider; // divider
 	private int rbr; //receive register
@@ -54,7 +54,7 @@ public class Uart16550 implements IODevice {
 
 	private boolean bus_error = false;
 
-	public Uart16550(CpuState cpu, TTY tty, int irq) {
+	public Uart16550(Cpu cpu, TTY tty, int irq) {
 		this.cpu = cpu;
 		this.tty = tty;
 		this.irq = irq;

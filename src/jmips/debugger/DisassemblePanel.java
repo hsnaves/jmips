@@ -12,17 +12,17 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListDataListener;
 
-import jmips.cpu.CpuState;
+import jmips.cpu.Cpu;
 import jmips.cpu.Disassemble;
 
 public final class DisassemblePanel extends JPanel {
 	private static final long serialVersionUID = -4642361356734616764L;
 
 	private DisassemblePanelList mainList;
-	private final CpuState cpu;
+	private final Cpu cpu;
 	private int listDataOffset;
 
-	public DisassemblePanel(CpuState cpu) {
+	public DisassemblePanel(Cpu cpu) {
 		this.cpu = cpu;
 		initializeComponents();
 	}

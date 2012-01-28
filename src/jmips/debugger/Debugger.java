@@ -21,13 +21,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.jcp.xml.dsig.internal.dom.Utils;
 
-import jmips.cpu.CpuState;
+import jmips.cpu.Cpu;
 import jmips.serial.SwingTTY;
 
 public class Debugger extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 2776635517093322890L;
 
-	private final CpuState cpu;
+	private final Cpu cpu;
 
 	private JToolBar mainToolBar;
 	private JButton stepIntoButton;
@@ -45,7 +45,7 @@ public class Debugger extends JFrame implements ActionListener {
 
 	private JFileChooser fileChooser;
 
-	public Debugger(CpuState cpu) {
+	public Debugger(Cpu cpu) {
 		this.cpu = cpu;
 		setTitle("JMIPS Debugger");
 		initComponents();
@@ -268,7 +268,7 @@ public class Debugger extends JFrame implements ActionListener {
 
 
 	public static void main(String[] args) {
-		CpuState cpu = new CpuState(0x0, 16 * 1024 * 1024);
+		Cpu cpu = new Cpu(0x0, 16 * 1024 * 1024);
 		Debugger debugger = new Debugger(cpu);
 		debugger.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		debugger.setVisible(true);

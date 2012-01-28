@@ -6,14 +6,14 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
-import jmips.cpu.CpuState;
+import jmips.cpu.Cpu;
 
 public class GPRTable extends JTable {
 
 	private static final long serialVersionUID = 2071267925156377116L;
 
-	private final CpuState cpu;
-	public GPRTable(CpuState cpu) {
+	private final Cpu cpu;
+	public GPRTable(Cpu cpu) {
 		this.cpu = cpu;
 		super.setModel(new DefaultTableModel(new Object[][] {
 				{"pc", "", "next_pc", null},

@@ -130,9 +130,9 @@ public final class Coprocessor0 {
 	private TlbEntry lastCodeEntry;
 	private TlbEntry lastDataEntry;
 
-	private final CpuState cpu;
+	private final Cpu cpu;
 
-	public Coprocessor0(CpuState cpu) {
+	public Coprocessor0(Cpu cpu) {
 		this.cpu = cpu;
 		tlbEntries = new TlbEntry[NUM_TLB_ENTRIES];
 		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
