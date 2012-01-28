@@ -59,6 +59,10 @@ public class Disassemble {
 		sb.append(String.format("0x%08X", Interpreter.I_BRANCH(opcode, pc)));
 	}
 
+	private static void disassembleBranch3(StringBuilder sb, int pc, int opcode) {
+		sb.append(String.format("0x%08X", Interpreter.I_BRANCH(opcode, pc)));
+	}
+
 	private static void disassemble3Registers(StringBuilder sb, int opcode) {
 		sb.append(REGISTER_NAMES[Interpreter.I_RD(opcode)]).append(", ");
 		sb.append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(", ");
@@ -151,10 +155,16 @@ public class Disassemble {
 
 	private static void disassembleCache(StringBuilder sb, int opcode) {
 		// TODO
+		sb.append(Interpreter.I_RT(opcode)).append(", ");
+		sb.append(Interpreter.I_IMM16(opcode));
+		sb.append("(").append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(")");
 	}
 
 	private static void disassemblePref(StringBuilder sb, int opcode) {
 		// TODO
+		sb.append(Interpreter.I_RT(opcode)).append(", ");
+		sb.append(Interpreter.I_IMM16(opcode));
+		sb.append("(").append(REGISTER_NAMES[Interpreter.I_RS(opcode)]).append(")");
 	}
 
 	private static void disassembleReserved(StringBuilder sb) {
@@ -165,18 +175,12 @@ public class Disassemble {
 		sb.append("(coprocessor unusuable)");
 	}
 
-	private static void disassembleInvalid(StringBuilder sb, int pc, int opcode, boolean alpha) {
-		if (alpha) {
-			sb.append("(reserved)");
-		} else {
-			sb.append("(invalid)");
-		}
-	}
 
 	private static void disassembleSpecial(StringBuilder sb, int pc, int opcode) {
 		switch(Interpreter.I_FUNCT(opcode)) {
 		case 0:
 			if (opcode == 0) printInsn(sb, "nop");
+			else if (opcode == 0x00000040) printInsn(sb, "ssnop");
 			else {
 				printInsn(sb, "sll");
 				disassembleShiftImmediate(sb, opcode);
@@ -414,8 +418,13 @@ public class Disassemble {
 			disassembleBranch(sb, pc, opcode);
 			break;
 		case 1:
-			printInsn(sb, "bgez");
-			disassembleBranch(sb, pc, opcode);
+			if ((opcode & 0xFFFF0000) == 0x04010000) {
+				printInsn(sb, "b");
+				disassembleBranch3(sb, pc, opcode);
+			} else {
+				printInsn(sb, "bgez");
+				disassembleBranch(sb, pc, opcode);
+			}
 			break;
 		case 2:
 			printInsn(sb, "bltzl");
@@ -454,8 +463,13 @@ public class Disassemble {
 			disassembleBranch(sb, pc, opcode);
 			break;
 		case 17:
-			printInsn(sb, "bgezal");
-			disassembleBranch(sb, pc, opcode);
+			if ((opcode & 0xFFFF0000) == 0x04110000) {
+				printInsn(sb, "bal");
+				disassembleBranch3(sb, pc, opcode);
+			} else {
+				printInsn(sb, "bgezal");
+				disassembleBranch(sb, pc, opcode);
+			}
 			break;
 		case 18:
 			printInsn(sb, "bltzall");
@@ -555,12 +569,25 @@ public class Disassemble {
 			disassembleJump(sb, pc, opcode);
 			break;
 		case 4:
-			printInsn(sb, "beq");
-			disassembleBranch2(sb, pc, opcode);
+			if ((opcode & 0xFFFF0000) == 0x10000000) {
+				printInsn(sb, "b");
+				disassembleBranch3(sb, pc, opcode);
+			} if ((opcode & 0xFC1F0000) == 0x10000000) {
+				printInsn(sb, "beqz");
+				disassembleBranch(sb, pc, opcode);
+			} else {
+				printInsn(sb, "beq");
+				disassembleBranch2(sb, pc, opcode);
+			}
 			break;
 		case 5:
-			printInsn(sb, "bne");
-			disassembleBranch2(sb, pc, opcode);
+			if ((opcode & 0xFC1F0000) == 0x14000000) {
+				printInsn(sb, "bnez");
+				disassembleBranch(sb, pc, opcode);
+			} else {
+				printInsn(sb, "bne");
+				disassembleBranch2(sb, pc, opcode);
+			}
 			break;
 		case 6:
 			printInsn(sb, "blez");
@@ -627,12 +654,22 @@ public class Disassemble {
 			disassembleCoprocessorUnusable(sb);
 			break;
 		case 20:
-			printInsn(sb, "beql");
-			disassembleBranch2(sb, pc, opcode);
+			if ((opcode & 0xFC1F0000) == 0x50000000) {
+				printInsn(sb, "beqzl");
+				disassembleBranch(sb, pc, opcode);
+			} else {
+				printInsn(sb, "beql");
+				disassembleBranch2(sb, pc, opcode);
+			}
 			break;
 		case 21:
-			printInsn(sb, "bnel");
-			disassembleBranch2(sb, pc, opcode);
+			if ((opcode & 0xFC1F0000) == 0x54000000) {
+				printInsn(sb, "bnezl");
+				disassembleBranch(sb, pc, opcode);
+			} else {
+				printInsn(sb, "bnel");
+				disassembleBranch2(sb, pc, opcode);
+			}
 			break;
 		case 22:
 			printInsn(sb, "blezl");

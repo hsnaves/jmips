@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class CpuState {
+	/* Register constants */
 	public static final int GPR_ZR = 0;
 	public static final int GPR_AT = 1;
 	public static final int GPR_V0 = 2;
@@ -41,7 +42,7 @@ public final class CpuState {
 	public final int[] gpr = new int[32];
 	public int hi, lo;
 	public int pc, next_pc;
-	public boolean delay_slot;
+	public boolean delay_slot, next_delay_slot;
 
 	private final Ram ram;
 	private final int ram_base;

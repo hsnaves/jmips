@@ -407,6 +407,22 @@ public final class Coprocessor0 {
 		cpu.next_pc = cpu.pc + 4;
 	}
 
+	private void exception_GENERAL(int cause) {
+		int vectorOffset;
+		if ((Status & 0x00000002) == 0) { // EXL = 0
+			if (cpu.delay_slot) {
+				EPC = cpu.pc - 4;
+				Cause |= 0x80000000;
+			} else {
+				EPC = cpu.pc;
+				Cause &= ~0x80000000;
+			}
+			if (cause == EXCP_CAUSE_TLBL || cause == EXCP_CAUSE_TLBS) {
+				vectorOffset = 0;
+			}
+		}
+	}
+
 	private void resetTLB() {
 		for(int i = 0; i < NUM_TLB_ENTRIES; i++)
 			tlbEntries[i].initialized = false;
