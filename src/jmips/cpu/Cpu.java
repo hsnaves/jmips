@@ -184,9 +184,6 @@ public final class Cpu {
 		return cop0.isBigEndian();
 	}
 
-	public int getCompare() {
-		return cop0.moveFromCoprocessor(Coprocessor0.COP0_REG_COMPARE, 0);
-	}
 	public byte read8(int address) {
 		int physicalAddress = cop0.translate(address, false, true);
 		if (cop0.translationError()) {
@@ -312,7 +309,7 @@ public final class Cpu {
 		if (success) {
 			int shift = (isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
-			return (oldValue & ((1 << shift) - 1)) | (value << shift); 
+			return (oldValue & ~((-1) << shift)) | (value << shift); 
 		}
 		return 0;
 	}
@@ -323,7 +320,7 @@ public final class Cpu {
 		if (success) {
 			int shift = (!isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
-			return (oldValue & ((-1) << shift)) | (value >>> shift); 
+			return (oldValue & ~((-1) >>> shift)) | (value >>> shift); 
 		}
 		return 0;
 	}
@@ -341,8 +338,8 @@ public final class Cpu {
 		if (success) {
 			int shift = (isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
-			oldValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
-			memoryManager.write32(physicalAddress, oldValue, isBigEndian());
+			int newValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
+			memoryManager.write32(physicalAddress, newValue, isBigEndian());
 			success = !memoryManager.error();
 		}
 		if (!success) cop0.exception_BUS_ERROR(true);
@@ -361,8 +358,8 @@ public final class Cpu {
 		if (success) {
 			int shift = (!isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
-			oldValue = (oldValue & ((1 << shift) - 1)) | (value << shift); 
-			memoryManager.write32(physicalAddress, oldValue, isBigEndian());
+			int newValue = (oldValue & ~((-1) << shift)) | (value << shift); 
+			memoryManager.write32(physicalAddress, newValue, isBigEndian());
 			success = !memoryManager.error();
 		}
 		if (!success) cop0.exception_BUS_ERROR(true);
@@ -404,6 +401,12 @@ public final class Cpu {
 		}
 		success = true;
 		return v;
+	}
+
+	public String disassemble() {
+		int opcode = fetchOpcode();
+		if (success) return Disassemble.disassemble(pc, opcode);
+		return null;
 	}
 
 	public void step() {
@@ -842,7 +845,7 @@ public final class Cpu {
 
 	private void div(int opcode) {
 		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RS(opcode)];
+		int rt = gpr[I_RT(opcode)];
 		if (rt == 0) {
 			lo = hi = 0;
 		} else {
@@ -853,7 +856,7 @@ public final class Cpu {
 
 	private void divu(int opcode) {
 		long rs = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[I_RT(opcode)] & 0xFFFFFFFFL;
 		if (rt == 0) {
 			lo = hi = 0;
 		} else {
@@ -870,7 +873,7 @@ public final class Cpu {
 
 	private void j(int opcode) {
 		nextPc = I_JUMP(opcode, pc - 4);
-		delaySlot = true;
+		nextDelaySlot = true;
 	}
 
 	private void jal(int opcode) {
@@ -886,7 +889,7 @@ public final class Cpu {
 	private void jr(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		nextPc = rs;
-		delaySlot = true;
+		nextDelaySlot = true;
 	}
 
 	private void lb(int opcode) {

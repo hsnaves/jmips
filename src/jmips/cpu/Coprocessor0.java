@@ -233,6 +233,7 @@ public final class Coprocessor0 {
 			break;
 		case COP0_REG_COMPARE: // Compare
 			Compare = value;
+			cpu.setCounter(cpu.getCounter() + 1);
 			lowerIrq(TIMER_IRQ);
 			break;
 		case COP0_REG_STATUS: // Status
@@ -411,37 +412,37 @@ public final class Coprocessor0 {
 		Wired = 0;
 		Config = changeValue(Config, 2, 0x07);
 		writeStatus(changeValue(Status, STATUS_BEV | STATUS_ERL, STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 8 : cpu.getProgramCounter() - 4;
 
 		cpu.setProgramCounter(0xBFC00000);
 	}
 
 	public void exception_SOFT_RESET() {
 		writeStatus(changeValue(Status, STATUS_SR | STATUS_BEV | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 8 : cpu.getProgramCounter() - 4;
 
 		cpu.setProgramCounter(0xBFC00000);
 	}
 
 	public void exception_NMI() {
 		writeStatus(changeValue(Status, STATUS_BEV | STATUS_NMI | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 8 : cpu.getProgramCounter() - 4;
 
 		cpu.setProgramCounter(0xBFC00000);
 	}
 
-	private void exception_GENERAL(int code, int copno) {
+	private void exception_GENERAL(int code, int copno, boolean offsetToZero) {
 		int vectorOffset;
 
 		if ((Status & STATUS_EXL) == 0) {
 			if (cpu.isBranchDelaySlot()) {
-				EPC = cpu.getProgramCounter() - 4;
+				EPC = cpu.getProgramCounter() - 8;
 				Cause |= CAUSE_BD;
 			} else {
-				EPC = cpu.getProgramCounter();
+				EPC = cpu.getProgramCounter() - 4;
 				Cause &= ~CAUSE_BD;
 			}
-			if (code == EXCEPTION_CODE_TLBL || code == EXCEPTION_CODE_TLBS) {
+			if (offsetToZero) {
 				vectorOffset = 0;
 			} else if (code == EXCEPTION_CODE_INT && ((Cause & CAUSE_IV) != 0)) {
 				vectorOffset = 0x200;
@@ -462,63 +463,63 @@ public final class Coprocessor0 {
 	}
 
 	public void exception_MCHECK() {
-		exception_GENERAL(EXCEPTION_CODE_MCHECK, 0);
+		exception_GENERAL(EXCEPTION_CODE_MCHECK, 0, false);
 		Status |= STATUS_TS;
 	}
 
 	public void exception_INTERRUPT() {
-		exception_GENERAL(EXCEPTION_CODE_INT, 0);
+		exception_GENERAL(EXCEPTION_CODE_INT, 0, false);
 	}
 
 	public void exception_ADDRESS_ERROR(int badVAddr, boolean load) {
-		exception_GENERAL(load ? EXCEPTION_CODE_ADEL : EXCEPTION_CODE_ADES, 0);
+		exception_GENERAL(load ? EXCEPTION_CODE_ADEL : EXCEPTION_CODE_ADES, 0, false);
 		BadVAddr = badVAddr;
 	}
 
 	public void exception_TLB_REFILL(int badVAddr, boolean load) {
-		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0);
+		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, true);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
 		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
 	}
 
 	public void exception_TLB_INVALID(int badVAddr, boolean load) {
-		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0);
+		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, false);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
 		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
 	}
 
 	public void exception_BUS_ERROR(boolean data) {
-		exception_GENERAL(data ? EXCEPTION_CODE_DBE : EXCEPTION_CODE_IBE, 0);
+		exception_GENERAL(data ? EXCEPTION_CODE_DBE : EXCEPTION_CODE_IBE, 0, false);
 	}
 
 	public void exception_SYSCALL() {
-		exception_GENERAL(EXCEPTION_CODE_SYS, 0);
+		exception_GENERAL(EXCEPTION_CODE_SYS, 0, false);
 	}
 
 	public void exception_BREAK() {
-		exception_GENERAL(EXCEPTION_CODE_BP, 0);
+		exception_GENERAL(EXCEPTION_CODE_BP, 0, false);
 	}
 
 	public void exception_RESERVED() {
-		exception_GENERAL(EXCEPTION_CODE_RI, 0);
+		exception_GENERAL(EXCEPTION_CODE_RI, 0, false);
 	}
 
 	public void exception_COPROCESS_UNUSABLE(int copno) {
-		exception_GENERAL(EXCEPTION_CODE_CPU, copno);
+		exception_GENERAL(EXCEPTION_CODE_CPU, copno, false);
 	}
 
 	public void exception_INTEGER_OVERFLOW() {
-		exception_GENERAL(EXCEPTION_CODE_OV, 0);
+		exception_GENERAL(EXCEPTION_CODE_OV, 0, false);
 	}
 
 	public void exception_TRAP() {
-		exception_GENERAL(EXCEPTION_CODE_TR, 0);
+		exception_GENERAL(EXCEPTION_CODE_TR, 0, false);
 	}
 
 	public void exception_TLB_MOD(int badVAddr) {
-		exception_GENERAL(EXCEPTION_CODE_MOD, 0);
+		exception_GENERAL(EXCEPTION_CODE_MOD, 0, false);
 		BadVAddr = badVAddr;
 		Context = badVAddr;
 	}
@@ -561,11 +562,12 @@ public final class Coprocessor0 {
 	}
 
 	public boolean checkTimerInterrupt(int before, int after) {
-		int cmp1 = Utils.compareUnsigned(before, Compare); 
-		if (cmp1 > 0) return false;
-		if (cmp1 < 0) {
-			if ((after - before) < (Compare - before)) return false;
-		}
+		if (after != Compare) return false;
+		//int cmp1 = Utils.compareUnsigned(before, Compare); 
+		//if (cmp1 > 0) return false;
+		//if (cmp1 < 0) {
+		//	if ((after - before) < (Compare - before)) return false;
+		//}
 
 		raiseIrq(TIMER_IRQ);
 		checkInterrupts();
@@ -727,6 +729,7 @@ public final class Coprocessor0 {
 		tlbEntry.VPN2 = VPN2;
 		tlbEntry.ASID = ASID;
 		tlbEntry.global = global;
+		tlbEntry.selectionBit = mask ^ (mask >> 1);
 		configurePageFromEntryLo(tlbEntry.page0, EntryLo0);
 		configurePageFromEntryLo(tlbEntry.page1, EntryLo1);
 	}
@@ -748,6 +751,20 @@ public final class Coprocessor0 {
 		private final TlbEntryPage page0 = new TlbEntryPage();
 		private final TlbEntryPage page1 = new TlbEntryPage();
 		private boolean initialized;
+
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(String.format("PageMask: 0x%08X\n", PageMask));
+			sb.append(String.format("VPN2: 0x%08X\n", VPN2));
+			sb.append(String.format("Selection Bit: 0x%08X\n", selectionBit));
+			sb.append(String.format("ASID: 0x%08X\n", ASID));
+			sb.append("Global: ").append(global).append("\n");
+			sb.append("Initialized: ").append(initialized).append("\n");
+			sb.append("Page 0: ").append(page0.toString()).append("\n");
+			sb.append("Page 1: ").append(page1.toString()).append("\n");
+			return sb.toString();
+		}
 	}
 
 	private static final class TlbEntryPage {
@@ -755,5 +772,11 @@ public final class Coprocessor0 {
 		private int cacheability;
 		private boolean dirty;
 		private boolean valid;
+
+		@Override
+		public String toString() {
+			return String.format("PFN: %08X Cacheability: %d %s %s", PFN,
+			                     cacheability, dirty ? "DT" : "ND", valid ? "VL" : "NV");
+		}
 	}
 }

@@ -95,20 +95,8 @@ public final class Ram extends Device {
 		int val = memory[block];
 		int b = ((int) value) & 0xFF;
 
-		switch (portion) {
-		case 0:
-			val = (val & 0xFFFFFF00) | b;
-			break;
-		case 1:
-			val = (val & 0xFFFF00FF) | (b << 8);
-			break;
-		case 2:
-			val = (val & 0xFF00FFFF) | (b << 16);
-			break;
-		case 3:
-			val = (val & 0x00FFFFFF) | (b << 24);
-			break;
-		}
+		portion *=8;
+		val = (val & ~(0xFF << portion)) | (b << portion);
 		memory[block] = val;
 	}
 

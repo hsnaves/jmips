@@ -7,11 +7,9 @@ import java.io.IOException;
 import javax.swing.JFrame;
 
 import jmips.cpu.Cpu;
-import jmips.cpu.Disassemble;
 import jmips.cpu.Utils;
 import jmips.dev.RealTimeClock;
 import jmips.dev.Uart16550;
-import jmips.serial.ConsoleTTY;
 import jmips.serial.SwingTTY;
 
 public class Main {
@@ -66,17 +64,11 @@ public class Main {
 				return;
 			}
 		}
-		for(int j = 0; j < 10; j++) {
-			for(int i = 0; i < 400000000; i++) {
-				if (cpu.isHalted()) break;
-				//System.out.println(Disassemble.disassemble(pc, opcode));
-				cpu.step();
-				while(tty.available())
-					uart.sendChar(tty.read());
-			}
+		for(int i = 0; i < 500000000; i++) {
 			if (cpu.isHalted()) break;
+			cpu.step();
+			while(tty.available())
+				uart.sendChar(tty.read());
 		}
-		System.out.println(cpu.getCounter());
-		System.out.println(cpu.getCompare());
 	}
 }
