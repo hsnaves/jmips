@@ -561,7 +561,7 @@ public class Disassemble {
 
 	public static String disassemble(int pc, int opcode) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("0x%08X: ", pc));
+		sb.append(String.format("0x%08X: 0x%08X ", pc, opcode));
 		switch (Cpu.I_OP(opcode)) {
 		case 0:
 			disassembleSpecial(sb, pc, opcode);

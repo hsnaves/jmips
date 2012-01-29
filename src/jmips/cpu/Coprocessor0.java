@@ -745,8 +745,8 @@ public final class Coprocessor0 {
 		private int selectionBit;
 		private boolean global;
 		private int ASID;
-		private TlbEntryPage page0;
-		private TlbEntryPage page1;
+		private final TlbEntryPage page0 = new TlbEntryPage();
+		private final TlbEntryPage page1 = new TlbEntryPage();
 		private boolean initialized;
 	}
 

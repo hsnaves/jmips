@@ -12,7 +12,7 @@ public class CpuTest {
 	private static final int RAM_BASE = 0x00000000;
 	private static final int RAM_SIZE = 64 * 1024 * 1024;
 	private static final int UART_BASE = 0x30000000;
-	private static final int BASE_ADDRESS = 0xA0000000;
+	private static final int BASE_ADDRESS = 0x80000000;
 
 	private Cpu createCpu() {
 		Cpu cpu = new Cpu(RAM_BASE, RAM_SIZE);
@@ -22,11 +22,15 @@ public class CpuTest {
 		return cpu;
 	}
 
+	private void reset(Cpu cpu) {
+		cpu.reset();
+		cpu.setProgramCounter(BASE_ADDRESS);
+	}
+
 	@Test
 	public void testADD() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
 		cpu.write32(BASE_ADDRESS, 0x00851020); // add $v0,$a0,$a1
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_A1, 2);
@@ -36,14 +40,11 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(3, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.setGpr(Cpu.GPR_A0, 0x7FFFFFFF);
 		cpu.setGpr(Cpu.GPR_A1, 2);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		// TODO
-		//assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
-		//assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0, cpu.getGpr(Cpu.GPR_V0));
 	}
 
@@ -51,7 +52,7 @@ public class CpuTest {
 	public void testADDI() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x20820003); // addi $v0,$a0,3
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_A0, 1);
@@ -61,16 +62,13 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(4, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.setGpr(Cpu.GPR_A0, 0x7FFFFFFF);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		// TODO
-		//assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
-		//assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x2082FFFE); // addi $v0,$a0,-2
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_V0, 0);
@@ -79,14 +77,10 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(-1, cpu.getGpr(Cpu.GPR_V0));
 
-	
-		cpu.reset();
+		reset(cpu);
 		cpu.setGpr(Cpu.GPR_A0, 0x80000000);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		// TODO
-		//assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
-		//assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0, cpu.getGpr(Cpu.GPR_V0));
 	}
 
@@ -94,7 +88,7 @@ public class CpuTest {
 	public void testADDIU() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x24820004); //  addiu $v0,$a0,4
 		cpu.setGpr(Cpu.GPR_A0, 2);
 		cpu.setGpr(Cpu.GPR_V0, 0);
@@ -103,7 +97,7 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(6, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.setGpr(Cpu.GPR_A0, 0x7FFFFFFF);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
@@ -111,7 +105,7 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals((int) 0x80000003, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x2482FFFD); // addiu $v0,$a0,-3
 		cpu.setGpr(Cpu.GPR_A0, 5);
 		cpu.setGpr(Cpu.GPR_V0, 0);
@@ -120,7 +114,7 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(2, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.setGpr(Cpu.GPR_A0, 0x80000000);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
@@ -133,7 +127,7 @@ public class CpuTest {
 	public void testADDU() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x00851021); // addu $v0,$a0,$a1
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_A1, 10);
@@ -143,7 +137,7 @@ public class CpuTest {
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(11, cpu.getGpr(Cpu.GPR_V0));
 
-		cpu.reset();
+		reset(cpu);
 		cpu.setGpr(Cpu.GPR_A0, 0x7FFFFFFF);
 		cpu.setGpr(Cpu.GPR_A1, 3);
 		cpu.setGpr(Cpu.GPR_V0, 0);
@@ -157,7 +151,7 @@ public class CpuTest {
 	public void testAND() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x00851024); // and $v0,$a0,$a1
 		cpu.setGpr(Cpu.GPR_A0, 0xFF00FF00);
 		cpu.setGpr(Cpu.GPR_A1, 0x12345678);
@@ -172,7 +166,7 @@ public class CpuTest {
 	public void testANDI() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x30829132); // andi $v0,$a0,0x9132
 		cpu.setGpr(Cpu.GPR_A0, 0xFFFFFF00);
 		cpu.setGpr(Cpu.GPR_V0, 0);
@@ -186,7 +180,7 @@ public class CpuTest {
 	public void testLWR() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x98820003); // lwr $v0,0($a0)
 		cpu.write32(BASE_ADDRESS + 8, 0x11223344);
 		cpu.write32(BASE_ADDRESS + 12, 0x55667788);
@@ -203,7 +197,7 @@ public class CpuTest {
 	public void testLWL() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x88820000); // lwl $v0,0($a0)
 		cpu.write32(BASE_ADDRESS + 8, 0x11223344);
 		cpu.write32(BASE_ADDRESS + 12, 0x55667788);
@@ -220,7 +214,7 @@ public class CpuTest {
 	public void testSWL() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0xA8820000); // swl $v0,0($a0)
 		cpu.write32(BASE_ADDRESS + 8, 0x00000000);
 		cpu.write32(BASE_ADDRESS + 12, 0x00000000);
@@ -237,7 +231,7 @@ public class CpuTest {
 	public void testSWR() {
 		Cpu cpu = createCpu();
 
-		cpu.reset();
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0xB8820000); // swr $v0,0($a0)
 		cpu.write32(BASE_ADDRESS + 8, 0x00000000);
 		cpu.write32(BASE_ADDRESS + 12, 0x00000000);

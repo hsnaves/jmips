@@ -184,6 +184,9 @@ public final class Cpu {
 		return cop0.isBigEndian();
 	}
 
+	public int getCompare() {
+		return cop0.moveFromCoprocessor(Coprocessor0.COP0_REG_COMPARE, 0);
+	}
 	public byte read8(int address) {
 		int physicalAddress = cop0.translate(address, false, true);
 		if (cop0.translationError()) {
@@ -363,6 +366,10 @@ public final class Cpu {
 			success = !memoryManager.error();
 		}
 		if (!success) cop0.exception_BUS_ERROR(true);
+	}
+
+	public boolean success() {
+		return success;
 	}
 
 	public void raiseIrq(int irqno) {
@@ -836,15 +843,23 @@ public final class Cpu {
 	private void div(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RS(opcode)];
-		lo = rs / rt;
-		hi = rs % rt;
+		if (rt == 0) {
+			lo = hi = 0;
+		} else {
+			lo = rs / rt;
+			hi = rs % rt;
+		}
 	}
 
 	private void divu(int opcode) {
 		long rs = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
 		long rt = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
-		lo = (int) (rs / rt);
-		hi = (int) (rs % rt);
+		if (rt == 0) {
+			lo = hi = 0;
+		} else {
+			lo = (int) (rs / rt);
+			hi = (int) (rs % rt);
+		}
 	}
 
 	private void eret(int opcode) {
