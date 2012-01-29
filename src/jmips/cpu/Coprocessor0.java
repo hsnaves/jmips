@@ -124,6 +124,7 @@ public final class Coprocessor0 {
 	private int ASID;
 
 	private boolean translationError;
+	private boolean loadLinkedStatus = false;
 
 	private final Random rand = new Random(System.currentTimeMillis());
 	private final TlbEntry [] tlbEntries;
@@ -367,6 +368,8 @@ public final class Coprocessor0 {
 	}
 
 	public void exception_RESET() {
+		loadLinkedStatus = false;
+
 		Wired = 0;
 		Config = 0x80008082;
 		Status = changeValue(Status, 0x00400004, 0x08780004);
@@ -383,6 +386,8 @@ public final class Coprocessor0 {
 	}
 
 	public void exception_SOFT_RESET() {
+		loadLinkedStatus = false;
+
 		Status = changeValue(Status, 0x00500004, 0x00780004);
 		kernelMode = true;
 		interruptEnable = false;
@@ -396,6 +401,8 @@ public final class Coprocessor0 {
 	}
 
 	public void exception_NMI() {
+		loadLinkedStatus = false;
+
 		Status = changeValue(Status, 0x00480004, 0x00780004);
 		kernelMode = true;
 		interruptEnable = false;
@@ -410,6 +417,8 @@ public final class Coprocessor0 {
 
 	private void exception_GENERAL(int cause) {
 		int vectorOffset;
+
+		loadLinkedStatus = false;
 		if ((Status & 0x00000002) == 0) { // EXL = 0
 			if (cpu.delaySlot) {
 				EPC = cpu.pc - 4;
@@ -422,6 +431,15 @@ public final class Coprocessor0 {
 				vectorOffset = 0;
 			}
 		}
+	}
+
+	public void loadLinked(int physicalAddress) {
+		loadLinkedStatus = true;
+		LLAddr = physicalAddress >>> 4;
+	}
+
+	public boolean canStoreConditional() {
+		return loadLinkedStatus;
 	}
 
 	private void resetTLB() {

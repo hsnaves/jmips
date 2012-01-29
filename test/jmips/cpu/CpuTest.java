@@ -183,6 +183,23 @@ public class CpuTest {
 	}
 
 	@Test
+	public void testLWR() {
+		Cpu cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(BASE_ADDRESS, 0x98820003); // lwr $v0,0($a0)
+		cpu.write32(BASE_ADDRESS + 8, 0x11223344);
+		cpu.write32(BASE_ADDRESS + 12, 0x55667788);
+		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 10);
+		cpu.setGpr(Cpu.GPR_V0, 0);
+		cpu.step();
+		assertEquals(BASE_ADDRESS + 4, cpu.pc);
+		assertEquals(BASE_ADDRESS + 8, cpu.nextPc);
+		assertEquals(0x00005566, cpu.getGpr(Cpu.GPR_V0));
+
+	}
+
+	@Test
 	public void testLWL() {
 		Cpu cpu = createCpu();
 
@@ -200,20 +217,36 @@ public class CpuTest {
 	}
 
 	@Test
-	public void testLWR() {
+	public void testSWL() {
 		Cpu cpu = createCpu();
 
 		cpu.reset();
-		cpu.write32(BASE_ADDRESS, 0x98820003); // lwr $v0,0($a0)
-		cpu.write32(BASE_ADDRESS + 8, 0x11223344);
-		cpu.write32(BASE_ADDRESS + 12, 0x55667788);
-		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 10);
-		cpu.setGpr(Cpu.GPR_V0, 0);
+		cpu.write32(BASE_ADDRESS, 0xA8820000); // swl $v0,0($a0)
+		cpu.write32(BASE_ADDRESS + 8, 0x00000000);
+		cpu.write32(BASE_ADDRESS + 12, 0x00000000);
+		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 11);
+		cpu.setGpr(Cpu.GPR_V0, 0x11223344);
 		cpu.step();
 		assertEquals(BASE_ADDRESS + 4, cpu.pc);
 		assertEquals(BASE_ADDRESS + 8, cpu.nextPc);
-		assertEquals(0x00005566, cpu.getGpr(Cpu.GPR_V0));
+		assertEquals(0x00000011, cpu.read32(BASE_ADDRESS + 8));
 
 	}
 
+	@Test
+	public void testSWR() {
+		Cpu cpu = createCpu();
+
+		cpu.reset();
+		cpu.write32(BASE_ADDRESS, 0xB8820000); // swr $v0,0($a0)
+		cpu.write32(BASE_ADDRESS + 8, 0x00000000);
+		cpu.write32(BASE_ADDRESS + 12, 0x00000000);
+		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 14);
+		cpu.setGpr(Cpu.GPR_V0, 0x11223344);
+		cpu.step();
+		assertEquals(BASE_ADDRESS + 4, cpu.pc);
+		assertEquals(BASE_ADDRESS + 8, cpu.nextPc);
+		assertEquals(0x22334400, cpu.read32(BASE_ADDRESS + 12));
+
+	}
 }

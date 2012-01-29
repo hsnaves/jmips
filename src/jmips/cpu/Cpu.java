@@ -223,6 +223,97 @@ public final class Cpu {
 		success = !memoryManager.error();
 	}
 
+	public int read32Linked(int address) {
+		int physicalAddress = cop0.translate(address, false, true);
+		if (cop0.translationError()) {
+			success = false;
+			return 0;
+		}
+		int v = memoryManager.read32(physicalAddress, bigEndian);
+		if (memoryManager.error()) {
+			success = false;
+			return 0;
+		}
+		success = true;
+		cop0.loadLinked(physicalAddress);
+		return v;
+	}
+
+	public boolean write32Conditional(int address, int value) {
+		int physicalAddress = cop0.translate(address, true, true);
+		if (cop0.translationError()) {
+			success = false;
+			return false;
+		}
+		if (!cop0.canStoreConditional()) {
+			success = true;
+			return false;
+		}
+		memoryManager.write32(physicalAddress, value, bigEndian);
+		success = !memoryManager.error();
+		return success;
+	}
+
+	public int read32UnalignedLeft(int address, int oldValue) {
+		int alignedAddress = address & (~3);
+		int value = read32(alignedAddress);
+		if (success) {
+			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
+			shift <<= 3;
+			return (oldValue & ((1 << shift) - 1)) | (value << shift); 
+		}
+		return 0;
+	}
+
+	public int read32UnalignedRight(int address, int oldValue) {
+		int alignedAddress = address & (~3);
+		int value = read32(alignedAddress);
+		if (success) {
+			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
+			shift <<= 3;
+			return (oldValue & ((-1) << shift)) | (value >>> shift); 
+		}
+		return 0;
+	}
+
+	public void write32UnalignedLeft(int address, int value) {
+		int alignedAddress = address & (~3);
+		int physicalAddress = cop0.translate(alignedAddress, true, true);
+		if (cop0.translationError()) {
+			success = false;
+			return;
+		}
+		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
+		success = !memoryManager.error();
+
+		if (success) {
+			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
+			shift <<= 3;
+			oldValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
+			memoryManager.write32(physicalAddress, oldValue, bigEndian);
+			success = !memoryManager.error();
+		}
+	}
+
+	public void write32UnalignedRight(int address, int value) {
+		int alignedAddress = address & (~3);
+		int physicalAddress = cop0.translate(alignedAddress, true, true);
+		if (cop0.translationError()) {
+			success = false;
+			return;
+		}
+		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
+		success = !memoryManager.error();
+
+		if (success) {
+			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
+			shift <<= 3;
+			oldValue = (oldValue & ((1 << shift) - 1)) | (value << shift); 
+			memoryManager.write32(physicalAddress, oldValue, bigEndian);
+			success = !memoryManager.error();
+		}
+	}
+
 	public int fetchOpcode() {
 		int physicalAddress = cop0.translate(pc, false, false);
 		if (cop0.translationError()) {
@@ -693,7 +784,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = memoryManager.read8(address) & 0xFF;
+		int val = read8(address) & 0xFF;
 		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
@@ -720,7 +811,13 @@ public final class Cpu {
 	}
 
 	private void ll(int opcode) {
-		//TODO
+		int rs = gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
+		int address = rs + offset;
+		int val = read32Linked(address);
+		if (success) {
+			setGpr(I_RT(opcode), val);
+		}
 	}
 
 	private void lui(int opcode) {
@@ -743,15 +840,10 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int alignedAddress = address & (~3);
-		int val = read32(alignedAddress);
+		int rt = I_RT(opcode);
+		int val = read32UnalignedLeft(address, gpr[rt]);
 		if (success) {
-			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
-			shift <<= 3;
-			int rt = I_RT(opcode);
-			int reg = gpr[rt];
-			reg = (reg & ((1 << shift) - 1)) | (val << shift); 
-			setGpr(rt, reg);
+			setGpr(rt, val);
 		}
 	}
 
@@ -759,15 +851,10 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int alignedAddress = address & (~3);
-		int val = read32(alignedAddress);
+		int rt = I_RT(opcode);
+		int val = read32UnalignedRight(address, gpr[rt]);
 		if (success) {
-			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
-			shift <<= 3;
-			int rt = I_RT(opcode);
-			int reg = gpr[rt];
-			reg = (reg & ((-1) << shift)) | (val >>> shift); 
-			setGpr(rt, reg);
+			setGpr(rt, val);
 		}
 	}
 
@@ -903,11 +990,18 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		memoryManager.write8(address, (byte) rt);
+		write8(address, (byte) rt);
 	}
 
 	private void sc(int opcode) {
-		//TODO
+		int rs = gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
+		int address = rs + offset;
+		int rt = I_RT(opcode);
+		boolean ok = write32Conditional(address, gpr[rt]);
+		if (success) {
+			setGpr(rt, ok ? 1 : 0);
+		}
 	}
 
 	private void sdbbp(int opcode) {
@@ -1016,11 +1110,19 @@ public final class Cpu {
 	}
 
 	private void swl(int opcode) {
-		//TODO
+		int rs = gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
+		int address = rs + offset;
+		int rt = gpr[I_RT(opcode)];
+		write32UnalignedLeft(address, rt);
 	}
 
 	private void swr(int opcode) {
-		//TODO
+		int rs = gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
+		int address = rs + offset;
+		int rt = gpr[I_RT(opcode)];
+		write32UnalignedRight(address, rt);
 	}
 
 	private void sync(int opcode) {
