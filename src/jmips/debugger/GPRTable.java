@@ -16,7 +16,7 @@ public class GPRTable extends JTable {
 	public GPRTable(Cpu cpu) {
 		this.cpu = cpu;
 		super.setModel(new DefaultTableModel(new Object[][] {
-				{"pc", "", "next_pc", null},
+				{"pc", "", "pc", null},
 				{"hi", null, "lo", null},
 				{"zr", null, "at", null},
 				{"v0", null, "v1", null},
@@ -64,10 +64,10 @@ public class GPRTable extends JTable {
 	}
 
 	public final void updateTable() {
-		setValueAt(String.format("0x%08X", cpu.pc), 0, 1);
-		setValueAt(String.format("0x%08X", cpu.nextPc), 0, 3);
-		setValueAt(String.format("0x%08X", cpu.hi), 1, 1);
-		setValueAt(String.format("0x%08X", cpu.pc), 1, 3);
+		setValueAt(String.format("0x%08X", cpu.getProgramCounter()), 0, 1);
+		setValueAt(String.format("0x%08X", cpu.getNextProgramCounter()), 0, 3);
+		setValueAt(String.format("0x%08X", cpu.getHi()), 1, 1);
+		setValueAt(String.format("0x%08X", cpu.getLo()), 1, 3);
 		for(int i = 0; i < 32; i++) {
 			setValueAt(String.format("0x%08X", cpu.getGpr(i)), 2 + (i / 2), 1 + 2 * (i % 2));
 		}

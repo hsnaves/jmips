@@ -1,7 +1,5 @@
 package jmips.cpu;
 
-import java.util.Arrays;
-
 public final class Cpu {
 
 	/* Register constants */
@@ -97,12 +95,13 @@ public final class Cpu {
 
 	/* Instance fields */
 	private final int[] gpr = new int[32];
-	public int hi, lo;
-	public int pc, nextPc;
-	boolean delaySlot, nextDelaySlot;
+	private int hi, lo;
+	private int pc, nextPc;
+	private long counter;
+	private boolean delaySlot, nextDelaySlot;
 
 	boolean halted;
-	boolean success, bigEndian = true;
+	private boolean success;
 
 	private final Coprocessor0 cop0;
 	private final MemoryManager memoryManager;
@@ -112,17 +111,17 @@ public final class Cpu {
 		this.memoryManager = new MemoryManager(ramOffset, ramSize);
 	}
 
+	public MemoryManager getMemoryManager() {
+		return memoryManager;
+	}
+
+	public void hardReset() {
+		cop0.hardReset();
+		reset();
+	}
+
 	public void reset() {
-		Arrays.fill(gpr, 0);
-		hi = lo = 0;
-		pc = 0xA0000000;
-		nextPc = pc + 4;
-	}
-
-	public void raiseIrq(int irqno) {
-	}
-
-	public void lowerIrq(int irqno) {
+		cop0.exception_RESET();
 	}
 
 	public void setGpr(int regno, int val) {
@@ -133,19 +132,56 @@ public final class Cpu {
 		return gpr[regno];
 	}
 
-	public MemoryManager getMemoryManager() {
-		return memoryManager;
+	public int getHi() {
+		return hi;
 	}
 
+	public int getLo() {
+		return lo;
+	}
 
-	public void step() {
-		int opcode = fetchOpcode();
+	public void setHi(int hi) {
+		this.hi = hi;
+	}
 
-		delaySlot = nextDelaySlot;
-		nextDelaySlot = false;
-		pc = nextPc;
-		nextPc = pc + 4;
-		step(opcode);
+	public void setLo(int lo) {
+		this.lo = lo;
+	}
+
+	public boolean isHalted() {
+		return halted;
+	}
+
+	public void setProgramCounter(int pc) {
+		this.pc = pc;
+		this.nextPc = pc + 4;
+		this.delaySlot = false;
+		this.nextDelaySlot = false;
+		this.halted = false;
+	}
+
+	public int getProgramCounter() {
+		return this.pc;
+	}
+
+	public int getNextProgramCounter() {
+		return this.nextPc;
+	}
+
+	public int getCounter() {
+		return (int) (counter >> 1);
+	}
+
+	public void setCounter(int counter) {
+		this.counter = (((long) counter) << 1);
+	}
+
+	public boolean isBranchDelaySlot() {
+		return delaySlot;
+	}
+
+	public boolean isBigEndian() {
+		return cop0.isBigEndian();
 	}
 
 	public byte read8(int address) {
@@ -157,6 +193,7 @@ public final class Cpu {
 		byte b = memoryManager.read8(physicalAddress);
 		if (memoryManager.error()) {
 			success = false;
+			cop0.exception_BUS_ERROR(true);
 			return 0;
 		}
 		success = true;
@@ -164,14 +201,21 @@ public final class Cpu {
 	}
 
 	public short read16(int address) {
+		if ((address & 1) != 0) {
+			cop0.exception_ADDRESS_ERROR(address, true);
+			success = false;
+			return 0;
+		}
+
 		int physicalAddress = cop0.translate(address, false, true);
 		if (cop0.translationError()) {
 			success = false;
 			return 0;
 		}
-		short s = memoryManager.read16(physicalAddress, bigEndian);
+		short s = memoryManager.read16(physicalAddress, isBigEndian());
 		if (memoryManager.error()) {
 			success = false;
+			cop0.exception_BUS_ERROR(true);
 			return 0;
 		}
 		success = true;
@@ -179,17 +223,29 @@ public final class Cpu {
 	}
 
 	public int read32(int address) {
+		return read32(address, false);
+	}
+
+	public int read32(int address, boolean linked) {
+		if ((address & 3) != 0) {
+			cop0.exception_ADDRESS_ERROR(address, true);
+			success = false;
+			return 0;
+		}
+
 		int physicalAddress = cop0.translate(address, false, true);
 		if (cop0.translationError()) {
 			success = false;
 			return 0;
 		}
-		int v = memoryManager.read32(physicalAddress, bigEndian);
+		int v = memoryManager.read32(physicalAddress, isBigEndian());
 		if (memoryManager.error()) {
 			success = false;
+			cop0.exception_BUS_ERROR(true);
 			return 0;
 		}
 		success = true;
+		if (linked) cop0.loadLinked(physicalAddress);
 		return v;
 	}
 
@@ -201,56 +257,49 @@ public final class Cpu {
 		}
 		memoryManager.write8(physicalAddress, value);
 		success = !memoryManager.error();
+		if (!success) cop0.exception_BUS_ERROR(true);
 	}
 
 	public void write16(int address, short value) {
+		if ((address & 1) != 0) {
+			cop0.exception_ADDRESS_ERROR(address, false);
+			success = false;
+			return;
+		}
+
 		int physicalAddress = cop0.translate(address, true, true);
 		if (cop0.translationError()) {
 			success = false;
 			return;
 		}
-		memoryManager.write16(physicalAddress, value, bigEndian);
+		memoryManager.write16(physicalAddress, value, isBigEndian());
 		success = !memoryManager.error();
+		if (!success) cop0.exception_BUS_ERROR(true);
 	}
 
 	public void write32(int address, int value) {
-		int physicalAddress = cop0.translate(address, true, true);
-		if (cop0.translationError()) {
-			success = false;
-			return;
-		}
-		memoryManager.write32(physicalAddress, value, bigEndian);
-		success = !memoryManager.error();
+		write32(address, value, false);
 	}
 
-	public int read32Linked(int address) {
-		int physicalAddress = cop0.translate(address, false, true);
-		if (cop0.translationError()) {
+	public boolean write32(int address, int value, boolean conditional) {
+		if ((address & 3) != 0) {
+			cop0.exception_ADDRESS_ERROR(address, false);
 			success = false;
-			return 0;
+			return false;
 		}
-		int v = memoryManager.read32(physicalAddress, bigEndian);
-		if (memoryManager.error()) {
-			success = false;
-			return 0;
-		}
-		success = true;
-		cop0.loadLinked(physicalAddress);
-		return v;
-	}
 
-	public boolean write32Conditional(int address, int value) {
 		int physicalAddress = cop0.translate(address, true, true);
 		if (cop0.translationError()) {
 			success = false;
 			return false;
 		}
-		if (!cop0.canStoreConditional()) {
+		if (conditional && !cop0.canStoreConditional()) {
 			success = true;
 			return false;
 		}
-		memoryManager.write32(physicalAddress, value, bigEndian);
+		memoryManager.write32(physicalAddress, value, isBigEndian());
 		success = !memoryManager.error();
+		if (!success) cop0.exception_BUS_ERROR(true);
 		return success;
 	}
 
@@ -258,7 +307,7 @@ public final class Cpu {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
 		if (success) {
-			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
+			int shift = (isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			return (oldValue & ((1 << shift) - 1)) | (value << shift); 
 		}
@@ -269,7 +318,7 @@ public final class Cpu {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
 		if (success) {
-			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
+			int shift = (!isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			return (oldValue & ((-1) << shift)) | (value >>> shift); 
 		}
@@ -283,16 +332,17 @@ public final class Cpu {
 			success = false;
 			return;
 		}
-		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
+		int oldValue = memoryManager.read32(physicalAddress, isBigEndian());
 		success = !memoryManager.error();
 
 		if (success) {
-			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
+			int shift = (isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			oldValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
-			memoryManager.write32(physicalAddress, oldValue, bigEndian);
+			memoryManager.write32(physicalAddress, oldValue, isBigEndian());
 			success = !memoryManager.error();
 		}
+		if (!success) cop0.exception_BUS_ERROR(true);
 	}
 
 	public void write32UnalignedRight(int address, int value) {
@@ -302,34 +352,84 @@ public final class Cpu {
 			success = false;
 			return;
 		}
-		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
+		int oldValue = memoryManager.read32(physicalAddress, isBigEndian());
 		success = !memoryManager.error();
 
 		if (success) {
-			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
+			int shift = (!isBigEndian()) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			oldValue = (oldValue & ((1 << shift) - 1)) | (value << shift); 
-			memoryManager.write32(physicalAddress, oldValue, bigEndian);
+			memoryManager.write32(physicalAddress, oldValue, isBigEndian());
 			success = !memoryManager.error();
 		}
+		if (!success) cop0.exception_BUS_ERROR(true);
+	}
+
+	public void raiseIrq(int irqno) {
+		cop0.raiseIrq(irqno);
+	}
+
+	public void lowerIrq(int irqno) {
+		cop0.lowerIrq(irqno);
+	}
+
+	public boolean checkInterrupts() {
+		return cop0.checkInterrupts();
 	}
 
 	public int fetchOpcode() {
+		if ((pc & 3) != 0) {
+			cop0.exception_ADDRESS_ERROR(pc, true);
+			success = false;
+			return 0;
+		}
+
 		int physicalAddress = cop0.translate(pc, false, false);
 		if (cop0.translationError()) {
 			success = false;
 			return 0;
 		}
-		int v = memoryManager.read32(physicalAddress, bigEndian);
+		int v = memoryManager.read32(physicalAddress, isBigEndian());
 		if (memoryManager.error()) {
 			success = false;
+			cop0.exception_BUS_ERROR(false);
 			return 0;
 		}
 		success = true;
 		return v;
 	}
 
-	private void step(int opcode) {
+	public void step() {
+		step(1);
+	}
+
+	public void step(int num) {
+		if (halted) return;
+		checkInterrupts();
+		int before = getCounter();
+		while(num-- > 0 && !halted) {
+			int opcode = fetchOpcode();
+			if (!success) {
+				opcode = fetchOpcode();
+				if (!success) {
+					halted = true;
+					break;
+				}
+			}
+			if (success) {
+				delaySlot = nextDelaySlot;
+				nextDelaySlot = false;
+				pc = nextPc;
+				nextPc = pc + 4;
+				microstep(opcode);
+			}
+		}
+		int after = getCounter();
+		cop0.checkTimerInterrupt(before, after);
+	}
+
+	private void microstep(int opcode) {
+		counter++;
 		switch (I_OP(opcode)) {
 		case 0: stepSpecial(opcode); break;
 		case 1: stepRegImm(opcode); break;
@@ -350,9 +450,9 @@ public final class Cpu {
 		case 15: lui(opcode); break;
 
 		case 16: stepCop0(opcode); break;
-		case 17: invalid(); break;
-		case 18: invalid(); break;
-		case 19: invalid(); break;
+		case 17: invalid(1); break;
+		case 18: invalid(2); break;
+		case 19: invalid(3); break;
 		case 20: beql(opcode); break;
 		case 21: bnel(opcode); break;
 		case 22: blezl(opcode); break;
@@ -386,21 +486,21 @@ public final class Cpu {
 		case 47: cache(opcode); break;
 
 		case 48: ll(opcode); break;
-		case 49: invalid(); break;
-		case 50: invalid(); break;
+		case 49: reserved(); break; // ???
+		case 50: reserved(); break; // ???
 		case 51: pref(opcode); break;
 		case 52: reserved(); break;
-		case 53: invalid(); break;
-		case 54: invalid(); break;
+		case 53: reserved(); break; // ???
+		case 54: reserved(); break; // ???
 		case 55: reserved(); break;
 
 		case 56: sc(opcode); break;
-		case 57: invalid(); break;
-		case 58: invalid(); break;
+		case 57: reserved(); break; // ???
+		case 58: reserved(); break; // ???
 		case 59: reserved(); break;
 		case 60: reserved(); break;
-		case 61: invalid(); break;
-		case 62: invalid(); break;
+		case 61: reserved(); break; // ???
+		case 62: reserved(); break; // ???
 		case 63: reserved(); break;
 		}
 	}
@@ -408,7 +508,7 @@ public final class Cpu {
 	private void stepSpecial(int opcode) {
 		switch(I_FUNCT(opcode)) {
 		case 0: sll(opcode); break;
-		case 1: invalid(); break;
+		case 1: reserved(); break; // ???
 		case 2: srl(opcode); break;
 		case 3: sra(opcode); break;
 		case 4: sllv(opcode); break;
@@ -708,11 +808,13 @@ public final class Cpu {
 	}
 
 	private void break_(int opcode) {
-		//TODO
+		cop0.exception_BREAK();
 	}
 
 	private void cache(int opcode) {
-		// No cache emulation is done
+		if (checkCoprocessor(0)) {
+			// No cache emulation is done
+		}
 	}
 
 	private void clo(int opcode) {
@@ -746,7 +848,9 @@ public final class Cpu {
 	}
 
 	private void eret(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			cop0.returnFromException();
+		}
 	}
 
 	private void j(int opcode) {
@@ -814,7 +918,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read32Linked(address);
+		int val = read32(address, true);
 		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
@@ -877,7 +981,12 @@ public final class Cpu {
 	}
 
 	private void mfc0(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			int rt = I_RT(opcode);
+			int rd = I_RD(opcode);
+			int sel = I_COP0SEL(opcode);
+			setGpr(rt, cop0.moveFromCoprocessor(rd, sel));
+		}
 	}
 
 	private void mfhi(int opcode) {
@@ -923,7 +1032,12 @@ public final class Cpu {
 	}
 
 	private void mtc0(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			int rt = I_RT(opcode);
+			int rd = I_RD(opcode);
+			int sel = I_COP0SEL(opcode);
+			cop0.moveToCoprocessor(rd, sel, gpr[rt]);
+		}
 	}
 
 	private void mthi(int opcode) {
@@ -998,7 +1112,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = I_RT(opcode);
-		boolean ok = write32Conditional(address, gpr[rt]);
+		boolean ok = write32(address, gpr[rt], true);
 		if (success) {
 			setGpr(rt, ok ? 1 : 0);
 		}
@@ -1130,7 +1244,7 @@ public final class Cpu {
 	}
 
 	private void syscall(int opcode) {
-		//TODO
+		cop0.exception_SYSCALL();
 	}
 
 	private void teq(int opcode) {
@@ -1182,19 +1296,27 @@ public final class Cpu {
 	}
 
 	private void tlbp(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			cop0.tlbProbe();
+		}
 	}
 
 	private void tlbr(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			cop0.tlbRead();
+		}
 	}
 
 	private void tlbwi(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			cop0.tlbWriteIndex();
+		}
 	}
 
 	private void tlbwr(int opcode) {
-		//TODO
+		if (checkCoprocessor(0)) {
+			cop0.tlbWriteRandom();
+		}
 	}
 
 	private void tlt(int opcode) {
@@ -1246,7 +1368,9 @@ public final class Cpu {
 	}
 
 	private void wait(int opcode) {
-		halted = true;
+		if (checkCoprocessor(0)) {
+			halted = true;
+		}
 	}
 
 	private void xor(int opcode) {
@@ -1263,14 +1387,22 @@ public final class Cpu {
 		setGpr(I_RT(opcode), result);
 	}
 
-	private void invalid() {
-		//TODO
+	private void invalid(int copno) {
+		if (checkCoprocessor(copno))
+			cop0.exception_RESERVED();
 	}
 
 	private void reserved() {
-		//TODO
+		cop0.exception_RESERVED();
 	}
 
+	private boolean checkCoprocessor(int copno) {
+		if (!cop0.isCoprocessorAvailable(copno)) {
+			cop0.exception_COPROCESS_UNUSABLE(copno);
+			return false;
+		}
+		return true;
+	}
 
 	private boolean checkOverflow(int a, int b, int result, boolean sum) {
 		boolean overflow = false;
@@ -1281,9 +1413,7 @@ public final class Cpu {
 			overflow = ((a <= 0) && (b > 0) && (result > 0)) ||
 			           ((a >= 0) && (b < 0) && (result < 0));
 		}
-		if (overflow) {
-			// TODO
-		}
+		if (overflow) cop0.exception_INTEGER_OVERFLOW();
 		return overflow;
 	}
 
@@ -1305,6 +1435,6 @@ public final class Cpu {
 	}
 
 	private void trap() {
-		// TODO
+		cop0.exception_TRAP();
 	}
 }

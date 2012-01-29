@@ -5,85 +5,107 @@ import java.util.Random;
 public final class Coprocessor0 {
 	public static final int NUM_TLB_ENTRIES = 16;
 
-	public static final int COP0_INDEX = 0;            // Index into TLB array
-	public static final int COP0_RANDOM = 1;           // Random generated index into the TLB array
-	public static final int COP0_ENTRYLO0 = 2;         // Low order portion of the TLB entry for even-numbered virtual pages
-	public static final int COP0_ENTRYLO1 = 3;         // Low order portion of the TLB entry for odd-numbered virtual pages
-	public static final int COP0_CONTEXT = 4;          // Pointer to page table entry in memory
-	public static final int COP0_PAGEMASK = 5;         // Controls the page sizes in TLB entries
-	public static final int COP0_WIRED = 6;            // Controls the number of fixed TLB entries
-	public static final int COP0_RESERVED1 = 7;        // Reserved
-	public static final int COP0_BADVADDR = 8;         // Reports the address for the most recent address-related exception
-	public static final int COP0_COUNT = 9;            // Processor cycle count
-	public static final int COP0_ENTRYHI = 10;         // High-order portion of the TLB entry
-	public static final int COP0_COMPARE = 11;         // Timer interrupt control
-	public static final int COP0_STATUS = 12;          // Processor status and control
-	public static final int COP0_CAUSE = 13;           // Cause of last exception
-	public static final int COP0_EPC = 14;             // Program counter at last exception
-	public static final int COP0_PRID = 15;            // Processor identification and revision
-	public static final int COP0_CONFIG = 16;          // Configuration registers
-	public static final int COP0_LLADDR = 17;          // Load linked address
-	public static final int COP0_WATCHLO = 18;         // Watchpoint address(low order)
-	public static final int COP0_WATCHHI = 19;         // Watchpoint address(high order) and mask
-	public static final int COP0_RESERVED2 = 20;       // Reserved
-	public static final int COP0_RESERVED3 = 21;       // Reserved
-	public static final int COP0_RESERVED4 = 22;       // Reserved
-	public static final int COP0_DEBUG = 23;           // Debug control and exception status
-	public static final int COP0_DEPC = 24;            // Program counter at last debug exception
-	public static final int COP0_RESERVED5 = 25;       // Reserved
-	public static final int COP0_ERRCTRL = 26;         // Control access to data and SPRAM arrays for CACHE instruction
-	public static final int COP0_RESERVED6 = 27;       // Reserved
-	public static final int COP0_TAGLO = 28;           // Low-order portion of cache tag interface
-	public static final int COP0_RESERVED7 = 29;       // Reserved
-	public static final int COP0_ERROREPC = 30;        // Program counter at last error
-	public static final int COP0_DESAVE = 31;          // Debug handler scratchpad register
+	public static final int COP0_REG_INDEX = 0;            // Index into TLB array
+	public static final int COP0_REG_RANDOM = 1;           // Random generated index into the TLB array
+	public static final int COP0_REG_ENTRYLO0 = 2;         // Low order portion of the TLB entry for even-numbered virtual pages
+	public static final int COP0_REG_ENTRYLO1 = 3;         // Low order portion of the TLB entry for odd-numbered virtual pages
+	public static final int COP0_REG_CONTEXT = 4;          // Pointer to page table entry in memory
+	public static final int COP0_REG_PAGEMASK = 5;         // Controls the page sizes in TLB entries
+	public static final int COP0_REG_WIRED = 6;            // Controls the number of fixed TLB entries
+	public static final int COP0_REG_RESERVED1 = 7;        // Reserved
+	public static final int COP0_REG_BADVADDR = 8;         // Reports the address for the most recent address-related exception
+	public static final int COP0_REG_COUNT = 9;            // Processor cycle count
+	public static final int COP0_REG_ENTRYHI = 10;         // High-order portion of the TLB entry
+	public static final int COP0_REG_COMPARE = 11;         // Timer interrupt control
+	public static final int COP0_REG_STATUS = 12;          // Processor status and control
+	public static final int COP0_REG_CAUSE = 13;           // Cause of last exception
+	public static final int COP0_REG_EPC = 14;             // Program counter at last exception
+	public static final int COP0_REG_PRID = 15;            // Processor identification and revision
+	public static final int COP0_REG_CONFIG = 16;          // Configuration registers
+	public static final int COP0_REG_LLADDR = 17;          // Load linked address
+	public static final int COP0_REG_WATCHLO = 18;         // Watchpoint address(low order)
+	public static final int COP0_REG_WATCHHI = 19;         // Watchpoint address(high order) and mask
+	public static final int COP0_REG_RESERVED2 = 20;       // Reserved
+	public static final int COP0_REG_RESERVED3 = 21;       // Reserved
+	public static final int COP0_REG_RESERVED4 = 22;       // Reserved
+	public static final int COP0_REG_DEBUG = 23;           // Debug control and exception status
+	public static final int COP0_REG_DEPC = 24;            // Program counter at last debug exception
+	public static final int COP0_REG_RESERVED5 = 25;       // Reserved
+	public static final int COP0_REG_ERRCTRL = 26;         // Control access to data and SPRAM arrays for CACHE instruction
+	public static final int COP0_REG_RESERVED6 = 27;       // Reserved
+	public static final int COP0_REG_TAGLO = 28;           // Low-order portion of cache tag interface
+	public static final int COP0_REG_RESERVED7 = 29;       // Reserved
+	public static final int COP0_REG_ERROREPC = 30;        // Program counter at last error
+	public static final int COP0_REG_DESAVE = 31;          // Debug handler scratchpad register
 
-	public static final int EXCP_RESET = 0;            // Reset (Cold_Reset)
-	public static final int EXCP_SOFT_RESET = 1;       // Reset (Soft_Reset)
-	public static final int EXCP_DSS = 2;              // EJTAG Debug Single Step
-	public static final int EXCP_DINT = 3;             // EJTAG Debug Interrupt
-	public static final int EXCP_NMI = 4;              // Non-maskable interrupt
-	public static final int EXCP_MACHINE_CHECK = 5;    // TLB write conflicts with an existing entry
-	public static final int EXCP_INTERRUPT = 6;        // Interrupt (Software of Hardware interrupt)
-	public static final int EXCP_DEFERRED_WATCH = 7;   // Deferred Watch
-	public static final int EXCP_DIB = 8;              // EJTAG Debug Hardware Instruction break matched
-	public static final int EXCP_WATCH_FETCH = 9;      // Reference to an address in one of the watch registers (fetch)
-	public static final int EXCP_ADEL_FETCH = 10;      // Fetch address alignment error or User mode fetch reference to kernel address
-	public static final int EXCP_TLBL_FETCH = 11;      // Fetch TLB miss or Fetch TLB hit to page with valid=false
-	public static final int EXCP_IBE = 12;             // Instruction fetch bus error 
-	public static final int EXCP_DBP = 13;             // EJTAG Breakpoint (execution of SDBBP)
-	public static final int EXCP_SYS = 14;             // SYSCALL
-	public static final int EXCP_BP = 15;              // BREAK
-	public static final int EXCP_CPU = 16;             // Coprocessor Unusable
-	public static final int EXCP_RI = 17;              // Reserved Instruction
-	public static final int EXCP_OV = 18;              // Overflow
-	public static final int EXCP_TR = 19;              // Trap
-	public static final int EXCP_DDBL_DDBS = 20;       // EJTAG Data address break (address only) or EJTAG Data Value Break on Store(address and value)
-	public static final int EXCP_WATCH = 21;           // Reference to an address in one of the watch registers (data)
-	public static final int EXCP_ADEL = 22;            // Load address alignment error or User mode load reference to kernel address
-	public static final int EXCP_ADES = 23;            // Store address alignment error or User mode store reference to kernel address
-	public static final int EXCP_TLBL = 24;            // Load TLB miss or Load TLB hit to page with valid=false
-	public static final int EXCP_TLBS = 25;            // Store TLB miss or Store TLB hit to page with valid=false
-	public static final int EXCP_TLBMOD = 26;          // Store TLB hit to page with dirty=false
-	public static final int EXCP_DBE = 27;             // Load or store bus error.
-	public static final int EXCP_DDBL = 28;            // EJTAG data hardware breakpoint matched in load data compare
+	/* Some mask to bits inside the registers */
+	private static final int INDEX_MASK  = 0x0000000F;
+	private static final int INDEX_PROBE = 0x80000000;
 
-	public static final int EXCP_CAUSE_INT = 0;        // Interrupt
-	public static final int EXCP_CAUSE_MOD = 1;        // TLB modification exception
-	public static final int EXCP_CAUSE_TLBL = 2;       // TLB exception (load or instruction fetch)
-	public static final int EXCP_CAUSE_TLBS = 3;       // TLB exception (store)
-	public static final int EXCP_CAUSE_ADEL = 4;       // Address error exception (load or instruction fetch)
-	public static final int EXCP_CAUSE_ADES = 5;       // Address error exception (store)
-	public static final int EXCP_CAUSE_IBE = 6;        // Bus Error exception (instruction fetch)
-	public static final int EXCP_CAUSE_DBE = 7;        // Bus Error exception (data reference: load or store)
-	public static final int EXCP_CAUSE_SYS = 8;        // Syscall exception
-	public static final int EXCP_CAUSE_BP = 9;         // Breakpoint exception
-	public static final int EXCP_CAUSE_RI = 10;        // Reserved Instruction exception
-	public static final int EXCP_CAUSE_CPU = 11;       // Coprocessor Unusable exception
-	public static final int EXCP_CAUSE_OV = 12;        // Overflow exception
-	public static final int EXCP_CAUSE_TR = 13;        // Trap exception
-	public static final int EXCP_CAUSE_WATCH = 23;     // Refrence to WatchHi/WatchLo address
-	public static final int EXCP_CAUSE_MCHECK = 24;    // Machine check exception
+	private static final int ENTRYLO_GLOBAL    = 0x00000001;
+	private static final int ENTRYLO_VALID     = 0x00000002;
+	private static final int ENTRYLO_DIRTY     = 0x00000004;
+	private static final int ENTRYLO_PFN_MASK  = 0x03FFFFC0;
+	private static final int ENTRYLO_COHERENCY_MASK  = 0x00000038;
+	private static final int ENTRYLO_COHERENCY_SHIFT = 3;
+	private static final int ENTRYLO_WRITE_MASK = ENTRYLO_GLOBAL | ENTRYLO_VALID | ENTRYLO_DIRTY | ENTRYLO_PFN_MASK | ENTRYLO_COHERENCY_MASK;
+
+	private static final int ENTRYHI_ASID_MASK = 0x000000FF;
+	private static final int ENTRYHI_VPN2_MASK = 0xFFFFE000;
+	private static final int ENTRYHI_WRITE_MASK = ENTRYHI_ASID_MASK | ENTRYHI_VPN2_MASK;
+
+	private static final int STATUS_IE  = 0x00000001;
+	private static final int STATUS_EXL = 0x00000002;
+	private static final int STATUS_ERL = 0x00000004;
+	private static final int STATUS_UM  = 0x00000010;
+	private static final int STATUS_INT_MASK  = 0x0000FF00;
+	private static final int STATUS_INT_SHIFT = 8;
+	private static final int STATUS_NMI = 0x00080000;
+	private static final int STATUS_SR  = 0x00100000;
+	private static final int STATUS_TS  = 0x00200000;
+	private static final int STATUS_BEV = 0x00400000;
+	private static final int STATUS_RE  = 0x02000000;
+	private static final int STATUS_RP  = 0x08000000;
+	private static final int STATUS_COP_MASK  = 0xF0000000;
+	private static final int STATUS_COP_SHIFT = 28;
+	private static final int STATUS_WRITE_MASK = STATUS_IE | STATUS_EXL | STATUS_ERL | STATUS_UM | STATUS_INT_MASK | STATUS_NMI | STATUS_SR | STATUS_TS | STATUS_BEV | STATUS_RE | STATUS_RP | STATUS_COP_MASK;
+
+	private static final int CAUSE_EXCCODE_MASK  = 0x0000007C;
+	private static final int CAUSE_EXCCODE_SHIFT = 2;
+	private static final int CAUSE_INTERRUPT_MASK = 0x0000FF00;
+	private static final int CAUSE_INTERRUPT_SHIFT = 8;
+	private static final int CAUSE_WP = 0x00400000;
+	private static final int CAUSE_IV = 0x00800000;
+	private static final int CAUSE_CE_MASK = 0x30000000;
+	private static final int CAUSE_CE_SHIFT = 28;
+	private static final int CAUSE_BD = 0x80000000;
+	private static final int CAUSE_WRITE_MASK = (3 << CAUSE_INTERRUPT_SHIFT) | CAUSE_WP | CAUSE_IV;
+
+	private static final int CONTEXT_PTE_MASK = 0xFF800000;
+	private static final int CONTEXT_WRITE_MASK = CONTEXT_PTE_MASK;
+
+	public static final int EXCEPTION_CODE_INT = 0;        // Interrupt
+	public static final int EXCEPTION_CODE_MOD = 1;        // TLB modification exception
+	public static final int EXCEPTION_CODE_TLBL = 2;       // TLB exception (load or instruction fetch)
+	public static final int EXCEPTION_CODE_TLBS = 3;       // TLB exception (store)
+	public static final int EXCEPTION_CODE_ADEL = 4;       // Address error exception (load or instruction fetch)
+	public static final int EXCEPTION_CODE_ADES = 5;       // Address error exception (store)
+	public static final int EXCEPTION_CODE_IBE = 6;        // Bus Error exception (instruction fetch)
+	public static final int EXCEPTION_CODE_DBE = 7;        // Bus Error exception (data reference: load or store)
+	public static final int EXCEPTION_CODE_SYS = 8;        // Syscall exception
+	public static final int EXCEPTION_CODE_BP = 9;         // Breakpoint exception
+	public static final int EXCEPTION_CODE_RI = 10;        // Reserved Instruction exception
+	public static final int EXCEPTION_CODE_CPU = 11;       // Coprocessor Unusable exception
+	public static final int EXCEPTION_CODE_OV = 12;        // Overflow exception
+	public static final int EXCEPTION_CODE_TR = 13;        // Trap exception
+	public static final int EXCEPTION_CODE_WATCH = 23;     // Refrence to WatchHi/WatchLo address
+	public static final int EXCEPTION_CODE_MCHECK = 24;    // Machine check exception
+
+	private static final int TIMER_IRQ = 7;
+
+	//private static final boolean[] CACHEABILITY = {
+	//	true, true, false, true, true, true, true, false
+	//};
 
 	private int Index;
 	private int EntryLo0;
@@ -93,14 +115,13 @@ public final class Coprocessor0 {
 	private int Wired;
 	private int Reserved1;
 	private int BadVAddr;
-	private int Count;
 	private int EntryHi;
 	private int Compare;
 	private int Status;
 	private int Cause;
 	private int EPC;
-	private int PRId;
-	private int Config;
+	private final int PRId = 0x0001800B; // Revision 1.1
+	private int Config = 0x80008082;
 	private final int Config1 = 0x1E000000; // no cache, no fpu, no ejtag, no mips16, no watch and no performance counter
 	private int LLAddr;
 	private int WatchLo;
@@ -118,18 +139,17 @@ public final class Coprocessor0 {
 	private int ErrorEPC;
 	private int DESAVE;
 
-	private boolean interruptEnable;
-	private boolean cop0Avail;
-	private boolean kernelMode= true, debugMode;
+	private boolean kernelMode= true;
+	private boolean bigEndian = true;
 	private int ASID;
 
 	private boolean translationError;
 	private boolean loadLinkedStatus = false;
 
 	private final Random rand = new Random(System.currentTimeMillis());
-	private final TlbEntry [] tlbEntries;
-	private TlbEntry lastCodeEntry;
-	private TlbEntry lastDataEntry;
+	private final TlbEntry[] tlbEntries;
+	private TlbEntry lastTlbEntryCode;
+	private TlbEntry lastTlbEntryData;
 
 	private final Cpu cpu;
 
@@ -139,10 +159,25 @@ public final class Coprocessor0 {
 		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
 			tlbEntries[i] = new TlbEntry();
 		}
-		lastCodeEntry = lastDataEntry = tlbEntries[0];
+		lastTlbEntryCode = lastTlbEntryData = tlbEntries[0];
+		hardReset();
 	}
 
-	private int randomRead() {
+	public void hardReset() {
+		for(int i = 0; i < NUM_TLB_ENTRIES; i++)
+			tlbEntries[i].initialized = false;
+	}
+
+	public boolean isBigEndian() {
+		return bigEndian;
+	}
+
+	public boolean isCoprocessorAvailable(int copno) {
+		if (copno == 0 && kernelMode) return true;
+		return (Status & (1 << (STATUS_COP_SHIFT + copno))) != 0;
+	}
+
+	private int readRegisterRandom() {
 		return Wired + rand.nextInt(NUM_TLB_ENTRIES - Wired);
 	}
 
@@ -150,110 +185,118 @@ public final class Coprocessor0 {
 		return (oldValue & ~ mask) | (newValue & mask);
 	}
 
+	private void writeStatus(int value) {
+		Status = value & STATUS_WRITE_MASK;
+		kernelMode = (value & (STATUS_UM | STATUS_EXL | STATUS_ERL)) != STATUS_UM;
+		if (!kernelMode) {
+			bigEndian = (value & STATUS_RE) == 0; 
+		} else {
+			bigEndian = true;
+		}
+	}
+
 	public void moveToCoprocessor(int reg, int sel, int value) {
 		switch(reg) {
-		case COP0_INDEX: // Index
-			Index = changeValue(Index, value, 0x0F);
+		case COP0_REG_INDEX: // Index
+			Index = changeValue(Index, value, INDEX_MASK);
 			break;
-		case COP0_RANDOM: // Random
+		case COP0_REG_RANDOM: // Random
 			// Ignore random writes
 			break;
-		case COP0_ENTRYLO0: // EntryLo0
-			EntryLo0 = value & 0x03FFFFFF;
+		case COP0_REG_ENTRYLO0: // EntryLo0
+			EntryLo0 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case COP0_ENTRYLO1: // EntryLo1
-			EntryLo1 = value & 0x03FFFFFF;
+		case COP0_REG_ENTRYLO1: // EntryLo1
+			EntryLo1 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case COP0_CONTEXT: // Context
-			Context = changeValue(Context, value, 0xFF800000);
+		case COP0_REG_CONTEXT: // Context
+			Context = changeValue(Context, value, CONTEXT_WRITE_MASK);
 			break;
-		case COP0_PAGEMASK: // PageMask
+		case COP0_REG_PAGEMASK: // PageMask
 			PageMask = value & 0x01FFE000;
 			break;
-		case COP0_WIRED: // Wired
-			Wired = value & 0x0F;
+		case COP0_REG_WIRED: // Wired
+			Wired = value & INDEX_MASK;
 			break;
-		case COP0_RESERVED1: // Reserved1
+		case COP0_REG_RESERVED1: // Reserved1
 			Reserved1 = value;
 			break;
-		case COP0_BADVADDR: // BadVAddr
+		case COP0_REG_BADVADDR: // BadVAddr
 			// Ignore BadVAddr writes
 			break;
-		case COP0_COUNT: // Count
-			Count = value;
+		case COP0_REG_COUNT: // Count
+			cpu.setCounter(value);
 			break;
-		case COP0_ENTRYHI: // EntryHi
-			EntryHi = value & 0xFFFFE0FF;
-			ASID = value & 0xFF;
+		case COP0_REG_ENTRYHI: // EntryHi
+			EntryHi = value & ENTRYHI_WRITE_MASK;
+			ASID = value & ENTRYHI_ASID_MASK;
 			break;
-		case COP0_COMPARE: // Compare
+		case COP0_REG_COMPARE: // Compare
 			Compare = value;
+			lowerIrq(TIMER_IRQ);
 			break;
-		case COP0_STATUS: // Status
-			Status = value & 0xFA78FF17;
-			kernelMode = ((value & 0x00000016) != 0x00000010);
-			interruptEnable = ((value & 0x00000007) == 0x00000001);
-			cop0Avail = ((value & 0x10000000) != 0);
+		case COP0_REG_STATUS: // Status
+			writeStatus(value);
 			break;
-		case COP0_CAUSE: // Cause
-			// Cause = value & 0xFFFFFFFF;
+		case COP0_REG_CAUSE: // Cause
+			Cause = changeValue(Cause, value, CAUSE_WRITE_MASK);
 			break;
-		case COP0_EPC: // EPC
+		case COP0_REG_EPC: // EPC
 			EPC = value;
 			break;
-		case COP0_PRID: // PRId
+		case COP0_REG_PRID: // PRId
 			// Ignore PRId writes
 			break;
-		case COP0_CONFIG: // Config and Config1
+		case COP0_REG_CONFIG: // Config and Config1
 			if (sel == 0) {
 				Config = changeValue(Config,  value, 0x07);
 			}
 			// Ignores Config1 writes
 			break;
-		case COP0_LLADDR: // LLAddr
+		case COP0_REG_LLADDR: // LLAddr
 			// Ignore LLAddr writes
 			break;
-		case COP0_WATCHLO: // WatchLo
+		case COP0_REG_WATCHLO: // WatchLo
 			WatchLo = value;
 			break;
-		case COP0_WATCHHI: // WatchHi
-			// WatchHi = value & 0xFFFFFFFF;
+		case COP0_REG_WATCHHI: // WatchHi
+			WatchHi = value;
 			break;
-		case COP0_RESERVED2: // Reserved2
+		case COP0_REG_RESERVED2: // Reserved2
 			Reserved2 = value;
 			break;
-		case COP0_RESERVED3: // Reserved3
+		case COP0_REG_RESERVED3: // Reserved3
 			Reserved3 = value;
 			break;
-		case COP0_RESERVED4: // Reserved4
+		case COP0_REG_RESERVED4: // Reserved4
 			Reserved4 = value;
 			break;
-		case COP0_DEBUG: // Debug
-			// Debug = value & 0xFFFFFFFF;
-			debugMode = (value & 0x40000000) != 0;
+		case COP0_REG_DEBUG: // Debug
+			Debug = value;
 			break;
-		case COP0_DEPC: // DEPC
+		case COP0_REG_DEPC: // DEPC
 			DEPC = value;
 			break;
-		case COP0_RESERVED5: // Reserved5
+		case COP0_REG_RESERVED5: // Reserved5
 			Reserved5 = value;
 			break;
-		case COP0_ERRCTRL: // ErrCtrl
-			//ErrCtrl = value & 0xFFFFFFFF;
+		case COP0_REG_ERRCTRL: // ErrCtrl
+			ErrCtrl = value;
 			break;
-		case COP0_RESERVED6: // Reserved6
+		case COP0_REG_RESERVED6: // Reserved6
 			Reserved6 = value;
 			break;
-		case COP0_TAGLO: // TagLo
-			//TagLo = value & 0xFFFFFFFF;
+		case COP0_REG_TAGLO: // TagLo
+			if (sel == 0) TagLo = value;
+			else DataLo = value;
 			break;
-		case COP0_RESERVED7: // Reserved7
+		case COP0_REG_RESERVED7: // Reserved7
 			Reserved7 = value;
 			break;
-		case COP0_ERROREPC: // ErrorEPC
+		case COP0_REG_ERROREPC: // ErrorEPC
 			ErrorEPC = value;
 			break;
-		case COP0_DESAVE: // DESAVE
+		case COP0_REG_DESAVE: // DESAVE
 			DESAVE = value;
 			break;
 		}
@@ -262,175 +305,271 @@ public final class Coprocessor0 {
 	public int moveFromCoprocessor(int reg, int sel) {
 		int retval = 0;
 		switch(reg) {
-		case COP0_INDEX: // Index
-			//Index = value & 0x0F;
+		case COP0_REG_INDEX: // Index
+			retval = Index;
 			break;
-		case COP0_RANDOM: // Random
-			retval = randomRead();
+		case COP0_REG_RANDOM: // Random
+			retval = readRegisterRandom();
 			break;
-		case COP0_ENTRYLO0: // EntryLo0
-			//EntryLo0 = value & 0x03FFFFFF;
+		case COP0_REG_ENTRYLO0: // EntryLo0
+			retval = EntryLo0;
 			break;
-		case COP0_ENTRYLO1: // EntryLo1
-			//EntryLo1 = value & 0x03FFFFFF;
+		case COP0_REG_ENTRYLO1: // EntryLo1
+			retval = EntryLo1;
 			break;
-		case COP0_CONTEXT: // Context
-			//Context = value & 0xFF800000;
+		case COP0_REG_CONTEXT: // Context
+			retval = Context;
 			break;
-		case COP0_PAGEMASK: // PageMask
+		case COP0_REG_PAGEMASK: // PageMask
 			retval = PageMask;
 			break;
-		case COP0_WIRED: // Wired
+		case COP0_REG_WIRED: // Wired
 			retval = Wired;
 			break;
-		case COP0_RESERVED1: // Reserved1
+		case COP0_REG_RESERVED1: // Reserved1
 			retval = Reserved1;
 			break;
-		case COP0_BADVADDR: // BadVAddr
+		case COP0_REG_BADVADDR: // BadVAddr
 			retval = BadVAddr;
 			break;
-		case COP0_COUNT: // Count
-			retval = Count;
+		case COP0_REG_COUNT: // Count
+			retval = cpu.getCounter();
 			break;
-		case COP0_ENTRYHI: // EntryHi
-			//EntryHi = value & 0xFFFFE0FF;
+		case COP0_REG_ENTRYHI: // EntryHi
+			retval = EntryHi;
 			break;
-		case COP0_COMPARE: // Compare
+		case COP0_REG_COMPARE: // Compare
 			retval = Compare;
 			break;
-		case COP0_STATUS: // Status
+		case COP0_REG_STATUS: // Status
 			retval = Status;
 			break;
-		case COP0_CAUSE: // Cause
-			// Cause = value & 0xFFFFFFFF;
+		case COP0_REG_CAUSE: // Cause
+			retval = Cause;
 			break;
-		case COP0_EPC: // EPC
+		case COP0_REG_EPC: // EPC
 			retval = EPC;
 			break;
-		case COP0_PRID: // PRId
+		case COP0_REG_PRID: // PRId
 			retval = PRId;
 			break;
-		case COP0_CONFIG: // Config and Config1
+		case COP0_REG_CONFIG: // Config and Config1
 			if (sel == 0) retval = Config;
 			else retval = Config1;
 			break;
-		case COP0_LLADDR: // LLAddr
-			// Ignore LLAddr writes
+		case COP0_REG_LLADDR: // LLAddr
+			retval = LLAddr;
 			break;
-		case COP0_WATCHLO: // WatchLo
+		case COP0_REG_WATCHLO: // WatchLo
 			retval = WatchLo;
 			break;
-		case COP0_WATCHHI: // WatchHi
-			// WatchHi = value & 0xFFFFFFFF;
+		case COP0_REG_WATCHHI: // WatchHi
+			retval = WatchHi;
 			break;
-		case COP0_RESERVED2: // Reserved2
+		case COP0_REG_RESERVED2: // Reserved2
 			retval = Reserved2;
 			break;
-		case COP0_RESERVED3: // Reserved3
+		case COP0_REG_RESERVED3: // Reserved3
 			retval = Reserved3;
 			break;
-		case COP0_RESERVED4: // Reserved4
+		case COP0_REG_RESERVED4: // Reserved4
 			retval = Reserved4;
 			break;
-		case COP0_DEBUG: // Debug
-			// Debug = value & 0xFFFFFFFF;
+		case COP0_REG_DEBUG: // Debug
+			retval = Debug;
 			break;
-		case COP0_DEPC: // DEPC
+		case COP0_REG_DEPC: // DEPC
 			retval = DEPC;
 			break;
-		case COP0_RESERVED5: // Reserved5
+		case COP0_REG_RESERVED5: // Reserved5
 			retval = Reserved5;
 			break;
-		case COP0_ERRCTRL: // ErrCtrl
-			//ErrCtrl = value & 0xFFFFFFFF;
+		case COP0_REG_ERRCTRL: // ErrCtrl
+			retval = ErrCtrl;
 			break;
-		case COP0_RESERVED6: // Reserved6
+		case COP0_REG_RESERVED6: // Reserved6
 			retval = Reserved6;
 			break;
-		case COP0_TAGLO: // TagLo
-			//TagLo = value & 0xFFFFFFFF;
+		case COP0_REG_TAGLO: // TagLo
+			if (sel == 0) retval = TagLo;
+			else retval = DataLo;
 			break;
-		case COP0_RESERVED7: // Reserved7
+		case COP0_REG_RESERVED7: // Reserved7
 			retval = Reserved7;
 			break;
-		case COP0_ERROREPC: // ErrorEPC
+		case COP0_REG_ERROREPC: // ErrorEPC
 			retval = ErrorEPC;
 			break;
-		case COP0_DESAVE: // DESAVE
+		case COP0_REG_DESAVE: // DESAVE
 			retval = DESAVE;
 			break;
 		}
 		return retval;
 	}
 
-	public void raiseException() {
-		
-	}
-
 	public void exception_RESET() {
-		loadLinkedStatus = false;
-
 		Wired = 0;
-		Config = 0x80008082;
-		Status = changeValue(Status, 0x00400004, 0x08780004);
-		kernelMode = true;
-		interruptEnable = false;
+		Config = changeValue(Config, 2, 0x07);
+		writeStatus(changeValue(Status, STATUS_BEV | STATUS_ERL, STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
 
-		ErrorEPC = (cpu.delaySlot) ? cpu.pc - 4 : cpu.pc;
-		WatchLo &= ~0x07;
-
-		cpu.halted = false;
-		cpu.delaySlot = false;
-		cpu.pc = 0xBFC00000;
-		cpu.nextPc = cpu.pc + 4;
+		cpu.setProgramCounter(0xBFC00000);
 	}
 
 	public void exception_SOFT_RESET() {
-		loadLinkedStatus = false;
+		writeStatus(changeValue(Status, STATUS_SR | STATUS_BEV | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
 
-		Status = changeValue(Status, 0x00500004, 0x00780004);
-		kernelMode = true;
-		interruptEnable = false;
-
-		ErrorEPC = (cpu.delaySlot) ? cpu.pc - 4 : cpu.pc;
-
-		cpu.halted = false;
-		cpu.delaySlot = false;
-		cpu.pc = 0xBFC00000;
-		cpu.nextPc = cpu.pc + 4;
+		cpu.setProgramCounter(0xBFC00000);
 	}
 
 	public void exception_NMI() {
-		loadLinkedStatus = false;
+		writeStatus(changeValue(Status, STATUS_BEV | STATUS_NMI | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
 
-		Status = changeValue(Status, 0x00480004, 0x00780004);
-		kernelMode = true;
-		interruptEnable = false;
-
-		ErrorEPC = (cpu.delaySlot) ? cpu.pc - 4 : cpu.pc;
-
-		cpu.halted = false;
-		cpu.delaySlot = false;
-		cpu.pc = 0xBFC00000;
-		cpu.nextPc = cpu.pc + 4;
+		cpu.setProgramCounter(0xBFC00000);
 	}
 
-	private void exception_GENERAL(int cause) {
+	private void exception_GENERAL(int code, int copno) {
 		int vectorOffset;
 
-		loadLinkedStatus = false;
-		if ((Status & 0x00000002) == 0) { // EXL = 0
-			if (cpu.delaySlot) {
-				EPC = cpu.pc - 4;
-				Cause |= 0x80000000;
+		if ((Status & STATUS_EXL) == 0) {
+			if (cpu.isBranchDelaySlot()) {
+				EPC = cpu.getProgramCounter() - 4;
+				Cause |= CAUSE_BD;
 			} else {
-				EPC = cpu.pc;
-				Cause &= ~0x80000000;
+				EPC = cpu.getProgramCounter();
+				Cause &= ~CAUSE_BD;
 			}
-			if (cause == EXCP_CAUSE_TLBL || cause == EXCP_CAUSE_TLBS) {
+			if (code == EXCEPTION_CODE_TLBL || code == EXCEPTION_CODE_TLBS) {
 				vectorOffset = 0;
+			} else if (code == EXCEPTION_CODE_INT && ((Cause & CAUSE_IV) != 0)) {
+				vectorOffset = 0x200;
+			} else {
+				vectorOffset = 0x180;
+			}
+		} else {
+			vectorOffset = 0x180;
+		}
+		Cause = (Cause & ~CAUSE_CE_MASK) | (copno << CAUSE_CE_SHIFT);
+		Cause = (Cause & ~CAUSE_EXCCODE_MASK) | (code << CAUSE_EXCCODE_SHIFT);
+		writeStatus(Status | STATUS_EXL);
+		if ((Status & STATUS_BEV) != 0) {
+			cpu.setProgramCounter(0xBFC00200 + vectorOffset);
+		} else {
+			cpu.setProgramCounter(0x80000000 + vectorOffset);
+		}
+	}
+
+	public void exception_MCHECK() {
+		exception_GENERAL(EXCEPTION_CODE_MCHECK, 0);
+		Status |= STATUS_TS;
+	}
+
+	public void exception_INTERRUPT() {
+		exception_GENERAL(EXCEPTION_CODE_INT, 0);
+	}
+
+	public void exception_ADDRESS_ERROR(int badVAddr, boolean load) {
+		exception_GENERAL(load ? EXCEPTION_CODE_ADEL : EXCEPTION_CODE_ADES, 0);
+		BadVAddr = badVAddr;
+	}
+
+	public void exception_TLB_REFILL(int badVAddr, boolean load) {
+		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0);
+		BadVAddr = badVAddr;
+		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
+		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
+	}
+
+	public void exception_TLB_INVALID(int badVAddr, boolean load) {
+		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0);
+		BadVAddr = badVAddr;
+		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
+		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
+	}
+
+	public void exception_BUS_ERROR(boolean data) {
+		exception_GENERAL(data ? EXCEPTION_CODE_DBE : EXCEPTION_CODE_IBE, 0);
+	}
+
+	public void exception_SYSCALL() {
+		exception_GENERAL(EXCEPTION_CODE_SYS, 0);
+	}
+
+	public void exception_BREAK() {
+		exception_GENERAL(EXCEPTION_CODE_BP, 0);
+	}
+
+	public void exception_RESERVED() {
+		exception_GENERAL(EXCEPTION_CODE_RI, 0);
+	}
+
+	public void exception_COPROCESS_UNUSABLE(int copno) {
+		exception_GENERAL(EXCEPTION_CODE_CPU, copno);
+	}
+
+	public void exception_INTEGER_OVERFLOW() {
+		exception_GENERAL(EXCEPTION_CODE_OV, 0);
+	}
+
+	public void exception_TRAP() {
+		exception_GENERAL(EXCEPTION_CODE_TR, 0);
+	}
+
+	public void exception_TLB_MOD(int badVAddr) {
+		exception_GENERAL(EXCEPTION_CODE_MOD, 0);
+		BadVAddr = badVAddr;
+		Context = badVAddr;
+	}
+
+	public void returnFromException() {
+		int newPc;
+		loadLinkedStatus = false;
+		if ((Status & STATUS_ERL) != 0) {
+			writeStatus(Status & (~STATUS_ERL));
+			newPc = ErrorEPC;
+		} else {
+			writeStatus(Status & (~STATUS_EXL));
+			newPc = EPC;
+		}
+		cpu.setProgramCounter(newPc);
+	}
+
+	public void raiseIrq(int irqno) {
+		Cause |= 1 << (CAUSE_INTERRUPT_SHIFT + irqno);
+	}
+
+	public void lowerIrq(int irqno) {
+		Cause &= ~(1 << (CAUSE_INTERRUPT_SHIFT + irqno));
+	}
+
+	public boolean interruptEnabled() {
+		return (Status & (STATUS_IE | STATUS_EXL | STATUS_ERL)) == STATUS_IE;
+	}
+
+	public boolean checkInterrupts() {
+		if (interruptEnabled()) {
+			int mask = (Status & STATUS_INT_MASK) >>> STATUS_INT_SHIFT;
+			int pending = (Cause & CAUSE_INTERRUPT_MASK) >>> CAUSE_INTERRUPT_SHIFT;
+			if ((mask & pending) != 0) {
+				exception_INTERRUPT();
+				return true;
 			}
 		}
+		return false;
+	}
+
+	public boolean checkTimerInterrupt(int before, int after) {
+		int cmp1 = Utils.compareUnsigned(before, Compare); 
+		if (cmp1 > 0) return false;
+		if (cmp1 < 0) {
+			if ((after - before) < (Compare - before)) return false;
+		}
+
+		raiseIrq(TIMER_IRQ);
+		checkInterrupts();
+		return true;
 	}
 
 	public void loadLinked(int physicalAddress) {
@@ -442,25 +581,16 @@ public final class Coprocessor0 {
 		return loadLinkedStatus;
 	}
 
-	private void resetTLB() {
-		for(int i = 0; i < NUM_TLB_ENTRIES; i++)
-			tlbEntries[i].initialized = false;
-	}
-
 	public int translate(int address, boolean write, boolean data) {
 		translationError = false;
-		if (debugMode || kernelMode) {
+		if (kernelMode) {
 			if ((address & 0xC0000000) == 0x80000000) { // kseg0 or kseg1 
 				return address & 0x1FFFFFFF;
-			}
-			if (debugMode && ((address & 0xFFE00000) == 0xFF200000)) { // dmseg or drseg
-				// TODO: Debug Memory segment 
-				return 0;
 			}
 		} else { // User Mode
 			// useg
 			if ((address & 0x80000000) != 0) { 
-				// TODO: Exception 
+				exception_ADDRESS_ERROR(address, !write);
 				translationError = true;
 				return 0;
 			}
@@ -469,10 +599,10 @@ public final class Coprocessor0 {
 
 		TlbEntry tlbEntry;
 		TlbEntryPage tlbEntryPage;
-		tlbEntry = (data) ? lastDataEntry : lastCodeEntry;
+		tlbEntry = (data) ? lastTlbEntryData : lastTlbEntryCode;
 
 		if (tlbEntry.initialized) {
-			tlbEntryPage = tlbMatch(tlbEntry, address, ASID);
+			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID);
 			if (tlbEntryPage != null) {
 				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
 			}
@@ -483,12 +613,16 @@ public final class Coprocessor0 {
 			tlbEntry = tlbEntries[i];
 
 			if (!tlbEntry.initialized) continue;
-			tlbEntryPage = tlbMatch(tlbEntry, address, ASID); 
+			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID); 
 			if (tlbEntryPage != null) {
 				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
 			}
 		}
-		// TODO: TLB Miss
+		if ((Status & STATUS_EXL) != 0) {
+			exception_TLB_INVALID(address, !write);
+		} else {
+			exception_TLB_REFILL(address, !write);
+		}
 		translationError = true;
 		return 0;
 	}
@@ -497,7 +631,7 @@ public final class Coprocessor0 {
 		return translationError;
 	}
 
-	private static TlbEntryPage tlbMatch(TlbEntry entry, int address, int ASID) {
+	private static TlbEntryPage tlbMatchEntry(TlbEntry entry, int address, int ASID) {
 		if ((entry.PageMask & address) == entry.VPN2) {
 			if (entry.global || entry.ASID == ASID) {
 				if ((address & entry.selectionBit) == 0) {
@@ -511,15 +645,15 @@ public final class Coprocessor0 {
 	}
 
 	private int tlbPageTranslate(TlbEntry tlbEntry, TlbEntryPage tlbEntryPage, int address, boolean write, boolean data) {
-		if (data) lastDataEntry = tlbEntry;
-		else lastCodeEntry = tlbEntry;
+		if (data) lastTlbEntryData = tlbEntry;
+		else lastTlbEntryCode = tlbEntry;
 		if (!tlbEntryPage.valid) {
-			// TODO: TLB Invalid exception
+			exception_TLB_INVALID(address, !write);
 			translationError = true;
 			return 0;
 		}
 		if (write && !tlbEntryPage.dirty) {
-			// TODO: TLB Modified exception
+			exception_TLB_MOD(address);
 			translationError = true;
 			return 0;
 		}
@@ -530,59 +664,59 @@ public final class Coprocessor0 {
 
 	private static int convertPageToEntryLo(TlbEntryPage page, boolean global) {
 		int entry = page.PFN >>> 6;
-		entry |= page.cacheability << 3;
-		if (page.dirty) entry |= 4;
-		if (page.valid) entry |= 2;
-		if (global) entry |= 1;
+		entry |= page.cacheability << ENTRYLO_COHERENCY_SHIFT;
+		if (page.dirty) entry |= ENTRYLO_DIRTY;
+		if (page.valid) entry |= ENTRYLO_VALID;
+		if (global) entry |= ENTRYLO_GLOBAL;
 		return entry;
 	}
 
 	private static void configurePageFromEntryLo(TlbEntryPage page, int entry) {
 		page.PFN = (entry << 6) & 0xFFFFF000;
-		page.cacheability = (entry >> 3) & 0x07;
-		page.dirty = (entry & 0x04) != 0;
-		page.valid = (entry & 0x02) != 0;
+		page.cacheability = (entry & ENTRYLO_COHERENCY_MASK) >> ENTRYLO_COHERENCY_SHIFT;
+		page.dirty = (entry & ENTRYLO_DIRTY) != 0;
+		page.valid = (entry & ENTRYLO_VALID) != 0;
 	}
 
-	public void doTLBP() {
-		int ASID = EntryHi & 0xFF;
-		int VPN2 = EntryHi & 0xFFFFE000;
-		Index = 0x80000000;
-		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
-			TlbEntry tlbEntry = tlbEntries[i];
+	public void tlbProbe() {
+		int ASID = EntryHi & ENTRYHI_ASID_MASK;
+		int VPN2 = EntryHi & ENTRYHI_VPN2_MASK;
+		Index = INDEX_PROBE;
+		for(int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
+			TlbEntry tlbEntry = tlbEntries[idx];
 			TlbEntryPage tlbEntryPage;
 
 			if (!tlbEntry.initialized) continue;
-			tlbEntryPage = tlbMatch(tlbEntry, VPN2, ASID); 
+			tlbEntryPage = tlbMatchEntry(tlbEntry, VPN2, ASID); 
 			if (tlbEntryPage != null) {
-				Index = i;
+				Index = idx;
 				return;
 			}
 		}
 	}
 
-	public void doTLBR() {
-		TlbEntry entry = tlbEntries[Index];
-		PageMask = (~entry.PageMask) & 0xFFFFE000;
+	public void tlbRead() {
+		TlbEntry entry = tlbEntries[Index & INDEX_MASK];
+		PageMask = (~entry.PageMask) & ENTRYHI_VPN2_MASK;
 		EntryHi = entry.VPN2 | entry.ASID;
 		EntryLo0 = convertPageToEntryLo(entry.page0, entry.global);
 		EntryLo1 = convertPageToEntryLo(entry.page1, entry.global);
 	}
 
-	private void doTLBWrite(int index) {
+	private void tlbWrite(int index) {
 		TlbEntry tlbEntry;
-		int mask = (~PageMask) & 0xFFFFE000;
+		int mask = (~PageMask) & ENTRYHI_VPN2_MASK;
 		int VPN2 = EntryHi & mask;
-		int ASID = EntryHi & 0xFF;
-		boolean global = ((EntryLo0 & 0x01) != 0) && ((EntryLo1 & 0x01) != 0);
+		int ASID = EntryHi & ENTRYHI_ASID_MASK;
+		boolean global = ((EntryLo0 & ENTRYLO_GLOBAL) != 0) && ((EntryLo1 & ENTRYLO_GLOBAL) != 0);
 
 		// Checks for multiple entries
-		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
-			tlbEntry = tlbEntries[i];
-			if (!tlbEntry.initialized || i == index) continue;
+		for (int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
+			tlbEntry = tlbEntries[idx];
+			if (!tlbEntry.initialized || idx == index) continue;
 			if ((tlbEntry.VPN2 & mask) == VPN2) {
 				if (global || tlbEntry.global || tlbEntry.ASID == ASID) {
-					// TODO: TLB Machine Check exception
+					exception_MCHECK();
 					return;
 				}
 			}
@@ -597,12 +731,12 @@ public final class Coprocessor0 {
 		configurePageFromEntryLo(tlbEntry.page1, EntryLo1);
 	}
 
-	public void doTLBWR() {
-		doTLBWrite(randomRead());
+	public void tlbWriteRandom() {
+		tlbWrite(readRegisterRandom());
 	}
 
-	public void doTLBWI() {
-		doTLBWrite(Index & 0x0F);
+	public void tlbWriteIndex() {
+		tlbWrite(Index & INDEX_MASK);
 	}
 
 	private static final class TlbEntry {

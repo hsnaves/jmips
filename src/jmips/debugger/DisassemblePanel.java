@@ -59,7 +59,7 @@ public final class DisassemblePanel extends JPanel {
 
 		@Override
 		public Object getElementAt(int index) {
-			int address = cpu.pc + 4 * (index + listDataOffset);
+			int address = cpu.getNextProgramCounter() + 4 * (index + listDataOffset);
 			int opcode = cpu.read32(address);
 			return Disassemble.disassemble(address, opcode);
 		}
