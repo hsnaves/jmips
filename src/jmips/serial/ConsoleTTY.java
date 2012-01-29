@@ -5,11 +5,10 @@ import java.io.IOException;
 
 public class ConsoleTTY implements TTY {
 
-
 	@Override
-	public void write(byte b) {
+	public void write(char c) {
 		// Incomplete implementation here
-		System.out.print((char) b);
+		System.out.print(c);
 	}
 
 	@Override
@@ -23,13 +22,17 @@ public class ConsoleTTY implements TTY {
 	}
 
 	@Override
-	public byte read() {
+	public char read() {
 		try {
-			return (byte) System.in.read();
+			return (char) System.in.read();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return 0;
 		}
 	}
 
+	@Override
+	public void reset() {
+		// Do nothing
+	}
 }

@@ -65,7 +65,7 @@ public class GPRTable extends JTable {
 
 	public final void updateTable() {
 		setValueAt(String.format("0x%08X", cpu.pc), 0, 1);
-		setValueAt(String.format("0x%08X", cpu.next_pc), 0, 3);
+		setValueAt(String.format("0x%08X", cpu.nextPc), 0, 3);
 		setValueAt(String.format("0x%08X", cpu.hi), 1, 1);
 		setValueAt(String.format("0x%08X", cpu.pc), 1, 3);
 		for(int i = 0; i < 32; i++) {

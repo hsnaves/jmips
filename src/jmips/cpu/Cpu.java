@@ -98,25 +98,25 @@ public final class Cpu {
 	/* Instance fields */
 	private final int[] gpr = new int[32];
 	public int hi, lo;
-	public int pc, next_pc;
-	public boolean delay_slot, next_delay_slot;
+	public int pc, nextPc;
+	boolean delaySlot, nextDelaySlot;
 
-	public boolean halted;
+	boolean halted;
+	boolean success, bigEndian = true;
 
-	public final Coprocessor0 cop0;
-	private final MemoryManager mm;
+	private final Coprocessor0 cop0;
+	private final MemoryManager memoryManager;
 
 	public Cpu(int ramOffset, int ramSize) {
 		this.cop0 = new Coprocessor0(this);
-		this.mm = new MemoryManager(ramOffset, ramSize);
+		this.memoryManager = new MemoryManager(ramOffset, ramSize);
 	}
-
 
 	public void reset() {
 		Arrays.fill(gpr, 0);
 		hi = lo = 0;
-		pc = 0x08000000;
-		next_pc = pc + 4;
+		pc = 0xA0000000;
+		nextPc = pc + 4;
 	}
 
 	public void raiseIrq(int irqno) {
@@ -133,14 +133,109 @@ public final class Cpu {
 		return gpr[regno];
 	}
 
+	public MemoryManager getMemoryManager() {
+		return memoryManager;
+	}
+
 
 	public void step() {
-		int opcode = mm.read32(pc);
+		int opcode = fetchOpcode();
 
-		delay_slot = false;
-		pc = next_pc;
-		next_pc = pc + 4;
+		delaySlot = nextDelaySlot;
+		nextDelaySlot = false;
+		pc = nextPc;
+		nextPc = pc + 4;
 		step(opcode);
+	}
+
+	public byte read8(int address) {
+		int physicalAddress = cop0.translate(address, false, true);
+		if (cop0.translationError()) {
+			success = false;
+			return 0;
+		}
+		byte b = memoryManager.read8(physicalAddress);
+		if (memoryManager.error()) {
+			success = false;
+			return 0;
+		}
+		success = true;
+		return b;
+	}
+
+	public short read16(int address) {
+		int physicalAddress = cop0.translate(address, false, true);
+		if (cop0.translationError()) {
+			success = false;
+			return 0;
+		}
+		short s = memoryManager.read16(physicalAddress, bigEndian);
+		if (memoryManager.error()) {
+			success = false;
+			return 0;
+		}
+		success = true;
+		return s;
+	}
+
+	public int read32(int address) {
+		int physicalAddress = cop0.translate(address, false, true);
+		if (cop0.translationError()) {
+			success = false;
+			return 0;
+		}
+		int v = memoryManager.read32(physicalAddress, bigEndian);
+		if (memoryManager.error()) {
+			success = false;
+			return 0;
+		}
+		success = true;
+		return v;
+	}
+
+	public void write8(int address, byte value) {
+		int physicalAddress = cop0.translate(address, true, true);
+		if (cop0.translationError()) {
+			success = false;
+			return;
+		}
+		memoryManager.write8(physicalAddress, value);
+		success = !memoryManager.error();
+	}
+
+	public void write16(int address, short value) {
+		int physicalAddress = cop0.translate(address, true, true);
+		if (cop0.translationError()) {
+			success = false;
+			return;
+		}
+		memoryManager.write16(physicalAddress, value, bigEndian);
+		success = !memoryManager.error();
+	}
+
+	public void write32(int address, int value) {
+		int physicalAddress = cop0.translate(address, true, true);
+		if (cop0.translationError()) {
+			success = false;
+			return;
+		}
+		memoryManager.write32(physicalAddress, value, bigEndian);
+		success = !memoryManager.error();
+	}
+
+	public int fetchOpcode() {
+		int physicalAddress = cop0.translate(pc, false, false);
+		if (cop0.translationError()) {
+			success = false;
+			return 0;
+		}
+		int v = memoryManager.read32(physicalAddress, bigEndian);
+		if (memoryManager.error()) {
+			success = false;
+			return 0;
+		}
+		success = true;
+		return v;
 	}
 
 	private void step(int opcode) {
@@ -345,7 +440,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs + rt;
-		if (check_overflow(rs, rt, result, true)) return;
+		if (checkOverflow(rs, rt, result, true)) return;
 		setGpr(I_RD(opcode), result);
 	}
 
@@ -353,7 +448,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		int result = rs + imm;
-		if (check_overflow(rs, imm, result, true)) return;
+		if (checkOverflow(rs, imm, result, true)) return;
 		setGpr(I_RT(opcode), result);
 	}
 
@@ -399,7 +494,7 @@ public final class Cpu {
 		if (rs == rt) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -424,7 +519,7 @@ public final class Cpu {
 		if (rs >= 0) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -433,7 +528,7 @@ public final class Cpu {
 		if (rs >= 0) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -449,7 +544,7 @@ public final class Cpu {
 		if (rs > 0) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -465,7 +560,7 @@ public final class Cpu {
 		if (rs <= 0) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -490,7 +585,7 @@ public final class Cpu {
 		if (rs < 0) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -499,7 +594,7 @@ public final class Cpu {
 		if (rs < 0) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -517,7 +612,7 @@ public final class Cpu {
 		if (rs != rt) {
 			branch(opcode);
 		} else {
-			skip_delay_slot();
+			skipDelaySlot();
 		}
 	}
 
@@ -564,8 +659,8 @@ public final class Cpu {
 	}
 
 	private void j(int opcode) {
-		next_pc = I_JUMP(opcode, pc - 4);
-		delay_slot = true;
+		nextPc = I_JUMP(opcode, pc - 4);
+		delaySlot = true;
 	}
 
 	private void jal(int opcode) {
@@ -580,16 +675,16 @@ public final class Cpu {
 
 	private void jr(int opcode) {
 		int rs = gpr[I_RS(opcode)];
-		next_pc = rs;
-		delay_slot = true;
+		nextPc = rs;
+		delaySlot = true;
 	}
 
 	private void lb(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = mm.read8(address);
-		if (mm.success()) {
+		int val = read8(address);
+		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -598,8 +693,8 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = mm.read8(address) & 0xFF;
-		if (mm.success()) {
+		int val = memoryManager.read8(address) & 0xFF;
+		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -608,8 +703,8 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = mm.read16(address);
-		if (mm.success()) {
+		int val = read16(address);
+		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -618,8 +713,8 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = mm.read16(address) & 0xFFFF;
-		if (mm.success()) {
+		int val = read16(address) & 0xFFFF;
+		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -638,18 +733,42 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = mm.read32(address);
-		if (mm.success()) {
+		int val = read32(address);
+		if (success) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
 
 	private void lwl(int opcode) {
-		//TODO
+		int rs = gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
+		int address = rs + offset;
+		int alignedAddress = address & (~3);
+		int val = read32(alignedAddress);
+		if (success) {
+			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
+			shift <<= 3;
+			int rt = I_RT(opcode);
+			int reg = gpr[rt];
+			reg = (reg & ((1 << shift) - 1)) | (val << shift); 
+			setGpr(rt, reg);
+		}
 	}
 
 	private void lwr(int opcode) {
-		//TODO
+		int rs = gpr[I_RS(opcode)];
+		int offset = I_IMM16(opcode);
+		int address = rs + offset;
+		int alignedAddress = address & (~3);
+		int val = read32(alignedAddress);
+		if (success) {
+			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
+			shift <<= 3;
+			int rt = I_RT(opcode);
+			int reg = gpr[rt];
+			reg = (reg & ((-1) << shift)) | (val >>> shift); 
+			setGpr(rt, reg);
+		}
 	}
 
 	private void madd(int opcode) {
@@ -784,7 +903,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		mm.write8(address, (byte) rt);
+		memoryManager.write8(address, (byte) rt);
 	}
 
 	private void sc(int opcode) {
@@ -800,7 +919,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		mm.write16(address, (short) rt);
+		write16(address, (short) rt);
 	}
 
 	private void sll(int opcode) {
@@ -877,7 +996,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		int result = rs - rt;
-		if (check_overflow(rs, rt, result, false)) return;
+		if (checkOverflow(rs, rt, result, false)) return;
 		setGpr(I_RD(opcode), result);
 	}
 
@@ -893,7 +1012,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = gpr[I_RT(opcode)];
-		mm.write32(address, rt);
+		write32(address, rt);
 	}
 
 	private void swl(int opcode) {
@@ -1051,7 +1170,7 @@ public final class Cpu {
 	}
 
 
-	private boolean check_overflow(int a, int b, int result, boolean sum) {
+	private boolean checkOverflow(int a, int b, int result, boolean sum) {
 		boolean overflow = false;
 		if (sum) {
 			overflow = ((a < 0) && (b < 0) && (result > 0)) ||
@@ -1067,8 +1186,8 @@ public final class Cpu {
 	}
 
 	private void branch(int opcode) {
-		next_pc = I_BRANCH(opcode, pc - 4);
-		delay_slot = true;
+		nextPc = I_BRANCH(opcode, pc - 4);
+		nextDelaySlot = true;
 	}
 
 	private void link() {
@@ -1079,7 +1198,7 @@ public final class Cpu {
 		setGpr(regno, pc + 4);
 	}
 
-	private void skip_delay_slot() {
+	private void skipDelaySlot() {
 		pc += 4;
 	}
 

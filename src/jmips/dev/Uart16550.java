@@ -3,11 +3,13 @@ package jmips.dev;
 import java.util.LinkedList;
 
 import jmips.cpu.Cpu;
-import jmips.cpu.IODevice;
+import jmips.cpu.Device;
 import jmips.serial.TTY;
 
-public class Uart16550 implements IODevice {
+public final class Uart16550 extends Device {
 
+	/* Generated serialVersionUID */
+	private static final long serialVersionUID = 2487224479818994761L;
 
 	// Interrupt enable register constants
 
@@ -50,17 +52,17 @@ public class Uart16550 implements IODevice {
 	private int scr; // scratch register
 
 
-	private final LinkedList<Byte> recv_fifo = new LinkedList<Byte>();
+	private final LinkedList<Byte> recvFifo = new LinkedList<Byte>();
 
-	private boolean bus_error = false;
-
-	public Uart16550(Cpu cpu, TTY tty, int irq) {
+	public Uart16550(int mappedOffset, Cpu cpu, TTY tty, int irq) {
+		super(mappedOffset);
 		this.cpu = cpu;
 		this.tty = tty;
 		this.irq = irq;
 		reset();
 	}
 
+	@Override
 	public void reset() {
 		divider = 0;
 		rbr = 0;
@@ -71,36 +73,36 @@ public class Uart16550 implements IODevice {
 		msr = 0;
 		scr = 0;
 		mcr = 0;
-		recv_fifo.clear();
+		recvFifo.clear();
+		tty.reset();
 	}
 
 	@Override
-	public int read32(int offset, boolean big_endian) {
+	public int read32(int offset, boolean bigEndian) {
 		// Invalid read
-		bus_error = true;
+		error = true;
 		return 0;
 	}
 
 	@Override
-	public void write32(int offset, int value, boolean big_endian) {
+	public void write32(int offset, int value, boolean bigEndian) {
 		// Invalid write
-		bus_error = true;
+		error = true;
 	}
 
 	@Override
-	public short read16(int offset, boolean big_endian) {
+	public short read16(int offset, boolean bigEndian) {
 		// Invalid read
-		bus_error = true;
+		error = true;
 		return 0;
 	}
 
 	@Override
-	public void write16(int offset, short value, boolean big_endian) {
-		// Invalid write
-		bus_error = true;
+	public void write16(int offset, short value, boolean bigEndian) {
+		error = true;
 	}
 
-	private void update_irq() {
+	private void updateIrq() {
 		if ((lsr & UART_LSR_DR) != 0 && (ier & UART_IER_RDI) != 0) {
 			iir = UART_IIR_RDI;
 		} else if ((lsr & UART_LSR_THRE) != 0 && (ier & UART_IER_THRI) != 0) {
@@ -116,16 +118,12 @@ public class Uart16550 implements IODevice {
 		}
 	}
 
-	private void send_char(byte b) {
-		rbr = b;
-		lsr |= UART_LSR_DR;
-		update_irq();
-	}
-
-	private void send_char_from_fifo() {
-		if (recv_fifo.size() > 0 && (lsr & UART_LSR_DR) == 0) {
-			byte b = recv_fifo.remove();
-			send_char(b);
+	private void sendCharFromFifo() {
+		if (recvFifo.size() > 0 && (lsr & UART_LSR_DR) == 0) {
+			byte b = recvFifo.remove();
+			rbr = b;
+			lsr |= UART_LSR_DR;
+			updateIrq();
 		}
 	}
 
@@ -133,7 +131,6 @@ public class Uart16550 implements IODevice {
 	public byte read8(int offset) {
 		byte ret;
 		
-		bus_error = false;
 		offset &= 7;
 		switch(offset) {
 		default:
@@ -143,8 +140,8 @@ public class Uart16550 implements IODevice {
 			} else {
 				ret = (byte) this.rbr;
 				lsr &= ~(UART_LSR_DR | UART_LSR_BI);
-				update_irq();
-				send_char_from_fifo();
+				updateIrq();
+				sendCharFromFifo();
 			}
 			break;
 		case 1:
@@ -178,8 +175,6 @@ public class Uart16550 implements IODevice {
 
 	@Override
 	public void write8(int offset, byte value) {
-		bus_error = false;
-
 		offset &= 7;
 		switch(offset) {
 		default:
@@ -188,11 +183,11 @@ public class Uart16550 implements IODevice {
 				divider = (divider & 0xFF00) | (((int) value) & 0xFF);
 			} else {
 				lsr &= ~UART_LSR_THRE;
-				update_irq();
-				tty.write(value);
+				updateIrq();
+				tty.write((char) value);
 				lsr |= UART_LSR_THRE;
 				lsr |= UART_LSR_TEMT;
-				update_irq();
+				updateIrq();
 			}
 			break;
 		case 1:
@@ -200,7 +195,7 @@ public class Uart16550 implements IODevice {
 				divider = (divider & 0x00FF) | ((((int) value) << 8) & 0xFF00);
 			} else {
 				ier = value;
-				update_irq();
+				updateIrq();
 			}
 			break;
 		case 2:
@@ -222,27 +217,24 @@ public class Uart16550 implements IODevice {
 		}
 	}
 
-	public void sendByte(byte b) {
-		recv_fifo.add(b);
-		send_char_from_fifo();
+	public void sendChar(char c) {
+		recvFifo.add((byte) c);
+		sendCharFromFifo();
 	}
 
-	public void sendChar(char c) {
-		sendByte((byte) c);;
-	}
 	public void sendString(String str) {
 		for(int i = 0; i < str.length(); i++)
-			recv_fifo.add((byte) str.charAt(i));
-		send_char_from_fifo();
+			recvFifo.add((byte) str.charAt(i));
+		sendCharFromFifo();
 	}
 
 	@Override
-	public boolean bus_error() {
-		return bus_error;
+	public String getDeviceName() {
+		return "uart16550";
 	}
 
 	@Override
-	public int size() {
+	public int getDeviceSize() {
 		return 8;
 	}
 }

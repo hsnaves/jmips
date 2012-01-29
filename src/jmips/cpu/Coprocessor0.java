@@ -120,7 +120,7 @@ public final class Coprocessor0 {
 
 	private boolean interruptEnable;
 	private boolean cop0Avail;
-	private boolean kernelMode, debugMode;
+	private boolean kernelMode= true, debugMode;
 	private int ASID;
 
 	private boolean translationError;
@@ -138,6 +138,7 @@ public final class Coprocessor0 {
 		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
 			tlbEntries[i] = new TlbEntry();
 		}
+		lastCodeEntry = lastDataEntry = tlbEntries[0];
 	}
 
 	private int randomRead() {
@@ -372,13 +373,13 @@ public final class Coprocessor0 {
 		kernelMode = true;
 		interruptEnable = false;
 
-		ErrorEPC = (cpu.delay_slot) ? cpu.pc - 4 : cpu.pc;
+		ErrorEPC = (cpu.delaySlot) ? cpu.pc - 4 : cpu.pc;
 		WatchLo &= ~0x07;
 
 		cpu.halted = false;
-		cpu.delay_slot = false;
+		cpu.delaySlot = false;
 		cpu.pc = 0xBFC00000;
-		cpu.next_pc = cpu.pc + 4;
+		cpu.nextPc = cpu.pc + 4;
 	}
 
 	public void exception_SOFT_RESET() {
@@ -386,12 +387,12 @@ public final class Coprocessor0 {
 		kernelMode = true;
 		interruptEnable = false;
 
-		ErrorEPC = (cpu.delay_slot) ? cpu.pc - 4 : cpu.pc;
+		ErrorEPC = (cpu.delaySlot) ? cpu.pc - 4 : cpu.pc;
 
 		cpu.halted = false;
-		cpu.delay_slot = false;
+		cpu.delaySlot = false;
 		cpu.pc = 0xBFC00000;
-		cpu.next_pc = cpu.pc + 4;
+		cpu.nextPc = cpu.pc + 4;
 	}
 
 	public void exception_NMI() {
@@ -399,18 +400,18 @@ public final class Coprocessor0 {
 		kernelMode = true;
 		interruptEnable = false;
 
-		ErrorEPC = (cpu.delay_slot) ? cpu.pc - 4 : cpu.pc;
+		ErrorEPC = (cpu.delaySlot) ? cpu.pc - 4 : cpu.pc;
 
 		cpu.halted = false;
-		cpu.delay_slot = false;
+		cpu.delaySlot = false;
 		cpu.pc = 0xBFC00000;
-		cpu.next_pc = cpu.pc + 4;
+		cpu.nextPc = cpu.pc + 4;
 	}
 
 	private void exception_GENERAL(int cause) {
 		int vectorOffset;
 		if ((Status & 0x00000002) == 0) { // EXL = 0
-			if (cpu.delay_slot) {
+			if (cpu.delaySlot) {
 				EPC = cpu.pc - 4;
 				Cause |= 0x80000000;
 			} else {
@@ -472,6 +473,10 @@ public final class Coprocessor0 {
 		// TODO: TLB Miss
 		translationError = true;
 		return 0;
+	}
+
+	public boolean translationError() {
+		return translationError;
 	}
 
 	private static TlbEntryPage tlbMatch(TlbEntry entry, int address, int ASID) {

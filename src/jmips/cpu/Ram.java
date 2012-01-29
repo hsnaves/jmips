@@ -1,31 +1,48 @@
 package jmips.cpu;
 
-public final class Ram {
-	private final int size;
-	private final int[] memory;
+public final class Ram extends Device {
+	/* Generated serialVersionUID */
+	private static final long serialVersionUID = -7526192275199175167L;
 
-	public Ram(int size) {
-		this.size = size & (~3); // Always aligned by 4
+	private final int[] memory;
+	private final int size;
+
+	public Ram(int mappedOffset, int size) {
+		super(mappedOffset);
+		this.size = size & (~3);
 		memory = new int[this.size >> 2];
 	}
 
-	public int read32(int offset, boolean big_endian) {
-		if (big_endian) {
+	@Override
+	public String getDeviceName() {
+		return "ram";
+	}
+
+	@Override
+	public int getDeviceSize() {
+		return this.size;
+	}
+
+	@Override
+	public int read32(int offset, boolean bigEndian) {
+		if (bigEndian) {
 			return memory[offset >> 2];
 		} else {
 			return Utils.byteSwap(memory[offset >> 2]);
 		}
 	}
 
-	public void write32(int offset, int value, boolean big_endian) {
-		if (big_endian) {
+	@Override
+	public void write32(int offset, int value, boolean bigEndian) {
+		if (bigEndian) {
 			memory[offset >> 2] = value;
 		} else {
 			memory[offset >> 2] = Utils.byteSwap(value);
 		}
 	}
 
-	public short read16(int offset, boolean big_endian) {
+	@Override
+	public short read16(int offset, boolean bigEndian) {
 		int block = offset >> 2;
 		int portion = 2 - (offset & 2);
 		int val = memory[block];
@@ -34,20 +51,21 @@ public final class Ram {
 		v1 = (val >> (8 * portion)) & 0xFF;
 		v2 = (val >> (8 + 8 * portion)) & 0xFF;
 
-		if (big_endian) {
+		if (bigEndian) {
 			return ((short) (v2 << 8 | v1));
 		} else {
 			return ((short) (v1 << 8 | v2));
 		}
 	}
 
-	public void write16(int offset, short value, boolean big_endian) {
+	@Override
+	public void write16(int offset, short value, boolean bigEndian) {
 		int block = offset >> 2;
 		int portion = 2 - (offset & 2);
 		int val = memory[block];
 		int s = ((int) value) & 0xFFFF;
 
-		if (big_endian) {
+		if (bigEndian) {
 			s = ((int) value) & 0xFFFF;
 		} else {
 			s = (value >> 8) & 0xFF;
@@ -62,6 +80,7 @@ public final class Ram {
 		memory[block] = val;
 	}
 
+	@Override
 	public byte read8(int offset) {
 		int block = offset >> 2;
 		int portion = 3 - (offset & 3);
@@ -69,6 +88,7 @@ public final class Ram {
 		return (byte) ((val >> (8 * portion)) & 0xFF);
 	}
 
+	@Override
 	public void write8(int offset, byte value) {
 		int block = offset >> 2;
 		int portion = 3 - (offset & 3);
@@ -92,7 +112,7 @@ public final class Ram {
 		memory[block] = val;
 	}
 
-	public int size() {
-		return size;
+	@Override
+	public void reset() {
 	}
 }

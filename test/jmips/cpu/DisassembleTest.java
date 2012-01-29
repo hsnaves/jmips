@@ -9,7 +9,7 @@ import org.junit.Test;
 public class DisassembleTest {
 
 	private void disassemble(String fileName) throws Exception {
-		byte[] data = Utils.readFile(new FileInputStream("asm/ " + fileName));
+		byte[] data = Utils.readFile(new FileInputStream("asm/" + fileName));
 		System.out.println(fileName);
 		int pc = 0x08000000;
 		for(int i = 0; i < data.length / 4; i++) {

@@ -41,7 +41,7 @@ public class SwingTTY extends JComponent implements TTY {
 	private final List<Integer> escapeParameters = new LinkedList<Integer>();
 	private int currentEscapeParameter;
 
-	private final List<Byte> inputBytes = new ArrayList<Byte>();
+	private final List<Character> inputChars = new ArrayList<Character>();
 
 	private final TerminalCharacter[][] characterMap;
 	private final Timer cursorTimer;
@@ -77,7 +77,7 @@ public class SwingTTY extends JComponent implements TTY {
 			
 			@Override
 			public void keyTyped(KeyEvent event) {
-				appendByte((byte) event.getKeyChar());
+				appendCharacter(event.getKeyChar());
 			}
 
 			@Override
@@ -98,41 +98,21 @@ public class SwingTTY extends JComponent implements TTY {
 					}
 				} else {
 					if (event.getKeyCode() == KeyEvent.VK_UP) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) 65);
+						appendString("\u001B[A");
 					} else if (event.getKeyCode() == KeyEvent.VK_DOWN) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) 66);
+						appendString("\u001B[B");
 					} else if (event.getKeyCode() == KeyEvent.VK_LEFT) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) 68);
+						appendString("\u001B[D");
 					} else if (event.getKeyCode() == KeyEvent.VK_RIGHT) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) 67);
+						appendString("\u001B[C");
 					} else if (event.getKeyCode() == KeyEvent.VK_HOME) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) '0');
-						appendByte((byte) 'H');
+						appendString("\u001B[0H");
 					} else if (event.getKeyCode() == KeyEvent.VK_END) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) '0');
-						appendByte((byte) 'F');
+						appendString("\u001B[0F");
 					} else if (event.getKeyCode() == KeyEvent.VK_PAGE_UP) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) '5');
-						appendByte((byte) '~');
+						appendString("\u001B[5~");
 					} else if (event.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
-						appendByte((byte) 27);
-						appendByte((byte) 91);
-						appendByte((byte) '6');
-						appendByte((byte) '~');
+						appendString("\u001B[6~");
 					}
 				}
 			}
@@ -170,9 +150,15 @@ public class SwingTTY extends JComponent implements TTY {
 		this.echoEnabled = echoEnabled;
 	}
 
-	private void appendByte(byte b) {
-		inputBytes.add(b);
-		if (echoEnabled) write(b);
+	private void appendCharacter(char c) {
+		inputChars.add(c);
+		if (echoEnabled) write(c);
+	}
+
+	private void appendString(String str) {
+		for(int index = 0; index < str.length(); index++) {
+			appendCharacter(str.charAt(index));
+		}
 	}
 
 	public void open() {
@@ -289,7 +275,7 @@ public class SwingTTY extends JComponent implements TTY {
 	}
 
 	@Override
-	public void write(byte b) {
+	public void write(char c) {
 		if (this.displayRow != this.baseRow) {
 			this.cursorRow += this.cursorRowDifference;
 			this.displayRow = this.baseRow;
@@ -297,20 +283,20 @@ public class SwingTTY extends JComponent implements TTY {
 		this.cursorRowDifference = 0;
 
 		if (this.inputState == 0) {
-			switch(b) {
-			case 10:
+			switch(c) {
+			case '\n':
 				this.cursorRow++;
 				this.cursorColumn = 0;
 				break;
-			case 13:
+			case '\r':
 				this.cursorColumn = 0;
 				break;
-			case 8:
+			case '\u0008': // backspace
 				if (this.cursorColumn > 0) {
 					this.cursorColumn--;
 				}
 				break;
-			case 9:
+			case '\t':
 				int newcolumn = (this.cursorColumn + 8) & ~7;
 				if (newcolumn < numColumns) {
 					this.cursorColumn = newcolumn;
@@ -319,13 +305,13 @@ public class SwingTTY extends JComponent implements TTY {
 					this.cursorRow++;
 				}
 				break;
-			case 27:
+			case '\u001B': // ESC
 				this.inputState = 1;
 				break;
 			default:
 				int row = this.cursorRow + this.baseRow;
 				if (row >= totalRows) row -= totalRows;
-				characterMap[row][this.cursorColumn].change((char) b, currentForegroundColor, currentBackgroundColor);
+				characterMap[row][this.cursorColumn].change(c, currentForegroundColor, currentBackgroundColor);
 
 				this.cursorColumn++;
 				if (this.cursorColumn == numColumns) {
@@ -339,7 +325,7 @@ public class SwingTTY extends JComponent implements TTY {
 			}
 			showCursor();
 		} else if (this.inputState == 1) {
-			if (b == 91) {
+			if (c == '[') {
 				this.escapeParameters.clear();
 				this.currentEscapeParameter = 0;
 				this.inputState = 2;
@@ -347,43 +333,43 @@ public class SwingTTY extends JComponent implements TTY {
 				this.inputState = 0;
 			}
 		} else {
-			if (b >= 48 && b < 58) {
-				this.currentEscapeParameter = this.currentEscapeParameter * 10 + (b - 48);
+			if (c >= '0' && c <= '9') {
+				this.currentEscapeParameter = this.currentEscapeParameter * 10 + (c - '0');
 			} else {
 				this.escapeParameters.add(this.currentEscapeParameter);
 				this.currentEscapeParameter = 0;
-				if (b != 59) {
+				if (c != ';') {
 					int n;
-					switch(b) {
-					case 65:
+					switch(c) {
+					case 'A': // up
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
 						this.cursorRow -= n;
 						if (this.cursorRow < 0)
 							this.cursorRow = 0;
 						break;
-					case 66:
+					case 'B': // down
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
 						this.cursorRow += n;
 						if (this.cursorRow >= this.numRows)
 							this.cursorRow = this.numRows - 1;
 						break;
-					case 67:
+					case 'C': // right
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
 						this.cursorColumn += n;
 						if (this.cursorColumn >= this.numColumns)
 							this.cursorColumn = this.numColumns - 1;
 						break;
-					case 68:
+					case 'D': // left
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
 						this.cursorColumn -= n;
 						if (this.cursorColumn < 0)
 							this.cursorColumn = 0;
 						break;
-					case 72:
+					case 'H': // home
 						int newRow = this.escapeParameters.get(0) - 1;
 						int newColumn = 0;
 						if (this.escapeParameters.size() > 1) {
@@ -396,11 +382,11 @@ public class SwingTTY extends JComponent implements TTY {
 						this.cursorRow = newRow;
 						this.cursorColumn = newColumn;
 						break;
-					case 74:
+					case 'J':
 						break;
-					case 75:
+					case 'K':
 						break;
-					case 109:
+					case 'm':
 						for(int i = 0; i < this.escapeParameters.size(); i++) {
 							int p = this.escapeParameters.get(i);
 							if (p >= 30 && p <= 37) {
@@ -413,7 +399,7 @@ public class SwingTTY extends JComponent implements TTY {
 							}
 						}
 						break;
-					case 110:
+					case 'n':
 						break;
 					}
 					this.inputState = 0;
@@ -425,14 +411,18 @@ public class SwingTTY extends JComponent implements TTY {
 
 	@Override
 	public boolean available() {
-		return !inputBytes.isEmpty();
+		return !inputChars.isEmpty();
 	}
 
 	@Override
-	public byte read() {
-		return inputBytes.remove(0);
+	public char read() {
+		return inputChars.remove(0);
 	}
 
+	@Override
+	public void reset() {
+		open();
+	}
 
 	public static final int COLOR_BLACK = 0;
 	public static final int COLOR_RED = 1;
