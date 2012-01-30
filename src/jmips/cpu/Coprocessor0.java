@@ -233,7 +233,6 @@ public final class Coprocessor0 {
 			break;
 		case COP0_REG_COMPARE: // Compare
 			Compare = value;
-			cpu.setCounter(cpu.getCounter() + 1);
 			lowerIrq(TIMER_IRQ);
 			break;
 		case COP0_REG_STATUS: // Status
@@ -412,21 +411,21 @@ public final class Coprocessor0 {
 		Wired = 0;
 		Config = changeValue(Config, 2, 0x07);
 		writeStatus(changeValue(Status, STATUS_BEV | STATUS_ERL, STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 8 : cpu.getProgramCounter() - 4;
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
 
 		cpu.setProgramCounter(0xBFC00000);
 	}
 
 	public void exception_SOFT_RESET() {
 		writeStatus(changeValue(Status, STATUS_SR | STATUS_BEV | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 8 : cpu.getProgramCounter() - 4;
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
 
 		cpu.setProgramCounter(0xBFC00000);
 	}
 
 	public void exception_NMI() {
 		writeStatus(changeValue(Status, STATUS_BEV | STATUS_NMI | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 8 : cpu.getProgramCounter() - 4;
+		ErrorEPC = (cpu.isBranchDelaySlot()) ? cpu.getProgramCounter() - 4 : cpu.getProgramCounter();
 
 		cpu.setProgramCounter(0xBFC00000);
 	}
@@ -436,10 +435,10 @@ public final class Coprocessor0 {
 
 		if ((Status & STATUS_EXL) == 0) {
 			if (cpu.isBranchDelaySlot()) {
-				EPC = cpu.getProgramCounter() - 8;
+				EPC = cpu.getProgramCounter() - 4;
 				Cause |= CAUSE_BD;
 			} else {
-				EPC = cpu.getProgramCounter() - 4;
+				EPC = cpu.getProgramCounter();
 				Cause &= ~CAUSE_BD;
 			}
 			if (offsetToZero) {

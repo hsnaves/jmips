@@ -96,7 +96,7 @@ public final class Cpu {
 	/* Instance fields */
 	private final int[] gpr = new int[32];
 	private int hi, lo;
-	private int pc, nextPc;
+	private int pc, _nextPc, nextPc;
 	private long counter;
 	private boolean delaySlot, nextDelaySlot;
 
@@ -154,6 +154,7 @@ public final class Cpu {
 
 	public void setProgramCounter(int pc) {
 		this.pc = pc;
+		this._nextPc = pc;
 		this.nextPc = pc + 4;
 		this.delaySlot = false;
 		this.nextDelaySlot = false;
@@ -233,7 +234,9 @@ public final class Cpu {
 			return 0;
 		}
 
+		//if (linked) pc += 4;
 		int physicalAddress = cop0.translate(address, false, true);
+		//if (linked) pc -= 4;
 		if (cop0.translationError()) {
 			success = false;
 			return 0;
@@ -244,8 +247,8 @@ public final class Cpu {
 			cop0.exception_BUS_ERROR(true);
 			return 0;
 		}
-		success = true;
 		if (linked) cop0.loadLinked(physicalAddress);
+		success = true;
 		return v;
 	}
 
@@ -288,13 +291,14 @@ public final class Cpu {
 			return false;
 		}
 
+		if (conditional && !cop0.canStoreConditional()) {
+			success = true;
+			return false;
+		}
+
 		int physicalAddress = cop0.translate(address, true, true);
 		if (cop0.translationError()) {
 			success = false;
-			return false;
-		}
-		if (conditional && !cop0.canStoreConditional()) {
-			success = true;
 			return false;
 		}
 		memoryManager.write32(physicalAddress, value, isBigEndian());
@@ -427,11 +431,12 @@ public final class Cpu {
 				}
 			}
 			if (success) {
-				delaySlot = nextDelaySlot;
 				nextDelaySlot = false;
-				pc = nextPc;
-				nextPc = pc + 4;
+				_nextPc = nextPc;
+				nextPc = nextPc + 4;
 				microstep(opcode);
+				delaySlot = nextDelaySlot;
+				pc = _nextPc;
 			}
 		}
 		int after = getCounter();
@@ -872,7 +877,7 @@ public final class Cpu {
 	}
 
 	private void j(int opcode) {
-		nextPc = I_JUMP(opcode, pc - 4);
+		nextPc = I_JUMP(opcode, pc);
 		nextDelaySlot = true;
 	}
 
@@ -1436,7 +1441,7 @@ public final class Cpu {
 	}
 
 	private void branch(int opcode) {
-		nextPc = I_BRANCH(opcode, pc - 4);
+		nextPc = I_BRANCH(opcode, pc);
 		nextDelaySlot = true;
 	}
 
@@ -1445,11 +1450,11 @@ public final class Cpu {
 	}
 
 	private void link(int regno) {
-		setGpr(regno, pc + 4);
+		setGpr(regno, _nextPc + 4);
 	}
 
 	private void skipDelaySlot() {
-		pc += 4;
+		_nextPc += 4;
 	}
 
 	private void trap() {

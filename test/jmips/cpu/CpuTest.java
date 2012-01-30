@@ -31,6 +31,7 @@ public class CpuTest {
 	public void testADD() {
 		Cpu cpu = createCpu();
 
+		reset(cpu);
 		cpu.write32(BASE_ADDRESS, 0x00851020); // add $v0,$a0,$a1
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_A1, 2);
