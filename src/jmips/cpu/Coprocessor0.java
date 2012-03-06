@@ -233,6 +233,7 @@ public final class Coprocessor0 {
 			break;
 		case COP0_REG_COMPARE: // Compare
 			Compare = value;
+			//cpu.setCounter(cpu.getCounter() + 1);
 			lowerIrq(TIMER_IRQ);
 			break;
 		case COP0_REG_STATUS: // Status
@@ -561,12 +562,9 @@ public final class Coprocessor0 {
 	}
 
 	public boolean checkTimerInterrupt(int before, int after) {
-		if (after != Compare) return false;
-		//int cmp1 = Utils.compareUnsigned(before, Compare); 
-		//if (cmp1 > 0) return false;
-		//if (cmp1 < 0) {
-		//	if ((after - before) < (Compare - before)) return false;
-		//}
+		//if (after != Compare || before == after) return false;
+		if (Utils.compareUnsigned(before, Compare) >= 0) return false;
+		if (Utils.compareUnsigned(after - before, Compare - before) < 0) return false;
 
 		raiseIrq(TIMER_IRQ);
 		checkInterrupts();
@@ -576,6 +574,10 @@ public final class Coprocessor0 {
 	public void loadLinked(int physicalAddress) {
 		loadLinkedStatus = true;
 		LLAddr = physicalAddress >>> 4;
+	}
+
+	public void cancelStoreConditional() {
+		loadLinkedStatus = false;
 	}
 
 	public boolean canStoreConditional() {
@@ -738,7 +740,10 @@ public final class Coprocessor0 {
 	}
 
 	public void tlbWriteIndex() {
-		tlbWrite(Index & INDEX_MASK);
+		if ((Index & INDEX_PROBE) == 0)
+			tlbWrite(Index & INDEX_MASK);
+		else
+			tlbWriteRandom();
 	}
 
 	private static final class TlbEntry {

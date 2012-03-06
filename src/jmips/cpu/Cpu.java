@@ -234,9 +234,7 @@ public final class Cpu {
 			return 0;
 		}
 
-		//if (linked) pc += 4;
 		int physicalAddress = cop0.translate(address, false, true);
-		//if (linked) pc -= 4;
 		if (cop0.translationError()) {
 			success = false;
 			return 0;
@@ -261,6 +259,7 @@ public final class Cpu {
 		memoryManager.write8(physicalAddress, value);
 		success = !memoryManager.error();
 		if (!success) cop0.exception_BUS_ERROR(true);
+		else cop0.cancelStoreConditional();
 	}
 
 	public void write16(int address, short value) {
@@ -278,6 +277,7 @@ public final class Cpu {
 		memoryManager.write16(physicalAddress, value, isBigEndian());
 		success = !memoryManager.error();
 		if (!success) cop0.exception_BUS_ERROR(true);
+		else cop0.cancelStoreConditional();
 	}
 
 	public void write32(int address, int value) {
@@ -304,6 +304,7 @@ public final class Cpu {
 		memoryManager.write32(physicalAddress, value, isBigEndian());
 		success = !memoryManager.error();
 		if (!success) cop0.exception_BUS_ERROR(true);
+		else cop0.cancelStoreConditional();
 		return success;
 	}
 

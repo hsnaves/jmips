@@ -18,6 +18,7 @@ public class Main {
 	private static final int UART_BASE = 0x1FD003F8;
 	private static final int RTC_BASE = 0x1FD00070;
 	private static final int BASE_ADDRESS = 0x80100000;
+	private static final int INITRD_ADDRESS = 0x80377000;
 
 	private static JFrame createConsoleFrame() {
 		JFrame frame = new JFrame("JMIPS");
@@ -60,10 +61,20 @@ public class Main {
 		for(int i = 0; i < data.length; i++) {
 			cpu.write8(BASE_ADDRESS + i, data[i]);
 			if (!cpu.success()) {
-				System.out.println("Error");
+				System.out.println("Error loading linux");
 				return;
 			}
 		}
+
+		data = Utils.readFile(new FileInputStream("initrd.gz"));
+		for(int i = 0; i < data.length; i++) {
+			cpu.write8(INITRD_ADDRESS + i, data[i]);
+			if (!cpu.success()) {
+				System.out.println("Error loading inird");
+				return;
+			}
+		}
+
 		for(int i = 0; i < 500000000; i++) {
 			if (cpu.isHalted()) break;
 			cpu.step();
