@@ -1,0 +1,5 @@
+
+Todo:
+- Implement an automatic building process (maybe ant?)
+- Implement dynamic recompilation
+- Provide a minimal linux distro in order to test
