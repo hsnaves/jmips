@@ -1,0 +1,89 @@
+<project name="jmips" basedir="." default="main">
+    <description>
+       Build file for the jmips project.
+    </description>
+
+    <property name="src.dir"          value="src"/>
+    <property name="test-src.dir"     value="test"/>
+
+    <property name="build.dir"        value="build"/>
+    <property name="classes.dir"      value="${build.dir}/classes"/>
+    <property name="test-classes.dir" value="${build.dir}/test-classes"/>
+    <property name="report.dir"       value="${build.dir}/junit"/>
+    <property name="jar.dir"          value="${build.dir}/jar"/>
+
+    <property name="main-class"       value="jmips.Main"/>
+
+    <path id="base.path">
+        <pathelement path="${classpath}"/>
+        <fileset dir="lib">
+            <include name="*.jar"/>
+            <exclude name="*junit*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="tests.path">
+        <path refid="base.path"/>
+        <fileset dir="lib">
+            <include name="*.jar"/>
+        </fileset>
+        <dirset dir="${classes.dir}" />
+    </path>
+
+    <path id="junit.path">
+        <path refid="tests.path"/>
+        <dirset dir="${test-classes.dir}" />
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false"/>
+    </target>
+
+    <target name="compile-tests" depends="compile">
+        <mkdir dir="${test-classes.dir}"/>
+        <javac srcdir="${test-src.dir}" destdir="${test-classes.dir}" includeantruntime="false">
+            <classpath refid="tests.path" />
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="test" depends="compile-tests">
+        <mkdir dir="${report.dir}"/>
+        <junit printsummary="yes">
+            <classpath refid="junit.path" />
+            
+            <formatter type="xml"/>
+            
+            <batchtest fork="yes" todir="${report.dir}">
+                <fileset dir="${test-classes.dir}" includes="**/*Test.class"/>
+            </batchtest>
+        </junit>
+    </target>
+    
+    <target name="report">
+        <junitreport todir="${report.dir}">
+            <fileset dir="${report.dir}" includes="TEST-*.xml"/>
+            <report todir="${report.dir}"/>
+        </junitreport>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="${jar.dir}/${ant.project.name}.jar" fork="true"/>
+    </target>
+
+    <target name="clean-build" depends="clean,jar"/>
+    <target name="main" depends="clean,test,report"/>
+</project>
