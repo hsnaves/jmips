@@ -1,8 +1,16 @@
 package jmips.cpu;
 
-public final class Cpu {
+import java.io.Serializable;
+import java.util.Random;
 
-	/* Register constants */
+/**
+ * Java implementation of a MIPS32 4Kc processor
+ */
+public final class Cpu implements Serializable {
+	/* Generated serialVersionUID */
+	private static final long serialVersionUID = -3521187175092175557L;
+
+	// Register constants
 	public static final int GPR_ZR = 0;
 	public static final int GPR_AT = 1;
 	public static final int GPR_V0 = 2;
@@ -36,64 +44,119 @@ public final class Cpu {
 	public static final int GPR_FP = 30;
 	public static final int GPR_RA = 31;
 
-	/* Auxiliary functions to decode the opcode */
-	public static int I_OP(int opcode) {
-		return (opcode >>> 26);
-	}
+	// Coprocessor0 register constants
+	public static final int COP0_REG_INDEX = 0;            // Index into TLB array
+	public static final int COP0_REG_RANDOM = 1;           // Random generated index into the TLB array
+	public static final int COP0_REG_ENTRYLO0 = 2;         // Low portion of the TLB entry for even virtual pages
+	public static final int COP0_REG_ENTRYLO1 = 3;         // Low portion of the TLB entry for odd virtual pages
+	public static final int COP0_REG_CONTEXT = 4;          // Pointer to page table entry in memory
+	public static final int COP0_REG_PAGEMASK = 5;         // Controls the page sizes in TLB entries
+	public static final int COP0_REG_WIRED = 6;            // Controls the number of fixed TLB entries
+	public static final int COP0_REG_RESERVED1 = 7;        // Reserved
+	public static final int COP0_REG_BADVADDR = 8;         // ASddress for the most recent address-related exception
+	public static final int COP0_REG_COUNT = 9;            // Processor cycle count
+	public static final int COP0_REG_ENTRYHI = 10;         // High-order portion of the TLB entry
+	public static final int COP0_REG_COMPARE = 11;         // Timer interrupt control
+	public static final int COP0_REG_STATUS = 12;          // Processor status and control
+	public static final int COP0_REG_CAUSE = 13;           // Cause of last exception
+	public static final int COP0_REG_EPC = 14;             // Program counter at last exception
+	public static final int COP0_REG_PRID = 15;            // Processor identification and revision
+	public static final int COP0_REG_CONFIG = 16;          // Configuration registers
+	public static final int COP0_REG_LLADDR = 17;          // Load linked address
+	public static final int COP0_REG_WATCHLO = 18;         // Watchpoint address(low order)
+	public static final int COP0_REG_WATCHHI = 19;         // Watchpoint address(high order) and mask
+	public static final int COP0_REG_RESERVED2 = 20;       // Reserved
+	public static final int COP0_REG_RESERVED3 = 21;       // Reserved
+	public static final int COP0_REG_RESERVED4 = 22;       // Reserved
+	public static final int COP0_REG_DEBUG = 23;           // Debug control and exception status
+	public static final int COP0_REG_DEPC = 24;            // Program counter at last debug exception
+	public static final int COP0_REG_RESERVED5 = 25;       // Reserved
+	public static final int COP0_REG_ERRCTRL = 26;         // Control access to data for CACHE instruction
+	public static final int COP0_REG_RESERVED6 = 27;       // Reserved
+	public static final int COP0_REG_TAGLO = 28;           // Low-order portion of cache tag interface
+	public static final int COP0_REG_RESERVED7 = 29;       // Reserved
+	public static final int COP0_REG_ERROREPC = 30;        // Program counter at last error
+	public static final int COP0_REG_DESAVE = 31;          // Debug handler scratchpad register
 
-	public static int I_FUNCT(int opcode) {
-		return opcode & 0x3F;
-	}
 
-	public static int I_RS(int opcode) {
-		return ((opcode >> 21) & 0x1F);
-	}
+	// Exception codes
+	public static final int EXCEPTION_CODE_INT = 0;        // Interrupt
+	public static final int EXCEPTION_CODE_MOD = 1;        // TLB modification exception
+	public static final int EXCEPTION_CODE_TLBL = 2;       // TLB exception (load or instruction fetch)
+	public static final int EXCEPTION_CODE_TLBS = 3;       // TLB exception (store)
+	public static final int EXCEPTION_CODE_ADEL = 4;       // Address error exception (load or instruction fetch)
+	public static final int EXCEPTION_CODE_ADES = 5;       // Address error exception (store)
+	public static final int EXCEPTION_CODE_IBE = 6;        // Bus Error exception (instruction fetch)
+	public static final int EXCEPTION_CODE_DBE = 7;        // Bus Error exception (data reference: load or store)
+	public static final int EXCEPTION_CODE_SYS = 8;        // Syscall exception
+	public static final int EXCEPTION_CODE_BP = 9;         // Breakpoint exception
+	public static final int EXCEPTION_CODE_RI = 10;        // Reserved Instruction exception
+	public static final int EXCEPTION_CODE_CPU = 11;       // Coprocessor Unusable exception
+	public static final int EXCEPTION_CODE_OV = 12;        // Overflow exception
+	public static final int EXCEPTION_CODE_TR = 13;        // Trap exception
+	public static final int EXCEPTION_CODE_WATCH = 23;     // Refrence to WatchHi/WatchLo address
+	public static final int EXCEPTION_CODE_MCHECK = 24;    // Machine check exception
 
-	public static int I_RT(int opcode) {
-		return ((opcode >> 16) & 0x1F);
-	}
+	// Number of TLB entries in Cop0
+	public static final int NUM_TLB_ENTRIES = 16;
 
-	public static int I_RD(int opcode) {
-		return ((opcode >> 11) & 0x1F);
-	}
+	// Some bitmasks inside Cop0 registers
+	private static final int INDEX_MASK  = 0x0000000F;
+	private static final int INDEX_PROBE = 0x80000000;
 
-	public static int I_SA(int opcode) {
-		return ((opcode >> 6) & 0x1F);
-	}
+	private static final int ENTRYLO_GLOBAL    = 0x00000001;
+	private static final int ENTRYLO_VALID     = 0x00000002;
+	private static final int ENTRYLO_DIRTY     = 0x00000004;
+	private static final int ENTRYLO_PFN_MASK  = 0x03FFFFC0;
+	private static final int ENTRYLO_COHERENCY_MASK  = 0x00000038;
+	private static final int ENTRYLO_COHERENCY_SHIFT = 3;
+	private static final int ENTRYLO_WRITE_MASK = ENTRYLO_GLOBAL | ENTRYLO_VALID | ENTRYLO_DIRTY |
+	                                              ENTRYLO_PFN_MASK | ENTRYLO_COHERENCY_MASK;
 
-	public static int I_IMM16(int opcode) {
-		return (int) ((short) opcode);
-	}
+	private static final int ENTRYHI_ASID_MASK = 0x000000FF;
+	private static final int ENTRYHI_VPN2_MASK = 0xFFFFE000;
+	private static final int ENTRYHI_WRITE_MASK = ENTRYHI_ASID_MASK | ENTRYHI_VPN2_MASK;
 
-	public static int I_IMM16U(int opcode) {
-		return opcode & 0xFFFF;
-	}
+	private static final int STATUS_IE  = 0x00000001;
+	private static final int STATUS_EXL = 0x00000002;
+	private static final int STATUS_ERL = 0x00000004;
+	private static final int STATUS_UM  = 0x00000010;
+	private static final int STATUS_INT_MASK  = 0x0000FF00;
+	private static final int STATUS_INT_SHIFT = 8;
+	private static final int STATUS_NMI = 0x00080000;
+	private static final int STATUS_SR  = 0x00100000;
+	private static final int STATUS_TS  = 0x00200000;
+	private static final int STATUS_BEV = 0x00400000;
+	private static final int STATUS_RE  = 0x02000000;
+	private static final int STATUS_RP  = 0x08000000;
+	private static final int STATUS_COP_MASK  = 0xF0000000;
+	private static final int STATUS_COP_SHIFT = 28;
+	private static final int STATUS_WRITE_MASK = STATUS_IE | STATUS_EXL | STATUS_ERL | STATUS_UM | STATUS_INT_MASK |
+	                                             STATUS_NMI | STATUS_SR | STATUS_TS | STATUS_BEV | STATUS_RE |
+	                                             STATUS_RP | STATUS_COP_MASK;
 
-	public static int I_BRANCH(int opcode, int pc) {
-		return pc + 4 + 4 * I_IMM16(opcode);
-	}
+	private static final int CAUSE_EXCCODE_MASK  = 0x0000007C;
+	private static final int CAUSE_EXCCODE_SHIFT = 2;
+	private static final int CAUSE_INTERRUPT_MASK = 0x0000FF00;
+	private static final int CAUSE_INTERRUPT_SHIFT = 8;
+	private static final int CAUSE_WP = 0x00400000;
+	private static final int CAUSE_IV = 0x00800000;
+	private static final int CAUSE_CE_MASK = 0x30000000;
+	private static final int CAUSE_CE_SHIFT = 28;
+	private static final int CAUSE_BD = 0x80000000;
+	private static final int CAUSE_WRITE_MASK = (3 << CAUSE_INTERRUPT_SHIFT) | CAUSE_WP | CAUSE_IV;
 
-	public static int I_JUMP(int opcode, int pc) {
-		return ((pc & 0xF0000000) | ((opcode & 0x3FFFFFF) << 2));
-	}
+	private static final int CONTEXT_PTE_MASK = 0xFF800000;
+	private static final int CONTEXT_WRITE_MASK = CONTEXT_PTE_MASK;
 
-	public static int I_SYSCALLCODE(int opcode) {
-		return ((opcode >> 6) & 0xFFFFF);
-	}
+	// Timer IRQ
+	private static final int TIMER_IRQ = 7;
 
-	public static int I_TRAPCODE(int opcode) {
-		return ((opcode >> 6) & 0x3FF);
-	}
+	//private static final boolean[] CACHEABILITY = {
+	//	true, true, false, true, true, true, true, false
+	//};
 
-	public static int I_WAITCODE(int opcode) {
-		return ((opcode >> 6) & 0x7FFFF);
-	}
-
-	public static int I_COP0SEL(int opcode) {
-		return (opcode & 0x07);
-	}
-
-	/* Instance fields */
+	// Instance fields
 	private final int[] gpr = new int[32];
 	private int hi, lo;
 	private int pc, _nextPc, nextPc;
@@ -103,12 +166,57 @@ public final class Cpu {
 	boolean halted;
 	private boolean success;
 
-	private final Coprocessor0 cop0;
 	private final MemoryManager memoryManager;
 
+	// Coprocessor0 Instance fields
+	private int Index;
+	private int EntryLo0;
+	private int EntryLo1;
+	private int Context;
+	private int PageMask;
+	private int Wired;
+	private int Reserved1;
+	private int BadVAddr;
+	private int EntryHi;
+	private int Compare;
+	private int Status;
+	private int Cause;
+	private int EPC;
+	private final int PRId = 0x0001800B; // Revision 1.1
+	private int Config = 0x80008082;
+	private final int Config1 = 0x1E000000; // no cache, no fpu, no ejtag, no mips16, no watch and no performance counter
+	private int LLAddr;
+	private int WatchLo;
+	private int WatchHi;
+	private int Reserved2;
+	private int Reserved3;
+	private int Reserved4;
+	private int Debug;
+	private int DEPC;
+	private int Reserved5;
+	private int ErrCtrl;
+	private int Reserved6;
+	private int TagLo, DataLo;
+	private int Reserved7;
+	private int ErrorEPC;
+	private int DESAVE;
+
+	private boolean kernelMode= true;
+	private boolean bigEndian = true;
+	private int ASID;
+
+	private boolean translationError;
+	private boolean loadLinkedStatus = false;
+
+	private final Random rand = new Random(System.currentTimeMillis());
+	private final TlbEntry[] tlbEntries = new TlbEntry[NUM_TLB_ENTRIES];;
+	private TlbEntry lastTlbEntryCode;
+	private TlbEntry lastTlbEntryData;
+
 	public Cpu(int ramOffset, int ramSize) {
-		this.cop0 = new Coprocessor0(this);
 		this.memoryManager = new MemoryManager(ramOffset, ramSize);
+		initTLB();
+		hardReset();
 	}
 
 	public MemoryManager getMemoryManager() {
@@ -116,12 +224,12 @@ public final class Cpu {
 	}
 
 	public void hardReset() {
-		cop0.hardReset();
+		resetTLB();
 		reset();
 	}
 
 	public void reset() {
-		cop0.exception_RESET();
+		exception_RESET();
 	}
 
 	public void setGpr(int regno, int val) {
@@ -181,20 +289,16 @@ public final class Cpu {
 		return delaySlot;
 	}
 
-	public boolean isBigEndian() {
-		return cop0.isBigEndian();
-	}
-
 	public byte read8(int address) {
-		int physicalAddress = cop0.translate(address, false, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(address, false, true);
+		if (translationError) {
 			success = false;
 			return 0;
 		}
 		byte b = memoryManager.read8(physicalAddress);
 		if (memoryManager.error()) {
 			success = false;
-			cop0.exception_BUS_ERROR(true);
+			exception_BUS_ERROR(true);
 			return 0;
 		}
 		success = true;
@@ -203,20 +307,20 @@ public final class Cpu {
 
 	public short read16(int address) {
 		if ((address & 1) != 0) {
-			cop0.exception_ADDRESS_ERROR(address, true);
+			exception_ADDRESS_ERROR(address, true);
 			success = false;
 			return 0;
 		}
 
-		int physicalAddress = cop0.translate(address, false, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(address, false, true);
+		if (translationError) {
 			success = false;
 			return 0;
 		}
-		short s = memoryManager.read16(physicalAddress, isBigEndian());
+		short s = memoryManager.read16(physicalAddress, bigEndian);
 		if (memoryManager.error()) {
 			success = false;
-			cop0.exception_BUS_ERROR(true);
+			exception_BUS_ERROR(true);
 			return 0;
 		}
 		success = true;
@@ -229,55 +333,55 @@ public final class Cpu {
 
 	public int read32(int address, boolean linked) {
 		if ((address & 3) != 0) {
-			cop0.exception_ADDRESS_ERROR(address, true);
+			exception_ADDRESS_ERROR(address, true);
 			success = false;
 			return 0;
 		}
 
-		int physicalAddress = cop0.translate(address, false, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(address, false, true);
+		if (translationError) {
 			success = false;
 			return 0;
 		}
-		int v = memoryManager.read32(physicalAddress, isBigEndian());
+		int v = memoryManager.read32(physicalAddress, bigEndian);
 		if (memoryManager.error()) {
 			success = false;
-			cop0.exception_BUS_ERROR(true);
+			exception_BUS_ERROR(true);
 			return 0;
 		}
-		if (linked) cop0.loadLinked(physicalAddress);
+		if (linked) loadLinked(physicalAddress);
 		success = true;
 		return v;
 	}
 
 	public void write8(int address, byte value) {
-		int physicalAddress = cop0.translate(address, true, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(address, true, true);
+		if (translationError) {
 			success = false;
 			return;
 		}
 		memoryManager.write8(physicalAddress, value);
 		success = !memoryManager.error();
-		if (!success) cop0.exception_BUS_ERROR(true);
-		else cop0.cancelStoreConditional();
+		if (!success) exception_BUS_ERROR(true);
+		else cancelStoreConditional();
 	}
 
 	public void write16(int address, short value) {
 		if ((address & 1) != 0) {
-			cop0.exception_ADDRESS_ERROR(address, false);
+			exception_ADDRESS_ERROR(address, false);
 			success = false;
 			return;
 		}
 
-		int physicalAddress = cop0.translate(address, true, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(address, true, true);
+		if (translationError) {
 			success = false;
 			return;
 		}
-		memoryManager.write16(physicalAddress, value, isBigEndian());
+		memoryManager.write16(physicalAddress, value, bigEndian);
 		success = !memoryManager.error();
-		if (!success) cop0.exception_BUS_ERROR(true);
-		else cop0.cancelStoreConditional();
+		if (!success) exception_BUS_ERROR(true);
+		else cancelStoreConditional();
 	}
 
 	public void write32(int address, int value) {
@@ -286,25 +390,25 @@ public final class Cpu {
 
 	public boolean write32(int address, int value, boolean conditional) {
 		if ((address & 3) != 0) {
-			cop0.exception_ADDRESS_ERROR(address, false);
+			exception_ADDRESS_ERROR(address, false);
 			success = false;
 			return false;
 		}
 
-		if (conditional && !cop0.canStoreConditional()) {
+		if (conditional && !canStoreConditional()) {
 			success = true;
 			return false;
 		}
 
-		int physicalAddress = cop0.translate(address, true, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(address, true, true);
+		if (translationError) {
 			success = false;
 			return false;
 		}
-		memoryManager.write32(physicalAddress, value, isBigEndian());
+		memoryManager.write32(physicalAddress, value, bigEndian);
 		success = !memoryManager.error();
-		if (!success) cop0.exception_BUS_ERROR(true);
-		else cop0.cancelStoreConditional();
+		if (!success) exception_BUS_ERROR(true);
+		else cancelStoreConditional();
 		return success;
 	}
 
@@ -312,7 +416,7 @@ public final class Cpu {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
 		if (success) {
-			int shift = (isBigEndian()) ? (address & 3) : 3 - (address & 3);
+			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			return (oldValue & ~((-1) << shift)) | (value << shift); 
 		}
@@ -323,7 +427,7 @@ public final class Cpu {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
 		if (success) {
-			int shift = (!isBigEndian()) ? (address & 3) : 3 - (address & 3);
+			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			return (oldValue & ~((-1) >>> shift)) | (value >>> shift); 
 		}
@@ -332,86 +436,68 @@ public final class Cpu {
 
 	public void write32UnalignedLeft(int address, int value) {
 		int alignedAddress = address & (~3);
-		int physicalAddress = cop0.translate(alignedAddress, true, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(alignedAddress, true, true);
+		if (translationError) {
 			success = false;
 			return;
 		}
-		int oldValue = memoryManager.read32(physicalAddress, isBigEndian());
+		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
 		success = !memoryManager.error();
 
 		if (success) {
-			int shift = (isBigEndian()) ? (address & 3) : 3 - (address & 3);
+			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			int newValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
-			memoryManager.write32(physicalAddress, newValue, isBigEndian());
+			memoryManager.write32(physicalAddress, newValue, bigEndian);
 			success = !memoryManager.error();
 		}
-		if (!success) cop0.exception_BUS_ERROR(true);
+		if (!success) exception_BUS_ERROR(true);
 	}
 
 	public void write32UnalignedRight(int address, int value) {
 		int alignedAddress = address & (~3);
-		int physicalAddress = cop0.translate(alignedAddress, true, true);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(alignedAddress, true, true);
+		if (translationError) {
 			success = false;
 			return;
 		}
-		int oldValue = memoryManager.read32(physicalAddress, isBigEndian());
+		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
 		success = !memoryManager.error();
 
 		if (success) {
-			int shift = (!isBigEndian()) ? (address & 3) : 3 - (address & 3);
+			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			int newValue = (oldValue & ~((-1) << shift)) | (value << shift); 
-			memoryManager.write32(physicalAddress, newValue, isBigEndian());
+			memoryManager.write32(physicalAddress, newValue, bigEndian);
 			success = !memoryManager.error();
 		}
-		if (!success) cop0.exception_BUS_ERROR(true);
+		if (!success) exception_BUS_ERROR(true);
 	}
 
 	public boolean success() {
 		return success;
 	}
 
-	public void raiseIrq(int irqno) {
-		cop0.raiseIrq(irqno);
-	}
-
-	public void lowerIrq(int irqno) {
-		cop0.lowerIrq(irqno);
-	}
-
-	public boolean checkInterrupts() {
-		return cop0.checkInterrupts();
-	}
-
 	public int fetchOpcode() {
 		if ((pc & 3) != 0) {
-			cop0.exception_ADDRESS_ERROR(pc, true);
+			exception_ADDRESS_ERROR(pc, true);
 			success = false;
 			return 0;
 		}
 
-		int physicalAddress = cop0.translate(pc, false, false);
-		if (cop0.translationError()) {
+		int physicalAddress = translate(pc, false, false);
+		if (translationError) {
 			success = false;
 			return 0;
 		}
-		int v = memoryManager.read32(physicalAddress, isBigEndian());
+		int v = memoryManager.read32(physicalAddress, bigEndian);
 		if (memoryManager.error()) {
 			success = false;
-			cop0.exception_BUS_ERROR(false);
+			exception_BUS_ERROR(false);
 			return 0;
 		}
 		success = true;
 		return v;
-	}
-
-	public String disassemble() {
-		int opcode = fetchOpcode();
-		if (success) return Disassemble.disassemble(pc, opcode);
-		return null;
 	}
 
 	public void step() {
@@ -441,7 +527,7 @@ public final class Cpu {
 			}
 		}
 		int after = getCounter();
-		cop0.checkTimerInterrupt(before, after);
+		checkTimerInterrupt(before, after);
 	}
 
 	private void microstep(int opcode) {
@@ -824,7 +910,7 @@ public final class Cpu {
 	}
 
 	private void break_(int opcode) {
-		cop0.exception_BREAK();
+		exception_BREAK();
 	}
 
 	private void cache(int opcode) {
@@ -873,7 +959,7 @@ public final class Cpu {
 
 	private void eret(int opcode) {
 		if (checkCoprocessor(0)) {
-			cop0.returnFromException();
+			returnFromException();
 		}
 	}
 
@@ -1009,7 +1095,7 @@ public final class Cpu {
 			int rt = I_RT(opcode);
 			int rd = I_RD(opcode);
 			int sel = I_COP0SEL(opcode);
-			setGpr(rt, cop0.moveFromCoprocessor(rd, sel));
+			setGpr(rt, moveFromCoprocessor(rd, sel));
 		}
 	}
 
@@ -1060,7 +1146,7 @@ public final class Cpu {
 			int rt = I_RT(opcode);
 			int rd = I_RD(opcode);
 			int sel = I_COP0SEL(opcode);
-			cop0.moveToCoprocessor(rd, sel, gpr[rt]);
+			moveToCoprocessor(rd, sel, gpr[rt]);
 		}
 	}
 
@@ -1268,7 +1354,7 @@ public final class Cpu {
 	}
 
 	private void syscall(int opcode) {
-		cop0.exception_SYSCALL();
+		exception_SYSCALL();
 	}
 
 	private void teq(int opcode) {
@@ -1321,25 +1407,25 @@ public final class Cpu {
 
 	private void tlbp(int opcode) {
 		if (checkCoprocessor(0)) {
-			cop0.tlbProbe();
+			tlbProbe();
 		}
 	}
 
 	private void tlbr(int opcode) {
 		if (checkCoprocessor(0)) {
-			cop0.tlbRead();
+			tlbRead();
 		}
 	}
 
 	private void tlbwi(int opcode) {
 		if (checkCoprocessor(0)) {
-			cop0.tlbWriteIndex();
+			tlbWriteIndex();
 		}
 	}
 
 	private void tlbwr(int opcode) {
 		if (checkCoprocessor(0)) {
-			cop0.tlbWriteRandom();
+			tlbWriteRandom();
 		}
 	}
 
@@ -1413,16 +1499,16 @@ public final class Cpu {
 
 	private void invalid(int copno) {
 		if (checkCoprocessor(copno))
-			cop0.exception_RESERVED();
+			exception_RESERVED();
 	}
 
 	private void reserved() {
-		cop0.exception_RESERVED();
+		exception_RESERVED();
 	}
 
 	private boolean checkCoprocessor(int copno) {
-		if (!cop0.isCoprocessorAvailable(copno)) {
-			cop0.exception_COPROCESS_UNUSABLE(copno);
+		if (!isCoprocessorAvailable(copno)) {
+			exception_COPROCESS_UNUSABLE(copno);
 			return false;
 		}
 		return true;
@@ -1437,7 +1523,7 @@ public final class Cpu {
 			overflow = ((a <= 0) && (b > 0) && (result > 0)) ||
 			           ((a >= 0) && (b < 0) && (result < 0));
 		}
-		if (overflow) cop0.exception_INTEGER_OVERFLOW();
+		if (overflow) exception_INTEGER_OVERFLOW();
 		return overflow;
 	}
 
@@ -1459,6 +1545,685 @@ public final class Cpu {
 	}
 
 	private void trap() {
-		cop0.exception_TRAP();
+		exception_TRAP();
+	}
+
+
+	public boolean isCoprocessorAvailable(int copno) {
+		if (copno == 0 && kernelMode) return true;
+		return (Status & (1 << (STATUS_COP_SHIFT + copno))) != 0;
+	}
+
+	private int readRegisterRandom() {
+		return Wired + rand.nextInt(NUM_TLB_ENTRIES - Wired);
+	}
+
+	private static int changeValue(int oldValue, int newValue, int mask) {
+		return (oldValue & ~ mask) | (newValue & mask);
+	}
+
+	private void writeStatus(int value) {
+		Status = value & STATUS_WRITE_MASK;
+		kernelMode = (value & (STATUS_UM | STATUS_EXL | STATUS_ERL)) != STATUS_UM;
+		if (!kernelMode) {
+			bigEndian = (value & STATUS_RE) == 0; 
+		} else {
+			bigEndian = true;
+		}
+	}
+
+	private void moveToCoprocessor(int reg, int sel, int value) {
+		switch(reg) {
+		case COP0_REG_INDEX:
+			Index = changeValue(Index, value, INDEX_MASK);
+			break;
+		case COP0_REG_RANDOM:
+			// Ignore random writes
+			break;
+		case COP0_REG_ENTRYLO0:
+			EntryLo0 = value & ENTRYLO_WRITE_MASK;
+			break;
+		case COP0_REG_ENTRYLO1:
+			EntryLo1 = value & ENTRYLO_WRITE_MASK;
+			break;
+		case COP0_REG_CONTEXT:
+			Context = changeValue(Context, value, CONTEXT_WRITE_MASK);
+			break;
+		case COP0_REG_PAGEMASK:
+			PageMask = value & 0x01FFE000;
+			break;
+		case COP0_REG_WIRED:
+			Wired = value & INDEX_MASK;
+			break;
+		case COP0_REG_RESERVED1:
+			Reserved1 = value;
+			break;
+		case COP0_REG_BADVADDR:
+			// Ignore BadVAddr writes
+			break;
+		case COP0_REG_COUNT:
+			setCounter(value);
+			break;
+		case COP0_REG_ENTRYHI:
+			EntryHi = value & ENTRYHI_WRITE_MASK;
+			ASID = value & ENTRYHI_ASID_MASK;
+			break;
+		case COP0_REG_COMPARE:
+			Compare = value;
+			lowerIrq(TIMER_IRQ);
+			break;
+		case COP0_REG_STATUS:
+			writeStatus(value);
+			break;
+		case COP0_REG_CAUSE:
+			Cause = changeValue(Cause, value, CAUSE_WRITE_MASK);
+			break;
+		case COP0_REG_EPC:
+			EPC = value;
+			break;
+		case COP0_REG_PRID:
+			// Ignore PRId writes
+			break;
+		case COP0_REG_CONFIG:
+			if (sel == 0) {
+				Config = changeValue(Config,  value, 0x07);
+			}
+			// Ignores Config1 writes
+			break;
+		case COP0_REG_LLADDR:
+			// Ignore LLAddr writes
+			break;
+		case COP0_REG_WATCHLO:
+			WatchLo = value;
+			break;
+		case COP0_REG_WATCHHI:
+			WatchHi = value;
+			break;
+		case COP0_REG_RESERVED2:
+			Reserved2 = value;
+			break;
+		case COP0_REG_RESERVED3:
+			Reserved3 = value;
+			break;
+		case COP0_REG_RESERVED4:
+			Reserved4 = value;
+			break;
+		case COP0_REG_DEBUG:
+			Debug = value;
+			break;
+		case COP0_REG_DEPC:
+			DEPC = value;
+			break;
+		case COP0_REG_RESERVED5:
+			Reserved5 = value;
+			break;
+		case COP0_REG_ERRCTRL:
+			ErrCtrl = value;
+			break;
+		case COP0_REG_RESERVED6:
+			Reserved6 = value;
+			break;
+		case COP0_REG_TAGLO:
+			if (sel == 0) TagLo = value;
+			else DataLo = value;
+			break;
+		case COP0_REG_RESERVED7:
+			Reserved7 = value;
+			break;
+		case COP0_REG_ERROREPC:
+			ErrorEPC = value;
+			break;
+		case COP0_REG_DESAVE:
+			DESAVE = value;
+			break;
+		}
+	}
+
+	private int moveFromCoprocessor(int reg, int sel) {
+		int retval = 0;
+		switch(reg) {
+		case COP0_REG_INDEX:
+			retval = Index;
+			break;
+		case COP0_REG_RANDOM:
+			retval = readRegisterRandom();
+			break;
+		case COP0_REG_ENTRYLO0:
+			retval = EntryLo0;
+			break;
+		case COP0_REG_ENTRYLO1:
+			retval = EntryLo1;
+			break;
+		case COP0_REG_CONTEXT:
+			retval = Context;
+			break;
+		case COP0_REG_PAGEMASK:
+			retval = PageMask;
+			break;
+		case COP0_REG_WIRED:
+			retval = Wired;
+			break;
+		case COP0_REG_RESERVED1:
+			retval = Reserved1;
+			break;
+		case COP0_REG_BADVADDR:
+			retval = BadVAddr;
+			break;
+		case COP0_REG_COUNT:
+			retval = getCounter();
+			break;
+		case COP0_REG_ENTRYHI:
+			retval = EntryHi;
+			break;
+		case COP0_REG_COMPARE:
+			retval = Compare;
+			break;
+		case COP0_REG_STATUS:
+			retval = Status;
+			break;
+		case COP0_REG_CAUSE:
+			retval = Cause;
+			break;
+		case COP0_REG_EPC:
+			retval = EPC;
+			break;
+		case COP0_REG_PRID:
+			retval = PRId;
+			break;
+		case COP0_REG_CONFIG:
+			if (sel == 0) retval = Config;
+			else retval = Config1;
+			break;
+		case COP0_REG_LLADDR:
+			retval = LLAddr;
+			break;
+		case COP0_REG_WATCHLO:
+			retval = WatchLo;
+			break;
+		case COP0_REG_WATCHHI:
+			retval = WatchHi;
+			break;
+		case COP0_REG_RESERVED2:
+			retval = Reserved2;
+			break;
+		case COP0_REG_RESERVED3:
+			retval = Reserved3;
+			break;
+		case COP0_REG_RESERVED4:
+			retval = Reserved4;
+			break;
+		case COP0_REG_DEBUG:
+			retval = Debug;
+			break;
+		case COP0_REG_DEPC:
+			retval = DEPC;
+			break;
+		case COP0_REG_RESERVED5:
+			retval = Reserved5;
+			break;
+		case COP0_REG_ERRCTRL:
+			retval = ErrCtrl;
+			break;
+		case COP0_REG_RESERVED6:
+			retval = Reserved6;
+			break;
+		case COP0_REG_TAGLO:
+			if (sel == 0) retval = TagLo;
+			else retval = DataLo;
+			break;
+		case COP0_REG_RESERVED7:
+			retval = Reserved7;
+			break;
+		case COP0_REG_ERROREPC:
+			retval = ErrorEPC;
+			break;
+		case COP0_REG_DESAVE:
+			retval = DESAVE;
+			break;
+		}
+		return retval;
+	}
+
+	private void exception_RESET() {
+		Wired = 0;
+		Config = changeValue(Config, 2, 0x07);
+		writeStatus(changeValue(Status, STATUS_BEV | STATUS_ERL, STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
+		ErrorEPC = isBranchDelaySlot() ? getProgramCounter() - 4 : getProgramCounter();
+
+		setProgramCounter(0xBFC00000);
+	}
+
+	private void exception_SOFT_RESET() {
+		writeStatus(changeValue(Status, STATUS_SR | STATUS_BEV | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
+		ErrorEPC = isBranchDelaySlot() ? getProgramCounter() - 4 : getProgramCounter();
+
+		setProgramCounter(0xBFC00000);
+	}
+
+	private void exception_NMI() {
+		writeStatus(changeValue(Status, STATUS_BEV | STATUS_NMI | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
+		ErrorEPC = isBranchDelaySlot() ? getProgramCounter() - 4 : getProgramCounter();
+
+		setProgramCounter(0xBFC00000);
+	}
+
+	private void exception_GENERAL(int code, int copno, boolean offsetToZero) {
+		int vectorOffset;
+
+		if ((Status & STATUS_EXL) == 0) {
+			if (isBranchDelaySlot()) {
+				EPC = getProgramCounter() - 4;
+				Cause |= CAUSE_BD;
+			} else {
+				EPC = getProgramCounter();
+				Cause &= ~CAUSE_BD;
+			}
+			if (offsetToZero) {
+				vectorOffset = 0;
+			} else if (code == EXCEPTION_CODE_INT && ((Cause & CAUSE_IV) != 0)) {
+				vectorOffset = 0x200;
+			} else {
+				vectorOffset = 0x180;
+			}
+		} else {
+			vectorOffset = 0x180;
+		}
+		Cause = (Cause & ~CAUSE_CE_MASK) | (copno << CAUSE_CE_SHIFT);
+		Cause = (Cause & ~CAUSE_EXCCODE_MASK) | (code << CAUSE_EXCCODE_SHIFT);
+		writeStatus(Status | STATUS_EXL);
+		if ((Status & STATUS_BEV) != 0) {
+			setProgramCounter(0xBFC00200 + vectorOffset);
+		} else {
+			setProgramCounter(0x80000000 + vectorOffset);
+		}
+	}
+
+	private void exception_MCHECK() {
+		exception_GENERAL(EXCEPTION_CODE_MCHECK, 0, false);
+		Status |= STATUS_TS;
+	}
+
+	private void exception_INTERRUPT() {
+		exception_GENERAL(EXCEPTION_CODE_INT, 0, false);
+	}
+
+	private void exception_ADDRESS_ERROR(int badVAddr, boolean load) {
+		exception_GENERAL(load ? EXCEPTION_CODE_ADEL : EXCEPTION_CODE_ADES, 0, false);
+		BadVAddr = badVAddr;
+	}
+
+	private void exception_TLB_REFILL(int badVAddr, boolean load) {
+		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, true);
+		BadVAddr = badVAddr;
+		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
+		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
+	}
+
+	private void exception_TLB_INVALID(int badVAddr, boolean load) {
+		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, false);
+		BadVAddr = badVAddr;
+		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
+		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
+	}
+
+	private void exception_BUS_ERROR(boolean data) {
+		exception_GENERAL(data ? EXCEPTION_CODE_DBE : EXCEPTION_CODE_IBE, 0, false);
+	}
+
+	private void exception_SYSCALL() {
+		exception_GENERAL(EXCEPTION_CODE_SYS, 0, false);
+	}
+
+	private void exception_BREAK() {
+		exception_GENERAL(EXCEPTION_CODE_BP, 0, false);
+	}
+
+	private void exception_RESERVED() {
+		exception_GENERAL(EXCEPTION_CODE_RI, 0, false);
+	}
+
+	private void exception_COPROCESS_UNUSABLE(int copno) {
+		exception_GENERAL(EXCEPTION_CODE_CPU, copno, false);
+	}
+
+	private void exception_INTEGER_OVERFLOW() {
+		exception_GENERAL(EXCEPTION_CODE_OV, 0, false);
+	}
+
+	private void exception_TRAP() {
+		exception_GENERAL(EXCEPTION_CODE_TR, 0, false);
+	}
+
+	private void exception_TLB_MOD(int badVAddr) {
+		exception_GENERAL(EXCEPTION_CODE_MOD, 0, false);
+		BadVAddr = badVAddr;
+		Context = badVAddr;
+	}
+
+	private void returnFromException() {
+		int newPc;
+		loadLinkedStatus = false;
+		if ((Status & STATUS_ERL) != 0) {
+			writeStatus(Status & (~STATUS_ERL));
+			newPc = ErrorEPC;
+		} else {
+			writeStatus(Status & (~STATUS_EXL));
+			newPc = EPC;
+		}
+		setProgramCounter(newPc);
+	}
+
+	public void raiseIrq(int irqno) {
+		Cause |= 1 << (CAUSE_INTERRUPT_SHIFT + irqno);
+	}
+
+	public void lowerIrq(int irqno) {
+		Cause &= ~(1 << (CAUSE_INTERRUPT_SHIFT + irqno));
+	}
+
+	private boolean interruptEnabled() {
+		return (Status & (STATUS_IE | STATUS_EXL | STATUS_ERL)) == STATUS_IE;
+	}
+
+	private boolean checkInterrupts() {
+		if (interruptEnabled()) {
+			int mask = (Status & STATUS_INT_MASK) >>> STATUS_INT_SHIFT;
+			int pending = (Cause & CAUSE_INTERRUPT_MASK) >>> CAUSE_INTERRUPT_SHIFT;
+			if ((mask & pending) != 0) {
+				exception_INTERRUPT();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean checkTimerInterrupt(int before, int after) {
+		//if (after != Compare || before == after) return false;
+		if (Utils.compareUnsigned(before, Compare) >= 0) return false;
+		if (Utils.compareUnsigned(after - before, Compare - before) < 0) return false;
+
+		raiseIrq(TIMER_IRQ);
+		checkInterrupts();
+		return true;
+	}
+
+	private void loadLinked(int physicalAddress) {
+		loadLinkedStatus = true;
+		LLAddr = physicalAddress >>> 4;
+	}
+
+	private void cancelStoreConditional() {
+		loadLinkedStatus = false;
+	}
+
+	private boolean canStoreConditional() {
+		return loadLinkedStatus;
+	}
+
+	// TLB functions
+	private void initTLB() {
+		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
+			tlbEntries[i] = new TlbEntry();
+		}
+		lastTlbEntryCode = lastTlbEntryData = tlbEntries[0];
+	}
+
+	private void resetTLB() {
+		for(int i = 0; i < NUM_TLB_ENTRIES; i++)
+			tlbEntries[i].initialized = false;
+	}
+
+	private int translate(int address, boolean write, boolean data) {
+		translationError = false;
+		if (kernelMode) {
+			if ((address & 0xC0000000) == 0x80000000) { // kseg0 or kseg1 
+				return address & 0x1FFFFFFF;
+			}
+		} else { // User Mode
+			// useg
+			if ((address & 0x80000000) != 0) { 
+				exception_ADDRESS_ERROR(address, !write);
+				translationError = true;
+				return 0;
+			}
+			
+		}
+
+		TlbEntry tlbEntry;
+		TlbEntryPage tlbEntryPage;
+		tlbEntry = (data) ? lastTlbEntryData : lastTlbEntryCode;
+
+		if (tlbEntry.initialized) {
+			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID);
+			if (tlbEntryPage != null) {
+				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
+			}
+		}
+
+		// Perform the TLB search
+		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
+			tlbEntry = tlbEntries[i];
+
+			if (!tlbEntry.initialized) continue;
+			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID); 
+			if (tlbEntryPage != null) {
+				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
+			}
+		}
+		if ((Status & STATUS_EXL) != 0) {
+			exception_TLB_INVALID(address, !write);
+		} else {
+			exception_TLB_REFILL(address, !write);
+		}
+		translationError = true;
+		return 0;
+	}
+
+	private static TlbEntryPage tlbMatchEntry(TlbEntry entry, int address, int ASID) {
+		if ((entry.PageMask & address) == entry.VPN2) {
+			if (entry.global || entry.ASID == ASID) {
+				if ((address & entry.selectionBit) == 0) {
+					return entry.page0;
+				} else {
+					return entry.page1;
+				}
+			}
+		}
+		return null;
+	}
+
+	private int tlbPageTranslate(TlbEntry tlbEntry, TlbEntryPage tlbEntryPage, int address, boolean write, boolean data) {
+		if (data) lastTlbEntryData = tlbEntry;
+		else lastTlbEntryCode = tlbEntry;
+		if (!tlbEntryPage.valid) {
+			exception_TLB_INVALID(address, !write);
+			translationError = true;
+			return 0;
+		}
+		if (write && !tlbEntryPage.dirty) {
+			exception_TLB_MOD(address);
+			translationError = true;
+			return 0;
+		}
+		address &= ~(tlbEntry.PageMask | tlbEntry.selectionBit);
+		address |= tlbEntryPage.PFN;
+		return address;
+	}
+
+	private static int convertPageToEntryLo(TlbEntryPage page, boolean global) {
+		int entry = page.PFN >>> 6;
+		entry |= page.cacheability << ENTRYLO_COHERENCY_SHIFT;
+		if (page.dirty) entry |= ENTRYLO_DIRTY;
+		if (page.valid) entry |= ENTRYLO_VALID;
+		if (global) entry |= ENTRYLO_GLOBAL;
+		return entry;
+	}
+
+	private static void configurePageFromEntryLo(TlbEntryPage page, int entry) {
+		page.PFN = (entry << 6) & 0xFFFFF000;
+		page.cacheability = (entry & ENTRYLO_COHERENCY_MASK) >> ENTRYLO_COHERENCY_SHIFT;
+		page.dirty = (entry & ENTRYLO_DIRTY) != 0;
+		page.valid = (entry & ENTRYLO_VALID) != 0;
+	}
+
+	private void tlbProbe() {
+		int ASID = EntryHi & ENTRYHI_ASID_MASK;
+		int VPN2 = EntryHi & ENTRYHI_VPN2_MASK;
+		Index = INDEX_PROBE;
+		for(int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
+			TlbEntry tlbEntry = tlbEntries[idx];
+			TlbEntryPage tlbEntryPage;
+
+			if (!tlbEntry.initialized) continue;
+			tlbEntryPage = tlbMatchEntry(tlbEntry, VPN2, ASID); 
+			if (tlbEntryPage != null) {
+				Index = idx;
+				return;
+			}
+		}
+	}
+
+	private void tlbRead() {
+		TlbEntry entry = tlbEntries[Index & INDEX_MASK];
+		PageMask = (~entry.PageMask) & ENTRYHI_VPN2_MASK;
+		EntryHi = entry.VPN2 | entry.ASID;
+		EntryLo0 = convertPageToEntryLo(entry.page0, entry.global);
+		EntryLo1 = convertPageToEntryLo(entry.page1, entry.global);
+	}
+
+	private void tlbWrite(int index) {
+		TlbEntry tlbEntry;
+		int mask = (~PageMask) & ENTRYHI_VPN2_MASK;
+		int VPN2 = EntryHi & mask;
+		int ASID = EntryHi & ENTRYHI_ASID_MASK;
+		boolean global = ((EntryLo0 & ENTRYLO_GLOBAL) != 0) && ((EntryLo1 & ENTRYLO_GLOBAL) != 0);
+
+		// Checks for multiple entries
+		for (int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
+			tlbEntry = tlbEntries[idx];
+			if (!tlbEntry.initialized || idx == index) continue;
+			if ((tlbEntry.VPN2 & mask) == VPN2) {
+				if (global || tlbEntry.global || tlbEntry.ASID == ASID) {
+					exception_MCHECK();
+					return;
+				}
+			}
+		}
+		tlbEntry = tlbEntries[index];
+		tlbEntry.initialized = true;
+		tlbEntry.PageMask = mask;
+		tlbEntry.VPN2 = VPN2;
+		tlbEntry.ASID = ASID;
+		tlbEntry.global = global;
+		tlbEntry.selectionBit = mask ^ (mask >> 1);
+		configurePageFromEntryLo(tlbEntry.page0, EntryLo0);
+		configurePageFromEntryLo(tlbEntry.page1, EntryLo1);
+	}
+
+	private void tlbWriteRandom() {
+		tlbWrite(readRegisterRandom());
+	}
+
+	private void tlbWriteIndex() {
+		if ((Index & INDEX_PROBE) == 0)
+			tlbWrite(Index & INDEX_MASK);
+		else
+			tlbWriteRandom();
+	}
+
+	private static final class TlbEntry {
+		private int PageMask; // Negation of original PageMask and'ed with 0xFFFFE000
+		private int VPN2;     // Masked VPN2
+		private int selectionBit;
+		private boolean global;
+		private int ASID;
+		private final TlbEntryPage page0 = new TlbEntryPage();
+		private final TlbEntryPage page1 = new TlbEntryPage();
+		private boolean initialized;
+
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(String.format("PageMask: 0x%08X\n", PageMask));
+			sb.append(String.format("VPN2: 0x%08X\n", VPN2));
+			sb.append(String.format("Selection Bit: 0x%08X\n", selectionBit));
+			sb.append(String.format("ASID: 0x%08X\n", ASID));
+			sb.append("Global: ").append(global).append("\n");
+			sb.append("Initialized: ").append(initialized).append("\n");
+			sb.append("Page 0: ").append(page0.toString()).append("\n");
+			sb.append("Page 1: ").append(page1.toString()).append("\n");
+			return sb.toString();
+		}
+	}
+
+	private static final class TlbEntryPage {
+		private int PFN;
+		private int cacheability;
+		private boolean dirty;
+		private boolean valid;
+
+		@Override
+		public String toString() {
+			return String.format("PFN: %08X Cacheability: %d %s %s", PFN,
+			                     cacheability, dirty ? "DT" : "ND", valid ? "VL" : "NV");
+		}
+	}
+
+
+	// Auxiliary functions to decode the opcode
+	public static int I_OP(int opcode) {
+		return (opcode >>> 26);
+	}
+
+	public static int I_FUNCT(int opcode) {
+		return opcode & 0x3F;
+	}
+
+	public static int I_RS(int opcode) {
+		return ((opcode >> 21) & 0x1F);
+	}
+
+	public static int I_RT(int opcode) {
+		return ((opcode >> 16) & 0x1F);
+	}
+
+	public static int I_RD(int opcode) {
+		return ((opcode >> 11) & 0x1F);
+	}
+
+	public static int I_SA(int opcode) {
+		return ((opcode >> 6) & 0x1F);
+	}
+
+	public static int I_IMM16(int opcode) {
+		return (int) ((short) opcode);
+	}
+
+	public static int I_IMM16U(int opcode) {
+		return opcode & 0xFFFF;
+	}
+
+	public static int I_BRANCH(int opcode, int pc) {
+		return pc + 4 + 4 * I_IMM16(opcode);
+	}
+
+	public static int I_JUMP(int opcode, int pc) {
+		return ((pc & 0xF0000000) | ((opcode & 0x3FFFFFF) << 2));
+	}
+
+	public static int I_SYSCALLCODE(int opcode) {
+		return ((opcode >> 6) & 0xFFFFF);
+	}
+
+	public static int I_TRAPCODE(int opcode) {
+		return ((opcode >> 6) & 0x3FF);
+	}
+
+	public static int I_WAITCODE(int opcode) {
+		return ((opcode >> 6) & 0x7FFFF);
+	}
+
+	public static int I_COP0SEL(int opcode) {
+		return (opcode & 0x07);
 	}
 }
