@@ -18,7 +18,8 @@ public class Main {
 	private static final int UART_BASE = 0x1FD003F8;
 	private static final int RTC_BASE = 0x1FD00070;
 	private static final int BASE_ADDRESS = 0x80100000;
-	private static final int INITRD_ADDRESS = 0x80377000;
+	private static final int START_ADDRESS = 0x802D2A80;
+	private static final int INITRD_ADDRESS = 0x8040D000;
 
 	private static JFrame createConsoleFrame() {
 		JFrame frame = new JFrame("JMIPS");
@@ -43,7 +44,7 @@ public class Main {
 
 	private static void reset(Cpu cpu) {
 		cpu.reset();
-		cpu.setProgramCounter(BASE_ADDRESS);
+		cpu.setPc(START_ADDRESS);
 	}
 
 	public static void main(String[] args) throws FileNotFoundException, IOException {
@@ -75,11 +76,17 @@ public class Main {
 			}
 		}
 
+		GdbServer server = new GdbServer(cpu, tty);
+		server.startServer(1234);
+		return;
+		/*
 		for(int i = 0; i < 500000000; i++) {
 			if (cpu.isHalted()) break;
 			cpu.step();
 			while(tty.available())
 				uart.sendChar(tty.read());
-		}
+		}*/
 	}
+
+
 }

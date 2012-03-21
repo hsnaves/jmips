@@ -260,7 +260,7 @@ public final class Cpu implements Serializable {
 		return halted;
 	}
 
-	public void setProgramCounter(int pc) {
+	public void setPc(int pc) {
 		this.pc = pc;
 		this._nextPc = pc;
 		this.nextPc = pc + 4;
@@ -269,11 +269,11 @@ public final class Cpu implements Serializable {
 		this.halted = false;
 	}
 
-	public int getProgramCounter() {
+	public int getPc() {
 		return this.pc;
 	}
 
-	public int getNextProgramCounter() {
+	public int getNextPc() {
 		return this.nextPc;
 	}
 
@@ -1095,7 +1095,7 @@ public final class Cpu implements Serializable {
 			int rt = I_RT(opcode);
 			int rd = I_RD(opcode);
 			int sel = I_COP0SEL(opcode);
-			setGpr(rt, moveFromCoprocessor(rd, sel));
+			setGpr(rt, getCop0Reg(rd, sel));
 		}
 	}
 
@@ -1146,7 +1146,7 @@ public final class Cpu implements Serializable {
 			int rt = I_RT(opcode);
 			int rd = I_RD(opcode);
 			int sel = I_COP0SEL(opcode);
-			moveToCoprocessor(rd, sel, gpr[rt]);
+			setCop0Reg(rd, sel, gpr[rt]);
 		}
 	}
 
@@ -1572,7 +1572,7 @@ public final class Cpu implements Serializable {
 		}
 	}
 
-	private void moveToCoprocessor(int reg, int sel, int value) {
+	public void setCop0Reg(int reg, int sel, int value) {
 		switch(reg) {
 		case COP0_REG_INDEX:
 			Index = changeValue(Index, value, INDEX_MASK);
@@ -1679,7 +1679,7 @@ public final class Cpu implements Serializable {
 		}
 	}
 
-	private int moveFromCoprocessor(int reg, int sel) {
+	public int getCop0Reg(int reg, int sel) {
 		int retval = 0;
 		switch(reg) {
 		case COP0_REG_INDEX:
@@ -1788,23 +1788,23 @@ public final class Cpu implements Serializable {
 		Wired = 0;
 		Config = changeValue(Config, 2, 0x07);
 		writeStatus(changeValue(Status, STATUS_BEV | STATUS_ERL, STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = isBranchDelaySlot() ? getProgramCounter() - 4 : getProgramCounter();
+		ErrorEPC = isBranchDelaySlot() ? getPc() - 4 : getPc();
 
-		setProgramCounter(0xBFC00000);
+		setPc(0xBFC00000);
 	}
 
 	private void exception_SOFT_RESET() {
 		writeStatus(changeValue(Status, STATUS_SR | STATUS_BEV | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = isBranchDelaySlot() ? getProgramCounter() - 4 : getProgramCounter();
+		ErrorEPC = isBranchDelaySlot() ? getPc() - 4 : getPc();
 
-		setProgramCounter(0xBFC00000);
+		setPc(0xBFC00000);
 	}
 
 	private void exception_NMI() {
 		writeStatus(changeValue(Status, STATUS_BEV | STATUS_NMI | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = isBranchDelaySlot() ? getProgramCounter() - 4 : getProgramCounter();
+		ErrorEPC = isBranchDelaySlot() ? getPc() - 4 : getPc();
 
-		setProgramCounter(0xBFC00000);
+		setPc(0xBFC00000);
 	}
 
 	private void exception_GENERAL(int code, int copno, boolean offsetToZero) {
@@ -1812,10 +1812,10 @@ public final class Cpu implements Serializable {
 
 		if ((Status & STATUS_EXL) == 0) {
 			if (isBranchDelaySlot()) {
-				EPC = getProgramCounter() - 4;
+				EPC = getPc() - 4;
 				Cause |= CAUSE_BD;
 			} else {
-				EPC = getProgramCounter();
+				EPC = getPc();
 				Cause &= ~CAUSE_BD;
 			}
 			if (offsetToZero) {
@@ -1832,9 +1832,9 @@ public final class Cpu implements Serializable {
 		Cause = (Cause & ~CAUSE_EXCCODE_MASK) | (code << CAUSE_EXCCODE_SHIFT);
 		writeStatus(Status | STATUS_EXL);
 		if ((Status & STATUS_BEV) != 0) {
-			setProgramCounter(0xBFC00200 + vectorOffset);
+			setPc(0xBFC00200 + vectorOffset);
 		} else {
-			setProgramCounter(0x80000000 + vectorOffset);
+			setPc(0x80000000 + vectorOffset);
 		}
 	}
 
@@ -1910,7 +1910,7 @@ public final class Cpu implements Serializable {
 			writeStatus(Status & (~STATUS_EXL));
 			newPc = EPC;
 		}
-		setProgramCounter(newPc);
+		setPc(newPc);
 	}
 
 	public void raiseIrq(int irqno) {

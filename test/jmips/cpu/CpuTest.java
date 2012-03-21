@@ -24,7 +24,7 @@ public class CpuTest {
 
 	private void reset(Cpu cpu) {
 		cpu.reset();
-		cpu.setProgramCounter(BASE_ADDRESS);
+		cpu.setPc(BASE_ADDRESS);
 	}
 
 	@Test
@@ -37,7 +37,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A1, 2);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(3, cpu.getGpr(Cpu.GPR_V0));
 
@@ -59,7 +59,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(4, cpu.getGpr(Cpu.GPR_V0));
 
@@ -74,7 +74,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 1);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(-1, cpu.getGpr(Cpu.GPR_V0));
 
@@ -94,7 +94,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 2);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(6, cpu.getGpr(Cpu.GPR_V0));
 
@@ -102,7 +102,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 0x7FFFFFFF);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals((int) 0x80000003, cpu.getGpr(Cpu.GPR_V0));
 
@@ -111,7 +111,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 5);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(2, cpu.getGpr(Cpu.GPR_V0));
 
@@ -119,7 +119,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 0x80000000);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x7FFFFFFD, cpu.getGpr(Cpu.GPR_V0));
 	}
@@ -134,7 +134,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A1, 10);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(11, cpu.getGpr(Cpu.GPR_V0));
 
@@ -143,7 +143,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A1, 3);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals((int) 0x80000002, cpu.getGpr(Cpu.GPR_V0));
 	}
@@ -158,7 +158,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A1, 0x12345678);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x12005600, cpu.getGpr(Cpu.GPR_V0));
 	}
@@ -172,7 +172,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, 0xFFFFFF00);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x00009100, cpu.getGpr(Cpu.GPR_V0));
 	}
@@ -188,7 +188,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 10);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x00005566, cpu.getGpr(Cpu.GPR_V0));
 
@@ -205,7 +205,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 9);
 		cpu.setGpr(Cpu.GPR_V0, 0);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x22334400, cpu.getGpr(Cpu.GPR_V0));
 
@@ -222,7 +222,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 11);
 		cpu.setGpr(Cpu.GPR_V0, 0x11223344);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x00000011, cpu.read32(BASE_ADDRESS + 8));
 
@@ -239,7 +239,7 @@ public class CpuTest {
 		cpu.setGpr(Cpu.GPR_A0, BASE_ADDRESS + 14);
 		cpu.setGpr(Cpu.GPR_V0, 0x11223344);
 		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getProgramCounter());
+		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
 		assertFalse(cpu.isBranchDelaySlot());
 		assertEquals(0x22334400, cpu.read32(BASE_ADDRESS + 12));
 

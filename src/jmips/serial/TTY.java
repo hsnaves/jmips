@@ -1,8 +1,8 @@
 package jmips.serial;
 
 public interface TTY {
-	public void write(char c);
+	public void write(byte b);
 	public boolean available();
-	public char read();
+	public byte read();
 	public void reset();
 }

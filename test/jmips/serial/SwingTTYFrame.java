@@ -33,7 +33,7 @@ public class SwingTTYFrame extends JFrame {
 			while(true) {
 				boolean shouldSleep = true;
 				while (out.available() > 0) {
-					t.tty.write((char) out.read());
+					t.tty.write((byte) out.read());
 					shouldSleep = false;
 				}
 				while (t.tty.available()) {

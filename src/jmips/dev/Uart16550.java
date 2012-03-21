@@ -184,7 +184,7 @@ public final class Uart16550 extends Device {
 			} else {
 				lsr &= ~UART_LSR_THRE;
 				updateIrq();
-				tty.write((char) value);
+				tty.write(value);
 				lsr |= UART_LSR_THRE;
 				lsr |= UART_LSR_TEMT;
 				updateIrq();

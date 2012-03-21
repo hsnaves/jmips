@@ -6,9 +6,9 @@ import java.io.IOException;
 public class ConsoleTTY implements TTY {
 
 	@Override
-	public void write(char c) {
+	public void write(byte c) {
 		// Incomplete implementation here
-		System.out.print(c);
+		System.out.print((char) c);
 	}
 
 	@Override
@@ -22,9 +22,9 @@ public class ConsoleTTY implements TTY {
 	}
 
 	@Override
-	public char read() {
+	public byte read() {
 		try {
-			return (char) System.in.read();
+			return (byte) System.in.read();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return 0;

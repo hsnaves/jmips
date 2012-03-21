@@ -41,7 +41,7 @@ public class SwingTTY extends JComponent implements TTY {
 	private final List<Integer> escapeParameters = new LinkedList<Integer>();
 	private int currentEscapeParameter;
 
-	private final List<Character> inputChars = new ArrayList<Character>();
+	private final List<Byte> inputChars = new ArrayList<Byte>();
 
 	private final TerminalCharacter[][] characterMap;
 	private final Timer cursorTimer;
@@ -77,7 +77,7 @@ public class SwingTTY extends JComponent implements TTY {
 			
 			@Override
 			public void keyTyped(KeyEvent event) {
-				appendCharacter(event.getKeyChar());
+				appendCharacter((byte) event.getKeyChar());
 			}
 
 			@Override
@@ -150,14 +150,14 @@ public class SwingTTY extends JComponent implements TTY {
 		this.echoEnabled = echoEnabled;
 	}
 
-	private void appendCharacter(char c) {
-		inputChars.add(c);
-		if (echoEnabled) write(c);
+	private void appendCharacter(byte b) {
+		inputChars.add(b);
+		if (echoEnabled) write(b);
 	}
 
 	private void appendString(String str) {
 		for(int index = 0; index < str.length(); index++) {
-			appendCharacter(str.charAt(index));
+			appendCharacter((byte) str.charAt(index));
 		}
 	}
 
@@ -275,7 +275,8 @@ public class SwingTTY extends JComponent implements TTY {
 	}
 
 	@Override
-	public void write(char c) {
+	public void write(byte b) {
+		char c = (char) b;
 		if (this.displayRow != this.baseRow) {
 			this.cursorRow += this.cursorRowDifference;
 			this.displayRow = this.baseRow;
@@ -415,7 +416,7 @@ public class SwingTTY extends JComponent implements TTY {
 	}
 
 	@Override
-	public char read() {
+	public byte read() {
 		return inputChars.remove(0);
 	}
 
