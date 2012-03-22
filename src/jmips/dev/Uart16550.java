@@ -8,11 +8,7 @@ import jmips.serial.TTY;
 
 public final class Uart16550 extends Device {
 
-	/* Generated serialVersionUID */
-	private static final long serialVersionUID = 2487224479818994761L;
-
 	// Interrupt enable register constants
-
 	private static final int UART_IER_THRI = 0x02;   // Enable Transmitter holding register int. 
 	private static final int UART_IER_RDI = 0x01;    // Enable receiver data interrupt 
 
@@ -226,11 +222,6 @@ public final class Uart16550 extends Device {
 		for(int i = 0; i < str.length(); i++)
 			recvFifo.add((byte) str.charAt(i));
 		sendCharFromFifo();
-	}
-
-	@Override
-	public String getDeviceName() {
-		return "uart16550";
 	}
 
 	@Override

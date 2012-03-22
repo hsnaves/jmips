@@ -11,6 +11,10 @@ import java.util.List;
 import jmips.cpu.Cpu;
 import jmips.serial.TTY;
 
+/**
+ * GdbStub class 
+ * @author Humberto Silva Naves
+ */
 public class GdbServer {
 	private ServerSocket server;
 	private Socket socket;
@@ -76,7 +80,7 @@ public class GdbServer {
 	}
 
 	private boolean processCommand(String cmd) throws IOException {
-		System.out.println("Recv: " + cmd);
+		//System.out.println("Recv: " + cmd);
 		if (cmd.startsWith("qSupported")) {
 			sendPacket("PacketSize=1024");
 		} else if (cmd.startsWith("H")) {
@@ -110,7 +114,7 @@ public class GdbServer {
 	}
 
 	private void sendData(String data) throws IOException {
-		System.out.println("Send: " + data);
+		//System.out.println("Send: " + data);
 		lastData = data;
 		os.write(data.getBytes());
 	}
@@ -191,12 +195,14 @@ public class GdbServer {
 	}
 
 	private void commandStep(String cmd) throws IOException {
+		cpu.wakeUp();
 		cpu.step();
 		sendPacket("S05");
 	}
 
 	private void commandContinue(String cmd) throws IOException {
 		sendData("+");
+		cpu.wakeUp();
 		while(true) {
 			if (cpu.isHalted()) break;
 			int pc = cpu.getPc();

@@ -1,11 +1,6 @@
 package jmips.cpu;
 
-import java.io.Serializable;
-
-public abstract class Device implements Serializable {
-	/* Generated serialVersionUID */
-	private static final long serialVersionUID = 4857690609302741932L;
-
+public abstract class Device {
 	private int mappedOffset;
 	protected boolean error;
 
@@ -26,7 +21,6 @@ public abstract class Device implements Serializable {
 		return error;
 	}
 
-	public abstract String getDeviceName();
 	public abstract int getDeviceSize();
 	public abstract int read32(int offset, boolean bigEndian);
 	public abstract void write32(int offset, int value, boolean bigEndian);
@@ -35,9 +29,4 @@ public abstract class Device implements Serializable {
 	public abstract byte read8(int offset);
 	public abstract void write8(int offset, byte value);
 	public abstract void reset();
-
-	@Override
-	public String toString() {
-		return getDeviceName();
-	}
 }

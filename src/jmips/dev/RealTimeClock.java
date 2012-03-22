@@ -4,16 +4,8 @@ import jmips.cpu.Device;
 
 public class RealTimeClock extends Device {
 
-	private static final long serialVersionUID = 618357907564813895L;
-
-	/* Generated serialVersionUID */
 	public RealTimeClock(int mappedOffset) {
 		super(mappedOffset);
-	}
-
-	@Override
-	public String getDeviceName() {
-		return "rtc";
 	}
 
 	@Override

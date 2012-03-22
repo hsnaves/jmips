@@ -18,8 +18,8 @@ public class Main {
 	private static final int UART_BASE = 0x1FD003F8;
 	private static final int RTC_BASE = 0x1FD00070;
 	private static final int BASE_ADDRESS = 0x80100000;
-	private static final int START_ADDRESS = 0x802D2A80;
-	private static final int INITRD_ADDRESS = 0x8040D000;
+	private static final int START_ADDRESS = BASE_ADDRESS;
+	private static final int INITRD_ADDRESS = 0x803D9000;
 
 	private static JFrame createConsoleFrame() {
 		JFrame frame = new JFrame("JMIPS");

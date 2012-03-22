@@ -1,15 +1,11 @@
 package jmips.cpu;
 
-import java.io.Serializable;
 import java.util.Random;
 
 /**
  * Java implementation of a MIPS32 4Kc processor
  */
-public final class Cpu implements Serializable {
-	/* Generated serialVersionUID */
-	private static final long serialVersionUID = -3521187175092175557L;
-
+public final class Cpu {
 	// Register constants
 	public static final int GPR_ZR = 0;
 	public static final int GPR_AT = 1;
@@ -163,7 +159,7 @@ public final class Cpu implements Serializable {
 	private long counter;
 	private boolean delaySlot, nextDelaySlot;
 
-	boolean halted;
+	private boolean halted;
 	private boolean success;
 
 	private final MemoryManager memoryManager;
@@ -182,9 +178,9 @@ public final class Cpu implements Serializable {
 	private int Status;
 	private int Cause;
 	private int EPC;
-	private final int PRId = 0x0001800B; // Revision 1.1
+	private final int PRId = 0x00018000; // Revision 1.1
 	private int Config = 0x80008082;
-	private final int Config1 = 0x1E000000; // no cache, no fpu, no ejtag, no mips16, no watch and no performance counter
+	private final int Config1 = 0x1E190C80; // cache 2-way, no fpu, no ejtag, no mips16, no watch and no performance counter
 	private int LLAddr;
 	private int WatchLo;
 	private int WatchHi;
@@ -258,6 +254,10 @@ public final class Cpu implements Serializable {
 
 	public boolean isHalted() {
 		return halted;
+	}
+
+	public void wakeUp() {
+		halted = false;
 	}
 
 	public void setPc(int pc) {
@@ -1853,6 +1853,7 @@ public final class Cpu implements Serializable {
 	}
 
 	private void exception_TLB_REFILL(int badVAddr, boolean load) {
+		System.out.printf("TLB_REFILL: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
 		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, true);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
@@ -1860,6 +1861,7 @@ public final class Cpu implements Serializable {
 	}
 
 	private void exception_TLB_INVALID(int badVAddr, boolean load) {
+		System.out.printf("TLB_INVALID: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
 		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, false);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
@@ -2118,6 +2120,7 @@ public final class Cpu implements Serializable {
 		tlbEntry.selectionBit = mask ^ (mask >> 1);
 		configurePageFromEntryLo(tlbEntry.page0, EntryLo0);
 		configurePageFromEntryLo(tlbEntry.page1, EntryLo1);
+		//System.out.println(tlbEntry);
 	}
 
 	private void tlbWriteRandom() {

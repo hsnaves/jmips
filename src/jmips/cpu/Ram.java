@@ -1,9 +1,6 @@
 package jmips.cpu;
 
 public final class Ram extends Device {
-	/* Generated serialVersionUID */
-	private static final long serialVersionUID = -7526192275199175167L;
-
 	private final int[] memory;
 	private final int size;
 
@@ -11,11 +8,6 @@ public final class Ram extends Device {
 		super(mappedOffset);
 		this.size = size & (~3);
 		memory = new int[this.size >> 2];
-	}
-
-	@Override
-	public String getDeviceName() {
-		return "ram";
 	}
 
 	@Override

@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MemoryManager extends Device {
-	/* Generated serialVersionUID */
-	private static final long serialVersionUID = 8769639119589142260L;
 
 	private final Ram ram;
 	private final List<Device> devices = new ArrayList<Device>();
@@ -124,11 +122,6 @@ public final class MemoryManager extends Device {
 		int offset = device.getMappedOffset();
 		device.write32(address - offset, value, bigEndian);
 		error = device.error();
-	}
-
-	@Override
-	public String getDeviceName() {
-		return "memory";
 	}
 
 	@Override
