@@ -176,7 +176,7 @@ public class GdbServer {
 		int len = Integer.parseInt(cmd.substring(divider + 1));
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i < len ; i++) {
-			byte b = cpu.read8(address + i);
+			byte b = cpu.load8(address + i);
 			sb.append(String.format("%02X", ((int) b) & 0xFF));
 		}
 		sendPacket(sb.toString());

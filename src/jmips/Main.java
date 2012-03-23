@@ -50,8 +50,8 @@ public class Main {
 
 		cpu.setPc(BASE_ADDRESS);
 
-		//GdbServer server = new GdbServer(cpu, tty);
-		//server.startServer(1234);
+		GdbServer server = new GdbServer(cpu, tty);
+		server.startServer(1234);
 		//return;
 		for(int i = 0; i < 500000000; i++) {
 			if (cpu.isHalted()) break;

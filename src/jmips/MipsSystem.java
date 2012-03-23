@@ -46,10 +46,15 @@ public final class MipsSystem {
 
 			private Device findDevice(int address) {
 				if (address >= UART_BASE) {
-					if (address < UART_END) return uart;
+					if (address < UART_END) {
+						deviceOffset = address - UART_BASE;
+						return uart;
+					}
 				} else {
-					if (address >= RTC_BASE && address < RTC_END)
+					if (address >= RTC_BASE && address < RTC_END) {
+						deviceOffset = address - RTC_BASE;
 						return rtc;
+					}
 				}
 				return null;
 			}
@@ -148,11 +153,13 @@ public final class MipsSystem {
 		final UartController controller = new UartController() {
 			@Override
 			public void write(byte b) {
+				tty.write(b);
 			}
 			
 			@Override
 			public void changeIrqStatus(boolean raise) {
-				cpu.lowerIrq(UART_IRQ);
+				if (raise) cpu.raiseIrq(UART_IRQ);
+				else cpu.lowerIrq(UART_IRQ);
 			}
 		};
 		Uart uart = new Uart(controller);
