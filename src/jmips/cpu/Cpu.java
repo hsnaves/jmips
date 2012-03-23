@@ -679,6 +679,25 @@ public final class Cpu {
 		return memoryError;
 	}
 
+	public String disassemble(int count) {
+		return disassemble(pc, count);
+	}
+
+	public String disassemble(int address, int count) {
+		StringBuilder sb = new StringBuilder();
+		address -= 4 * (count / 2);
+		for(int i = 0; i < count; i++) {
+			int opcode = load32(address + 4 * i);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				sb.append(Disassemble.disassemble(address + 4 * i, opcode));
+			} else {
+				sb.append("Invalid memory location");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
+
 	public void step() {
 		step(1);
 	}
@@ -702,6 +721,7 @@ public final class Cpu {
 			delaySlot = nextDelaySlot;
 			pc = _nextPc;
 			num--;
+			if (num == 0 && delaySlot) num++;
 		}
 		counter += num;
 
@@ -1742,7 +1762,7 @@ public final class Cpu {
 		Status = value & STATUS_WRITE_MASK;
 		kernelMode = (value & (STATUS_UM | STATUS_EXL | STATUS_ERL)) != STATUS_UM;
 		if (!kernelMode) {
-			bigEndian = (value & STATUS_RE) == 0; 
+			bigEndian = (value & STATUS_RE) == 0;
 		} else {
 			bigEndian = true;
 		}
@@ -2029,7 +2049,6 @@ public final class Cpu {
 	}
 
 	private void exception_TLB_REFILL(int badVAddr, boolean load) {
-		//System.out.printf("TLB_REFILL: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
 		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, true);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
@@ -2037,7 +2056,6 @@ public final class Cpu {
 	}
 
 	private void exception_TLB_INVALID(int badVAddr, boolean load) {
-		//System.out.printf("TLB_INVALID: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
 		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, false);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
@@ -2164,8 +2182,8 @@ public final class Cpu {
 		}
 
 		// Perform the TLB search
-		for(int i = 0; i < NUM_TLB_ENTRIES; i++) {
-			tlbEntry = tlbEntries[i];
+		for(int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
+			tlbEntry = tlbEntries[idx];
 
 			if (!tlbEntry.initialized) continue;
 			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID); 
@@ -2184,7 +2202,7 @@ public final class Cpu {
 		return 0;
 	}
 
-	private static TlbEntryPage tlbMatchEntry(TlbEntry entry, int address, int ASID) {
+	private TlbEntryPage tlbMatchEntry(TlbEntry entry, int address, int ASID) {
 		if ((entry.PageMask & address) == entry.VPN2) {
 			if (entry.global || entry.ASID == ASID) {
 				if ((address & entry.selectionBit) == 0) {
@@ -2214,7 +2232,7 @@ public final class Cpu {
 		return address;
 	}
 
-	private static int convertPageToEntryLo(TlbEntryPage page, boolean global) {
+	private int convertPageToEntryLo(TlbEntryPage page, boolean global) {
 		int entry = page.PFN >>> 6;
 		entry |= page.cacheability << ENTRYLO_COHERENCY_SHIFT;
 		if (page.dirty) entry |= ENTRYLO_DIRTY;
@@ -2223,7 +2241,7 @@ public final class Cpu {
 		return entry;
 	}
 
-	private static void configurePageFromEntryLo(TlbEntryPage page, int entry) {
+	private void configurePageFromEntryLo(TlbEntryPage page, int entry) {
 		page.PFN = (entry << 6) & 0xFFFFF000;
 		page.cacheability = (entry & ENTRYLO_COHERENCY_MASK) >> ENTRYLO_COHERENCY_SHIFT;
 		page.dirty = (entry & ENTRYLO_DIRTY) != 0;
@@ -2282,6 +2300,7 @@ public final class Cpu {
 		tlbEntry.selectionBit = mask ^ (mask >> 1);
 		configurePageFromEntryLo(tlbEntry.page0, EntryLo0);
 		configurePageFromEntryLo(tlbEntry.page1, EntryLo1);
+		//System.out.printf("Idx: %d PageMask = 0x%08X, mask = 0x%08X\n", index, PageMask, mask);
 		//System.out.println(tlbEntry);
 	}
 
@@ -2297,7 +2316,7 @@ public final class Cpu {
 	}
 
 	private static final class TlbEntry {
-		private int PageMask; // Negation of original PageMask and'ed with 0xFFFFE000
+		private int PageMask; // Negation of original PageMask and'ed with ENTRYHI_VPN2_MASK
 		private int VPN2;     // Masked VPN2
 		private int selectionBit;
 		private boolean global;

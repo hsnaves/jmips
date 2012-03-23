@@ -581,7 +581,7 @@ public class Disassemble {
 			if ((opcode & 0xFFFF0000) == 0x10000000) {
 				printInsn(sb, "b");
 				disassembleBranch3(sb, pc, opcode);
-			} if ((opcode & 0xFC1F0000) == 0x10000000) {
+			} else if ((opcode & 0xFC1F0000) == 0x10000000) {
 				printInsn(sb, "beqz");
 				disassembleBranch(sb, pc, opcode);
 			} else {
