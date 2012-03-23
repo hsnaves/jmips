@@ -136,8 +136,8 @@ public class Disassemble {
 		sb.append(REGISTER_NAMES[Cpu.I_RT(opcode)]).append(", ");
 		int sel = Cpu.I_COP0SEL(opcode);
 		int rd = Cpu.I_RD(opcode);
-		if (sel == 1 && (rd == Coprocessor0.COP0_REG_CONFIG || rd == Coprocessor0.COP0_REG_TAGLO)) {
-			if (rd == Coprocessor0.COP0_REG_CONFIG)
+		if (sel == 1 && (rd == Cpu.COP0_REG_CONFIG || rd == Cpu.COP0_REG_TAGLO)) {
+			if (rd == Cpu.COP0_REG_CONFIG)
 				sb.append("Config1");
 			else
 				sb.append("DataLo");
