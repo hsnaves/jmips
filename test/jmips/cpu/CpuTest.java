@@ -3,7 +3,7 @@ package jmips.cpu;
 import static org.junit.Assert.*;
 
 import jmips.serial.ConsoleTTY;
-import jmips.dev.Uart16550;
+import jmips.dev.Uart;
 
 import org.junit.Test;
 
@@ -16,7 +16,7 @@ public class CpuTest {
 
 	private Cpu createCpu() {
 		Cpu cpu = new Cpu(RAM_BASE, RAM_SIZE);
-		Uart16550 uart = new Uart16550(UART_BASE, cpu, new ConsoleTTY(), 1);
+		Uart uart = new Uart(UART_BASE, cpu, new ConsoleTTY(), 1);
 
 		cpu.getMemoryManager().registerDevice(uart);
 		return cpu;

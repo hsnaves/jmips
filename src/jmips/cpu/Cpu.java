@@ -1853,7 +1853,7 @@ public final class Cpu {
 	}
 
 	private void exception_TLB_REFILL(int badVAddr, boolean load) {
-		System.out.printf("TLB_REFILL: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
+		//System.out.printf("TLB_REFILL: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
 		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, true);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
@@ -1861,7 +1861,7 @@ public final class Cpu {
 	}
 
 	private void exception_TLB_INVALID(int badVAddr, boolean load) {
-		System.out.printf("TLB_INVALID: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
+		//System.out.printf("TLB_INVALID: 0x%08X, pc: 0x%08X\n", badVAddr, pc);
 		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, false);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);

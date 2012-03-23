@@ -9,7 +9,8 @@ import javax.swing.JFrame;
 import jmips.cpu.Cpu;
 import jmips.cpu.Utils;
 import jmips.dev.RealTimeClock;
-import jmips.dev.Uart16550;
+import jmips.dev.Uart;
+import jmips.dev.UartController;
 import jmips.serial.SwingTTY;
 
 public class Main {
@@ -48,10 +49,22 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws FileNotFoundException, IOException {
-		JFrame frame = createConsoleFrame();
-		SwingTTY tty = createSwingTTY(frame);
-		Cpu cpu = createCpu();
-		Uart16550 uart = new Uart16550(UART_BASE, cpu, tty, 1);
+		final JFrame frame = createConsoleFrame();
+		final SwingTTY tty = createSwingTTY(frame);
+		final Cpu cpu = createCpu();
+		Uart uart = new Uart(UART_BASE, new UartController() {
+			
+			@Override
+			public void write(byte b) {
+				tty.write(b);
+			}
+			
+			@Override
+			public void changeIrqStatus(boolean raise) {
+				if (raise) cpu.raiseIrq(1);
+				else cpu.lowerIrq(1);
+			}
+		});
 		RealTimeClock rtc = new RealTimeClock(RTC_BASE);
 		cpu.getMemoryManager().registerDevice(rtc);
 		cpu.getMemoryManager().registerDevice(uart);
@@ -76,16 +89,15 @@ public class Main {
 			}
 		}
 
-		GdbServer server = new GdbServer(cpu, tty);
-		server.startServer(1234);
-		return;
-		/*
+		//GdbServer server = new GdbServer(cpu, tty);
+		//server.startServer(1234);
+		//return;
 		for(int i = 0; i < 500000000; i++) {
 			if (cpu.isHalted()) break;
 			cpu.step();
 			while(tty.available())
-				uart.sendChar(tty.read());
-		}*/
+				uart.receiveByte(tty.read());
+		}
 	}
 
 
