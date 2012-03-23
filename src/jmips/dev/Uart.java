@@ -1,7 +1,6 @@
 package jmips.dev;
 
 import java.util.LinkedList;
-
 import jmips.cpu.Device;
 
 /**
@@ -9,7 +8,7 @@ import jmips.cpu.Device;
  * @author Humberto Silva Naves
  *
  */
-public final class Uart extends Device {
+public final class Uart implements Device {
 
 	// Interrupt enable register constants
 	public static final int UART_IER_ERBFI = 0x01;     // Enable received data available interrupt 
@@ -73,12 +72,12 @@ public final class Uart extends Device {
 
 	private int fifo_threshold;
 	private int divider;
+	private boolean error;
 
 	private final UartController controller;
 	private final LinkedList<Byte> recvFifo = new LinkedList<Byte>(); // There is no transmit fifo
 
-	public Uart(int mappedOffset, UartController controller) {
-		super(mappedOffset);
+	public Uart(UartController controller) {
 		this.controller = controller;
 		reset();
 	}
@@ -99,8 +98,8 @@ public final class Uart extends Device {
 	}
 
 	@Override
-	public int getDeviceSize() {
-		return 8;
+	public boolean ioError() {
+		return error;
 	}
 
 	private void updateIrq() {
@@ -182,6 +181,7 @@ public final class Uart extends Device {
 	public byte read8(int offset) {
 		byte ret;
 
+		error = false;
 		offset &= 7;
 		switch(offset) {
 		default:
@@ -223,6 +223,7 @@ public final class Uart extends Device {
 
 	@Override
 	public void write8(int offset, byte value) {
+		error = false;
 		offset &= 7;
 		switch(offset) {
 		default:

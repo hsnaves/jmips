@@ -6,7 +6,7 @@ import java.util.Random;
  * Java implementation of a MIPS32 4Kc processor
  */
 public final class Cpu {
-	// Register constants
+	// General purpose register constants
 	public static final int GPR_ZR = 0;
 	public static final int GPR_AT = 1;
 	public static final int GPR_V0 = 2;
@@ -97,60 +97,68 @@ public final class Cpu {
 	public static final int NUM_TLB_ENTRIES = 16;
 
 	// Some bitmasks inside Cop0 registers
-	private static final int INDEX_MASK  = 0x0000000F;
-	private static final int INDEX_PROBE = 0x80000000;
+	public static final int INDEX_MASK  = 0x0000000F;
+	public static final int INDEX_PROBE = 0x80000000;
 
-	private static final int ENTRYLO_GLOBAL    = 0x00000001;
-	private static final int ENTRYLO_VALID     = 0x00000002;
-	private static final int ENTRYLO_DIRTY     = 0x00000004;
-	private static final int ENTRYLO_PFN_MASK  = 0x03FFFFC0;
-	private static final int ENTRYLO_COHERENCY_MASK  = 0x00000038;
-	private static final int ENTRYLO_COHERENCY_SHIFT = 3;
-	private static final int ENTRYLO_WRITE_MASK = ENTRYLO_GLOBAL | ENTRYLO_VALID | ENTRYLO_DIRTY |
-	                                              ENTRYLO_PFN_MASK | ENTRYLO_COHERENCY_MASK;
+	public static final int ENTRYLO_GLOBAL    = 0x00000001;
+	public static final int ENTRYLO_VALID     = 0x00000002;
+	public static final int ENTRYLO_DIRTY     = 0x00000004;
+	public static final int ENTRYLO_PFN_MASK  = 0x03FFFFC0;
+	public static final int ENTRYLO_COHERENCY_MASK  = 0x00000038;
+	public static final int ENTRYLO_COHERENCY_SHIFT = 3;
+	public static final int ENTRYLO_WRITE_MASK = ENTRYLO_GLOBAL | ENTRYLO_VALID | ENTRYLO_DIRTY |
+	                                             ENTRYLO_PFN_MASK | ENTRYLO_COHERENCY_MASK;
 
-	private static final int ENTRYHI_ASID_MASK = 0x000000FF;
-	private static final int ENTRYHI_VPN2_MASK = 0xFFFFE000;
-	private static final int ENTRYHI_WRITE_MASK = ENTRYHI_ASID_MASK | ENTRYHI_VPN2_MASK;
+	public static final int ENTRYHI_ASID_MASK = 0x000000FF;
+	public static final int ENTRYHI_VPN2_MASK = 0xFFFFE000;
+	public static final int ENTRYHI_WRITE_MASK = ENTRYHI_ASID_MASK | ENTRYHI_VPN2_MASK;
 
-	private static final int STATUS_IE  = 0x00000001;
-	private static final int STATUS_EXL = 0x00000002;
-	private static final int STATUS_ERL = 0x00000004;
-	private static final int STATUS_UM  = 0x00000010;
-	private static final int STATUS_INT_MASK  = 0x0000FF00;
-	private static final int STATUS_INT_SHIFT = 8;
-	private static final int STATUS_NMI = 0x00080000;
-	private static final int STATUS_SR  = 0x00100000;
-	private static final int STATUS_TS  = 0x00200000;
-	private static final int STATUS_BEV = 0x00400000;
-	private static final int STATUS_RE  = 0x02000000;
-	private static final int STATUS_RP  = 0x08000000;
-	private static final int STATUS_COP_MASK  = 0xF0000000;
-	private static final int STATUS_COP_SHIFT = 28;
-	private static final int STATUS_WRITE_MASK = STATUS_IE | STATUS_EXL | STATUS_ERL | STATUS_UM | STATUS_INT_MASK |
-	                                             STATUS_NMI | STATUS_SR | STATUS_TS | STATUS_BEV | STATUS_RE |
-	                                             STATUS_RP | STATUS_COP_MASK;
+	public static final int STATUS_IE  = 0x00000001;
+	public static final int STATUS_EXL = 0x00000002;
+	public static final int STATUS_ERL = 0x00000004;
+	public static final int STATUS_UM  = 0x00000010;
+	public static final int STATUS_INT_MASK  = 0x0000FF00;
+	public static final int STATUS_INT_SHIFT = 8;
+	public static final int STATUS_NMI = 0x00080000;
+	public static final int STATUS_SR  = 0x00100000;
+	public static final int STATUS_TS  = 0x00200000;
+	public static final int STATUS_BEV = 0x00400000;
+	public static final int STATUS_RE  = 0x02000000;
+	public static final int STATUS_RP  = 0x08000000;
+	public static final int STATUS_COP_MASK  = 0xF0000000;
+	public static final int STATUS_COP_SHIFT = 28;
+	public static final int STATUS_WRITE_MASK = STATUS_IE | STATUS_EXL | STATUS_ERL | STATUS_UM | STATUS_INT_MASK |
+	                                            STATUS_NMI | STATUS_SR | STATUS_TS | STATUS_BEV | STATUS_RE |
+	                                            STATUS_RP | STATUS_COP_MASK;
 
-	private static final int CAUSE_EXCCODE_MASK  = 0x0000007C;
-	private static final int CAUSE_EXCCODE_SHIFT = 2;
-	private static final int CAUSE_INTERRUPT_MASK = 0x0000FF00;
-	private static final int CAUSE_INTERRUPT_SHIFT = 8;
-	private static final int CAUSE_WP = 0x00400000;
-	private static final int CAUSE_IV = 0x00800000;
-	private static final int CAUSE_CE_MASK = 0x30000000;
-	private static final int CAUSE_CE_SHIFT = 28;
-	private static final int CAUSE_BD = 0x80000000;
-	private static final int CAUSE_WRITE_MASK = (3 << CAUSE_INTERRUPT_SHIFT) | CAUSE_WP | CAUSE_IV;
+	public static final int CAUSE_EXCCODE_MASK  = 0x0000007C;
+	public static final int CAUSE_EXCCODE_SHIFT = 2;
+	public static final int CAUSE_INTERRUPT_MASK = 0x0000FF00;
+	public static final int CAUSE_INTERRUPT_SHIFT = 8;
+	public static final int CAUSE_WP = 0x00400000;
+	public static final int CAUSE_IV = 0x00800000;
+	public static final int CAUSE_CE_MASK = 0x30000000;
+	public static final int CAUSE_CE_SHIFT = 28;
+	public static final int CAUSE_BD = 0x80000000;
+	public static final int CAUSE_WRITE_MASK = (3 << CAUSE_INTERRUPT_SHIFT) | CAUSE_WP | CAUSE_IV;
 
-	private static final int CONTEXT_PTE_MASK = 0xFF800000;
-	private static final int CONTEXT_WRITE_MASK = CONTEXT_PTE_MASK;
+	public static final int CONTEXT_PTE_MASK = 0xFF800000;
+	public static final int CONTEXT_WRITE_MASK = CONTEXT_PTE_MASK;
 
 	// Timer IRQ
-	private static final int TIMER_IRQ = 7;
+	public static final int TIMER_IRQ = 7;
 
-	//private static final boolean[] CACHEABILITY = {
-	//	true, true, false, true, true, true, true, false
-	//};
+	// Memory error codes
+	public static final int MEMORY_ERROR_NOERROR = 0;                // Memory operation succeeded
+	public static final int MEMORY_ERROR_BUS_ERROR_INSTRUCTION = 1;  // I/O Bus error for opcode
+	public static final int MEMORY_ERROR_BUS_ERROR_DATA = 2;         // I/O Bus error for data
+	public static final int MEMORY_ERROR_ADDRESS_ERROR_LOAD = 3;     // Address error for store
+	public static final int MEMORY_ERROR_ADDRESS_ERROR_STORE = 4;    // Unaligned address
+	public static final int MEMORY_ERROR_TLB_INVALID_LOAD = 5;       // TLB Invalid for load
+	public static final int MEMORY_ERROR_TLB_INVALID_STORE = 6;      // TLB Invalid for store 
+	public static final int MEMORY_ERROR_TLB_REFILL_LOAD = 7;        // TLB Refill for load
+	public static final int MEMORY_ERROR_TLB_REFILL_STORE = 8;       // TLB Refill for store
+	public static final int MEMORY_ERROR_TLB_MOD = 9;                // TLB Dirty
 
 	// Instance fields
 	private final int[] gpr = new int[32];
@@ -160,9 +168,10 @@ public final class Cpu {
 	private boolean delaySlot, nextDelaySlot;
 
 	private boolean halted;
-	private boolean success;
+	private int memoryError;
 
-	private final MemoryManager memoryManager;
+	private final Ram ram;
+	private final Device ioController;
 
 	// Coprocessor0 Instance fields
 	private int Index;
@@ -201,7 +210,6 @@ public final class Cpu {
 	private boolean bigEndian = true;
 	private int ASID;
 
-	private boolean translationError;
 	private boolean loadLinkedStatus = false;
 
 	private final Random rand = new Random(System.currentTimeMillis());
@@ -209,14 +217,11 @@ public final class Cpu {
 	private TlbEntry lastTlbEntryCode;
 	private TlbEntry lastTlbEntryData;
 
-	public Cpu(int ramOffset, int ramSize) {
-		this.memoryManager = new MemoryManager(ramOffset, ramSize);
+	public Cpu(int ramSize, Device io) {
+		this.ram = new Ram(ramSize);
+		this.ioController = io;
 		initTLB();
 		hardReset();
-	}
-
-	public MemoryManager getMemoryManager() {
-		return memoryManager;
 	}
 
 	public void hardReset() {
@@ -289,215 +294,393 @@ public final class Cpu {
 		return delaySlot;
 	}
 
+	// Load and store operations don't raise exceptions, but read and write do!
+	private byte _load8phys(final int physicalAddress) {
+		byte ret;
+		if (physicalAddress < ram.getRamSize()) {
+			ret = ram.read8(physicalAddress);
+		} else {
+			ret = ioController.read8(physicalAddress);
+			if (ioController.ioError())
+				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
+		}
+		return ret;
+	}
+
+	private void _store8phys(final int physicalAddress, final byte value) {
+		if (physicalAddress < ram.getRamSize()) {
+			ram.write8(physicalAddress, value);
+		} else {
+			ioController.write8(physicalAddress, value);
+			if (ioController.ioError())
+				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
+		}
+	}
+
+	private short _load16phys(final int physicalAddress) {
+		short ret;
+		if (physicalAddress < ram.getRamSize()) {
+			ret = ram.read16(physicalAddress, bigEndian);
+		} else {
+			ret = ioController.read16(physicalAddress, bigEndian);
+			if (ioController.ioError())
+				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
+		}
+		return ret;
+	}
+
+	private void _store16phys(final int physicalAddress, final short value) {
+		if (physicalAddress < ram.getRamSize()) {
+			ram.write16(physicalAddress, value, bigEndian);
+		} else {
+			ioController.write16(physicalAddress, value, bigEndian);
+			if (ioController.ioError())
+				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
+		}
+	}
+
+	private int _load32phys(final int physicalAddress) {
+		int ret;
+		if (physicalAddress < ram.getRamSize()) {
+			ret = ram.read32(physicalAddress, bigEndian);
+		} else {
+			ret = ioController.read32(physicalAddress, bigEndian);
+			if (ioController.ioError())
+				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
+		}
+		return ret;
+	}
+
+	private void _store32phys(final int physicalAddress, int value) {
+		if (physicalAddress < ram.getRamSize()) {
+			ram.write32(physicalAddress, value, bigEndian);
+		} else {
+			ioController.write32(physicalAddress, value, bigEndian);
+			if (ioController.ioError())
+				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
+		}
+	}
+
+	public byte load8phys(final int physicalAddress) {
+		memoryError = MEMORY_ERROR_NOERROR;
+		return _load8phys(physicalAddress);
+	}
+
+	public void store8phys(final int physicalAddress, final byte value) {
+		memoryError = MEMORY_ERROR_NOERROR;
+		_store8phys(physicalAddress, value);
+	}
+
+	public short load16phys(final int physicalAddress) {
+		if ((physicalAddress & 1) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+			return _load16phys(physicalAddress);
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
+			return 0;
+		}
+	}
+
+	public void store16phys(final int physicalAddress, final short value) {
+		if ((physicalAddress & 1) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+			_store16phys(physicalAddress, value);
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_STORE;
+		}
+	}
+
+	public int load32phys(final int physicalAddress) {
+		if ((physicalAddress & 3) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+			return _load32phys(physicalAddress);
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
+			return 0;
+		}
+	}
+
+	public void store32phys(final int physicalAddress, final int value) {
+		if ((physicalAddress & 3) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+			_store32phys(physicalAddress, value);
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_STORE;
+		}
+	}
+
+
+	public byte load8(int address) {
+		memoryError = MEMORY_ERROR_NOERROR;
+
+		int physicalAddress = translate(address, false, true);
+		if (memoryError == MEMORY_ERROR_NOERROR) {
+			return _load8phys(physicalAddress);
+		}
+		return 0;
+	}
+
+	public void store8(int address, byte value) {
+		memoryError = MEMORY_ERROR_NOERROR;
+
+		int physicalAddress = translate(address, true, true);
+		if (memoryError == MEMORY_ERROR_NOERROR) {
+			_store8phys(physicalAddress, value);
+		}
+	}
+
+	public short load16(int address) {
+		if ((address & 1) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+
+			int physicalAddress = translate(address, false, true);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				return _load16phys(physicalAddress);
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
+		}
+		return 0;
+	}
+
+	public void store16(int address, short value) {
+		if ((address & 1) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+
+			int physicalAddress = translate(address, true, true);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				_store16phys(physicalAddress, value);
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_STORE;
+		}
+	}
+
+	public int load32(int address) {
+		if ((address & 3) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+
+			int physicalAddress = translate(address, false, true);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				return _load32phys(physicalAddress);
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
+		}
+		return 0;
+	}
+
+	public void store32(int address, int value) {
+		if ((address & 3) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
+
+			int physicalAddress = translate(address, true, true);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				_store32phys(physicalAddress, value);
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_STORE;
+		}
+	}
+
+	private void raiseMemoryException(int address) {
+		switch(memoryError) {
+		case MEMORY_ERROR_ADDRESS_ERROR_LOAD:
+			exception_ADDRESS_ERROR(address, true);
+			break;
+		case MEMORY_ERROR_ADDRESS_ERROR_STORE:
+			exception_ADDRESS_ERROR(address, false);
+			break;
+		case MEMORY_ERROR_BUS_ERROR_DATA:
+			exception_BUS_ERROR(true);
+			break;
+		case MEMORY_ERROR_BUS_ERROR_INSTRUCTION:
+			exception_BUS_ERROR(false);
+			break;
+		case MEMORY_ERROR_TLB_INVALID_LOAD:
+			exception_TLB_INVALID(address, true);
+			break;
+		case MEMORY_ERROR_TLB_INVALID_STORE:
+			exception_TLB_INVALID(address, false);
+			break;
+		case MEMORY_ERROR_TLB_REFILL_LOAD:
+			exception_TLB_REFILL(address, true);
+			break;
+		case MEMORY_ERROR_TLB_REFILL_STORE:
+			exception_TLB_REFILL(address, false);
+			break;
+		case MEMORY_ERROR_TLB_MOD:
+			exception_TLB_MOD(address);
+			break;
+		}
+	}
+
 	public byte read8(int address) {
-		int physicalAddress = translate(address, false, true);
-		if (translationError) {
-			success = false;
-			return 0;
-		}
-		byte b = memoryManager.read8(physicalAddress);
-		if (memoryManager.error()) {
-			success = false;
-			exception_BUS_ERROR(true);
-			return 0;
-		}
-		success = true;
-		return b;
-	}
-
-	public short read16(int address) {
-		if ((address & 1) != 0) {
-			exception_ADDRESS_ERROR(address, true);
-			success = false;
-			return 0;
-		}
-
-		int physicalAddress = translate(address, false, true);
-		if (translationError) {
-			success = false;
-			return 0;
-		}
-		short s = memoryManager.read16(physicalAddress, bigEndian);
-		if (memoryManager.error()) {
-			success = false;
-			exception_BUS_ERROR(true);
-			return 0;
-		}
-		success = true;
-		return s;
-	}
-
-	public int read32(int address) {
-		return read32(address, false);
-	}
-
-	public int read32(int address, boolean linked) {
-		if ((address & 3) != 0) {
-			exception_ADDRESS_ERROR(address, true);
-			success = false;
-			return 0;
-		}
-
-		int physicalAddress = translate(address, false, true);
-		if (translationError) {
-			success = false;
-			return 0;
-		}
-		int v = memoryManager.read32(physicalAddress, bigEndian);
-		if (memoryManager.error()) {
-			success = false;
-			exception_BUS_ERROR(true);
-			return 0;
-		}
-		if (linked) loadLinked(physicalAddress);
-		success = true;
-		return v;
+		byte ret = load8(address);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
+		return ret;
 	}
 
 	public void write8(int address, byte value) {
-		int physicalAddress = translate(address, true, true);
-		if (translationError) {
-			success = false;
-			return;
-		}
-		memoryManager.write8(physicalAddress, value);
-		success = !memoryManager.error();
-		if (!success) exception_BUS_ERROR(true);
-		else cancelStoreConditional();
+		store8(address, value);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
+	}
+
+	public short read16(int address) {
+		short ret = load16(address);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
+		return ret;
 	}
 
 	public void write16(int address, short value) {
-		if ((address & 1) != 0) {
-			exception_ADDRESS_ERROR(address, false);
-			success = false;
-			return;
-		}
-
-		int physicalAddress = translate(address, true, true);
-		if (translationError) {
-			success = false;
-			return;
-		}
-		memoryManager.write16(physicalAddress, value, bigEndian);
-		success = !memoryManager.error();
-		if (!success) exception_BUS_ERROR(true);
-		else cancelStoreConditional();
+		store16(address, value);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
 	}
 
+	public int read32(int address) {
+		int ret = load32(address);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
+		return ret;
+	}
+	
 	public void write32(int address, int value) {
-		write32(address, value, false);
+		store32(address, value);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
 	}
 
-	public boolean write32(int address, int value, boolean conditional) {
-		if ((address & 3) != 0) {
-			exception_ADDRESS_ERROR(address, false);
-			success = false;
-			return false;
-		}
+	public int read32linked(int address) {
+		int ret;
+		if ((address & 3) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
 
-		if (conditional && !canStoreConditional()) {
-			success = true;
-			return false;
+			int physicalAddress = translate(address, false, true);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				ret = _load32phys(physicalAddress);
+				if (memoryError == MEMORY_ERROR_NOERROR) {
+					loadLinkedStatus = true;
+					LLAddr = physicalAddress >>> 4;
+				}
+			} else {
+				ret = 0;
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
+			ret = 0;
 		}
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
+		return ret;
+	}
 
-		int physicalAddress = translate(address, true, true);
-		if (translationError) {
-			success = false;
-			return false;
+
+	public boolean write32conditional(int address, int value) {
+		if ((address & 3) == 0) {
+			if (loadLinkedStatus) {
+				write32(address, value);
+				if (memoryError == MEMORY_ERROR_NOERROR) {
+					loadLinkedStatus = false;
+					return true;
+				}
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_STORE;
 		}
-		memoryManager.write32(physicalAddress, value, bigEndian);
-		success = !memoryManager.error();
-		if (!success) exception_BUS_ERROR(true);
-		else cancelStoreConditional();
-		return success;
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
+		return false;
 	}
 
 	public int read32UnalignedLeft(int address, int oldValue) {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			return (oldValue & ~((-1) << shift)) | (value << shift); 
+		} else {
+			return 0;
 		}
-		return 0;
 	}
 
 	public int read32UnalignedRight(int address, int oldValue) {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
 			shift <<= 3;
 			return (oldValue & ~((-1) >>> shift)) | (value >>> shift); 
+		} else {
+			return 0;
 		}
-		return 0;
 	}
 
 	public void write32UnalignedLeft(int address, int value) {
 		int alignedAddress = address & (~3);
-		int physicalAddress = translate(alignedAddress, true, true);
-		if (translationError) {
-			success = false;
-			return;
-		}
-		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
-		success = !memoryManager.error();
 
-		if (success) {
-			int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
-			shift <<= 3;
-			int newValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
-			memoryManager.write32(physicalAddress, newValue, bigEndian);
-			success = !memoryManager.error();
+		memoryError = MEMORY_ERROR_NOERROR;
+		int physicalAddress = translate(alignedAddress, true, true);
+		if (memoryError == MEMORY_ERROR_NOERROR) {
+			int oldValue = _load32phys(physicalAddress);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				int shift = (bigEndian) ? (address & 3) : 3 - (address & 3);
+				shift <<= 3;
+				int newValue = (oldValue & ~((-1) >>> shift)) | (value >>> shift);
+				_store32phys(physicalAddress, newValue);
+			}
 		}
-		if (!success) exception_BUS_ERROR(true);
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
 	}
 
 	public void write32UnalignedRight(int address, int value) {
 		int alignedAddress = address & (~3);
+
+		memoryError = MEMORY_ERROR_NOERROR;
 		int physicalAddress = translate(alignedAddress, true, true);
-		if (translationError) {
-			success = false;
-			return;
+		if (memoryError == MEMORY_ERROR_NOERROR) {
+			int oldValue = _load32phys(physicalAddress);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
+				shift <<= 3;
+				int newValue = (oldValue & ~((-1) << shift)) | (value << shift); 
+				_store32phys(physicalAddress, newValue);
+			}
 		}
-		int oldValue = memoryManager.read32(physicalAddress, bigEndian);
-		success = !memoryManager.error();
-
-		if (success) {
-			int shift = (!bigEndian) ? (address & 3) : 3 - (address & 3);
-			shift <<= 3;
-			int newValue = (oldValue & ~((-1) << shift)) | (value << shift); 
-			memoryManager.write32(physicalAddress, newValue, bigEndian);
-			success = !memoryManager.error();
-		}
-		if (!success) exception_BUS_ERROR(true);
-	}
-
-	public boolean success() {
-		return success;
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(address);
 	}
 
 	public int fetchOpcode() {
-		if ((pc & 3) != 0) {
-			exception_ADDRESS_ERROR(pc, true);
-			success = false;
-			return 0;
-		}
+		int ret = 0;
+		if ((pc & 3) == 0) {
+			memoryError = MEMORY_ERROR_NOERROR;
 
-		int physicalAddress = translate(pc, false, false);
-		if (translationError) {
-			success = false;
-			return 0;
+			int physicalAddress = translate(pc, false, false);
+			if (memoryError == MEMORY_ERROR_NOERROR) {
+				if (physicalAddress < ram.getRamSize()) {
+					ret = ram.read32(physicalAddress, bigEndian);
+				} else {
+					ret = ioController.read32(physicalAddress, bigEndian);
+					if (ioController.ioError())
+						memoryError = MEMORY_ERROR_BUS_ERROR_INSTRUCTION;
+				}
+			}
+		} else {
+			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
 		}
-		int v = memoryManager.read32(physicalAddress, bigEndian);
-		if (memoryManager.error()) {
-			success = false;
-			exception_BUS_ERROR(false);
-			return 0;
-		}
-		success = true;
-		return v;
+		if (memoryError != MEMORY_ERROR_NOERROR)
+			raiseMemoryException(pc);
+		return ret;
+	}
+
+	public int getLastMemoryError() {
+		return memoryError;
 	}
 
 	public void step() {
@@ -506,25 +689,24 @@ public final class Cpu {
 
 	public void step(int num) {
 		if (halted) return;
+
 		checkInterrupts();
 		int before = getCounter();
 		while(num-- > 0 && !halted) {
 			int opcode = fetchOpcode();
-			if (!success) {
+			if (memoryError != MEMORY_ERROR_NOERROR) {
 				opcode = fetchOpcode();
-				if (!success) {
+				if (memoryError != MEMORY_ERROR_NOERROR) {
 					halted = true;
 					break;
 				}
 			}
-			if (success) {
-				nextDelaySlot = false;
-				_nextPc = nextPc;
-				nextPc = nextPc + 4;
-				microstep(opcode);
-				delaySlot = nextDelaySlot;
-				pc = _nextPc;
-			}
+			nextDelaySlot = false;
+			_nextPc = nextPc;
+			nextPc = nextPc + 4;
+			microstep(opcode);
+			delaySlot = nextDelaySlot;
+			pc = _nextPc;
 		}
 		int after = getCounter();
 		checkTimerInterrupt(before, after);
@@ -532,6 +714,7 @@ public final class Cpu {
 
 	private void microstep(int opcode) {
 		counter++;
+
 		switch (I_OP(opcode)) {
 		case 0: stepSpecial(opcode); break;
 		case 1: stepRegImm(opcode); break;
@@ -989,7 +1172,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read8(address);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -999,7 +1182,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read8(address) & 0xFF;
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -1009,7 +1192,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read16(address);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -1019,7 +1202,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read16(address) & 0xFFFF;
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -1028,8 +1211,8 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
-		int val = read32(address, true);
-		if (success) {
+		int val = read32linked(address);
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -1045,7 +1228,7 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read32(address);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(I_RT(opcode), val);
 		}
 	}
@@ -1056,7 +1239,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int rt = I_RT(opcode);
 		int val = read32UnalignedLeft(address, gpr[rt]);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, val);
 		}
 	}
@@ -1067,7 +1250,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int rt = I_RT(opcode);
 		int val = read32UnalignedRight(address, gpr[rt]);
-		if (success) {
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, val);
 		}
 	}
@@ -1222,8 +1405,8 @@ public final class Cpu {
 		int offset = I_IMM16(opcode);
 		int address = rs + offset;
 		int rt = I_RT(opcode);
-		boolean ok = write32(address, gpr[rt], true);
-		if (success) {
+		boolean ok = write32conditional(address, gpr[rt]);
+		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, ok ? 1 : 0);
 		}
 	}
@@ -1361,7 +1544,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		if (rs == rt) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1369,7 +1552,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		if (rs == imm) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1377,7 +1560,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		if (rs >= rt) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1385,7 +1568,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		if (rs >= imm) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1393,7 +1576,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		if (Utils.compareUnsigned(rs, imm) >= 0) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1401,7 +1584,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		if (Utils.compareUnsigned(rs, rt) >= 0) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1433,7 +1616,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		if (rs < rt) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1441,7 +1624,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		if (rs < imm) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1449,7 +1632,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		if (Utils.compareUnsigned(rs, imm) < 0) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1457,7 +1640,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		if (Utils.compareUnsigned(rs, rt) < 0) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1465,7 +1648,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
 		if (rs != rt) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1473,7 +1656,7 @@ public final class Cpu {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
 		if (rs != imm) {
-			trap();
+			exception_TRAP();
 		}
 	}
 
@@ -1542,10 +1725,6 @@ public final class Cpu {
 
 	private void skipDelaySlot() {
 		_nextPc += 4;
-	}
-
-	private void trap() {
-		exception_TRAP();
 	}
 
 
@@ -1949,18 +2128,6 @@ public final class Cpu {
 		return true;
 	}
 
-	private void loadLinked(int physicalAddress) {
-		loadLinkedStatus = true;
-		LLAddr = physicalAddress >>> 4;
-	}
-
-	private void cancelStoreConditional() {
-		loadLinkedStatus = false;
-	}
-
-	private boolean canStoreConditional() {
-		return loadLinkedStatus;
-	}
 
 	// TLB functions
 	private void initTLB() {
@@ -1976,24 +2143,21 @@ public final class Cpu {
 	}
 
 	private int translate(int address, boolean write, boolean data) {
-		translationError = false;
 		if (kernelMode) {
 			if ((address & 0xC0000000) == 0x80000000) { // kseg0 or kseg1 
 				return address & 0x1FFFFFFF;
 			}
 		} else { // User Mode
-			// useg
-			if ((address & 0x80000000) != 0) { 
-				exception_ADDRESS_ERROR(address, !write);
-				translationError = true;
+			if ((address & 0x80000000) != 0) {
+				memoryError = write ? MEMORY_ERROR_ADDRESS_ERROR_STORE :
+				                      MEMORY_ERROR_ADDRESS_ERROR_LOAD;
 				return 0;
 			}
 			
 		}
 
-		TlbEntry tlbEntry;
 		TlbEntryPage tlbEntryPage;
-		tlbEntry = (data) ? lastTlbEntryData : lastTlbEntryCode;
+		TlbEntry tlbEntry = (data) ? lastTlbEntryData : lastTlbEntryCode;
 
 		if (tlbEntry.initialized) {
 			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID);
@@ -2012,12 +2176,14 @@ public final class Cpu {
 				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
 			}
 		}
+
 		if ((Status & STATUS_EXL) != 0) {
-			exception_TLB_INVALID(address, !write);
+			memoryError = write ? MEMORY_ERROR_TLB_INVALID_STORE :
+			                      MEMORY_ERROR_TLB_INVALID_LOAD;
 		} else {
-			exception_TLB_REFILL(address, !write);
+			memoryError = write ? MEMORY_ERROR_TLB_REFILL_STORE :
+			                      MEMORY_ERROR_TLB_REFILL_LOAD;
 		}
-		translationError = true;
 		return 0;
 	}
 
@@ -2038,13 +2204,12 @@ public final class Cpu {
 		if (data) lastTlbEntryData = tlbEntry;
 		else lastTlbEntryCode = tlbEntry;
 		if (!tlbEntryPage.valid) {
-			exception_TLB_INVALID(address, !write);
-			translationError = true;
+			memoryError = write ? MEMORY_ERROR_TLB_INVALID_STORE :
+			                      MEMORY_ERROR_TLB_INVALID_LOAD;
 			return 0;
 		}
 		if (write && !tlbEntryPage.dirty) {
-			exception_TLB_MOD(address);
-			translationError = true;
+			memoryError = MEMORY_ERROR_TLB_MOD;
 			return 0;
 		}
 		address &= ~(tlbEntry.PageMask | tlbEntry.selectionBit);

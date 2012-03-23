@@ -2,15 +2,10 @@ package jmips.dev;
 
 import jmips.cpu.Device;
 
-public class RealTimeClock extends Device {
+public class RealTimeClock implements Device {
+	private boolean error;
 
-	public RealTimeClock(int mappedOffset) {
-		super(mappedOffset);
-	}
-
-	@Override
-	public int getDeviceSize() {
-		return 2;
+	public RealTimeClock() {
 	}
 
 	@Override
@@ -37,15 +32,22 @@ public class RealTimeClock extends Device {
 
 	@Override
 	public byte read8(int offset) {
+		error = false;
 		return 0;
 	}
 
 	@Override
 	public void write8(int offset, byte value) {
+		error = false;
 	}
 
 	@Override
 	public void reset() {
+	}
+
+	@Override
+	public boolean ioError() {
+		return error;
 	}
 
 }

@@ -2,24 +2,17 @@ package jmips.cpu;
 
 import static org.junit.Assert.*;
 
+import jmips.MipsSystem;
 import jmips.serial.ConsoleTTY;
-import jmips.dev.Uart;
 
 import org.junit.Test;
 
 public class CpuTest {
-
-	private static final int RAM_BASE = 0x00000000;
-	private static final int RAM_SIZE = 64 * 1024 * 1024;
-	private static final int UART_BASE = 0x30000000;
-	private static final int BASE_ADDRESS = 0x80000000;
+	private static final int BASE_ADDRESS = 0x80100000;
 
 	private Cpu createCpu() {
-		Cpu cpu = new Cpu(RAM_BASE, RAM_SIZE);
-		Uart uart = new Uart(UART_BASE, cpu, new ConsoleTTY(), 1);
-
-		cpu.getMemoryManager().registerDevice(uart);
-		return cpu;
+		MipsSystem system = new MipsSystem(new ConsoleTTY());
+		return system.getCpu();
 	}
 
 	private void reset(Cpu cpu) {

@@ -1,18 +1,16 @@
 package jmips.cpu;
 
-public final class Ram extends Device {
+public final class Ram implements Device {
 	private final int[] memory;
 	private final int size;
 
-	public Ram(int mappedOffset, int size) {
-		super(mappedOffset);
+	public Ram(int size) {
 		this.size = size & (~3);
 		memory = new int[this.size >> 2];
 	}
 
-	@Override
-	public int getDeviceSize() {
-		return this.size;
+	public int getRamSize() {
+		return size;
 	}
 
 	@Override
@@ -94,5 +92,10 @@ public final class Ram extends Device {
 
 	@Override
 	public void reset() {
+	}
+
+	@Override
+	public boolean ioError() {
+		return false;
 	}
 }
