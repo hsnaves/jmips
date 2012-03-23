@@ -163,9 +163,9 @@ public final class Cpu {
 	// Instance fields
 	private final int[] gpr = new int[32];
 	private int hi, lo;
-	private int pc, _nextPc, nextPc;
+	private int pc, npc;
 	private long counter;
-	private boolean delaySlot, nextDelaySlot;
+	private boolean delaySlot;
 
 	private boolean halted;
 	private int memoryError;
@@ -263,19 +263,12 @@ public final class Cpu {
 
 	public void setPc(int pc) {
 		this.pc = pc;
-		this._nextPc = pc;
-		this.nextPc = pc + 4;
 		this.delaySlot = false;
-		this.nextDelaySlot = false;
 		this.halted = false;
 	}
 
 	public int getPc() {
 		return this.pc;
-	}
-
-	public int getNextPc() {
-		return this.nextPc;
 	}
 
 	public int getCounter() {
@@ -679,6 +672,59 @@ public final class Cpu {
 		return memoryError;
 	}
 
+	public void step() {
+		step(1);
+	}
+
+	private int safeFetchOpcode() {
+		int opcode = fetchOpcode();
+		if (memoryError == MEMORY_ERROR_NOERROR) {
+			return opcode;
+		} else {
+			return fetchOpcode();
+		}
+	}
+
+	public void step(int num) {
+		checkInterrupts();
+		int before = getCounter();
+		while(num > 0 && !halted) {
+			int opcode;
+
+			delaySlot = false;
+			npc = pc;
+			opcode = safeFetchOpcode();
+			if (memoryError != MEMORY_ERROR_NOERROR) {
+				halted = true;
+				break;
+			}
+
+			pc = pc + 4;
+			microstep(opcode);
+			if (delaySlot) {
+				int nextPc = npc;
+
+				npc = pc;
+				opcode = fetchOpcode();
+				if (memoryError == MEMORY_ERROR_NOERROR) {
+					pc = pc + 4;
+					microstep(opcode);
+					if (delaySlot) {
+						pc = nextPc;
+						num--;
+					}
+				}
+			}
+			num--;
+		}
+		if (num > 0) counter += num;
+		delaySlot = false;
+		npc = pc;
+
+		int after = getCounter();
+		checkTimerInterrupt(before, after);
+	}
+
 	public String disassemble(int count) {
 		return disassemble(pc, count);
 	}
@@ -696,37 +742,6 @@ public final class Cpu {
 			sb.append("\n");
 		}
 		return sb.toString();
-	}
-
-	public void step() {
-		step(1);
-	}
-
-	public void step(int num) {
-		checkInterrupts();
-		int before = getCounter();
-		while(num > 0 && !halted) {
-			int opcode = fetchOpcode();
-			if (memoryError != MEMORY_ERROR_NOERROR) {
-				opcode = fetchOpcode();
-				if (memoryError != MEMORY_ERROR_NOERROR) {
-					halted = true;
-					break;
-				}
-			}
-			nextDelaySlot = false;
-			_nextPc = nextPc;
-			nextPc = nextPc + 4;
-			microstep(opcode);
-			delaySlot = nextDelaySlot;
-			pc = _nextPc;
-			num--;
-			if (num == 0 && delaySlot) num++;
-		}
-		counter += num;
-
-		int after = getCounter();
-		checkTimerInterrupt(before, after);
 	}
 
 	private void microstep(int opcode) {
@@ -1164,8 +1179,8 @@ public final class Cpu {
 	}
 
 	private void j(int opcode) {
-		nextPc = I_JUMP(opcode, pc);
-		nextDelaySlot = true;
+		npc = I_JUMP(opcode, pc - 4);
+		delaySlot = true;
 	}
 
 	private void jal(int opcode) {
@@ -1180,8 +1195,8 @@ public final class Cpu {
 
 	private void jr(int opcode) {
 		int rs = gpr[I_RS(opcode)];
-		nextPc = rs;
-		nextDelaySlot = true;
+		npc = rs;
+		delaySlot = true;
 	}
 
 	private void lb(int opcode) {
@@ -1728,8 +1743,8 @@ public final class Cpu {
 	}
 
 	private void branch(int opcode) {
-		nextPc = I_BRANCH(opcode, pc);
-		nextDelaySlot = true;
+		npc = I_BRANCH(opcode, pc - 4);
+		delaySlot = true;
 	}
 
 	private void link() {
@@ -1737,11 +1752,11 @@ public final class Cpu {
 	}
 
 	private void link(int regno) {
-		setGpr(regno, _nextPc + 4);
+		setGpr(regno, pc + 4);
 	}
 
 	private void skipDelaySlot() {
-		_nextPc += 4;
+		pc += 4;
 	}
 
 
@@ -1980,25 +1995,35 @@ public final class Cpu {
 		return retval;
 	}
 
+	private int exceptionPc() {
+		return delaySlot ? npc - 4 : npc;
+	}
+
 	private void exception_RESET() {
+		final int statusSet = STATUS_BEV | STATUS_ERL;
+		final int statusMask = STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL;
 		Wired = 0;
 		Config = changeValue(Config, 2, 0x07);
-		writeStatus(changeValue(Status, STATUS_BEV | STATUS_ERL, STATUS_RP | STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = isBranchDelaySlot() ? getPc() - 4 : getPc();
+		writeStatus(changeValue(Status, statusSet, statusMask));
+		ErrorEPC = exceptionPc();
 
 		setPc(0xBFC00000);
 	}
 
 	private void exception_SOFT_RESET() {
-		writeStatus(changeValue(Status, STATUS_SR | STATUS_BEV | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = isBranchDelaySlot() ? getPc() - 4 : getPc();
+		final int statusSet = STATUS_SR | STATUS_BEV | STATUS_ERL;
+		final int statusMask = STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL;
+		writeStatus(changeValue(Status, statusSet, statusMask));
+		ErrorEPC = exceptionPc();
 
 		setPc(0xBFC00000);
 	}
 
 	private void exception_NMI() {
-		writeStatus(changeValue(Status, STATUS_BEV | STATUS_NMI | STATUS_ERL, STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL));
-		ErrorEPC = isBranchDelaySlot() ? getPc() - 4 : getPc();
+		final int statusSet = STATUS_BEV | STATUS_NMI | STATUS_ERL;
+		final int statusMask = STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL;
+		writeStatus(changeValue(Status, statusSet, statusMask));
+		ErrorEPC = exceptionPc();
 
 		setPc(0xBFC00000);
 	}
@@ -2007,11 +2032,11 @@ public final class Cpu {
 		int vectorOffset;
 
 		if ((Status & STATUS_EXL) == 0) {
-			if (isBranchDelaySlot()) {
-				EPC = getPc() - 4;
+			if (delaySlot) {
+				EPC = exceptionPc();
 				Cause |= CAUSE_BD;
 			} else {
-				EPC = getPc();
+				EPC = exceptionPc();
 				Cause &= ~CAUSE_BD;
 			}
 			if (offsetToZero) {
@@ -2097,16 +2122,16 @@ public final class Cpu {
 	}
 
 	private void returnFromException() {
-		int newPc;
+		int pc;
 		loadLinkedStatus = false;
 		if ((Status & STATUS_ERL) != 0) {
 			writeStatus(Status & (~STATUS_ERL));
-			newPc = ErrorEPC;
+			pc = ErrorEPC;
 		} else {
 			writeStatus(Status & (~STATUS_EXL));
-			newPc = EPC;
+			pc = EPC;
 		}
-		setPc(newPc);
+		setPc(pc);
 	}
 
 	public void raiseIrq(int irqno) {
@@ -2215,7 +2240,8 @@ public final class Cpu {
 		return null;
 	}
 
-	private int tlbPageTranslate(TlbEntry tlbEntry, TlbEntryPage tlbEntryPage, int address, boolean write, boolean data) {
+	private int tlbPageTranslate(TlbEntry tlbEntry, TlbEntryPage tlbEntryPage,
+	                             int address, boolean write, boolean data) {
 		if (data) lastTlbEntryData = tlbEntry;
 		else lastTlbEntryCode = tlbEntry;
 		if (!tlbEntryPage.valid) {
@@ -2278,7 +2304,8 @@ public final class Cpu {
 		int mask = (~PageMask) & ENTRYHI_VPN2_MASK;
 		int VPN2 = EntryHi & mask;
 		int ASID = EntryHi & ENTRYHI_ASID_MASK;
-		boolean global = ((EntryLo0 & ENTRYLO_GLOBAL) != 0) && ((EntryLo1 & ENTRYLO_GLOBAL) != 0);
+		boolean global = ((EntryLo0 & ENTRYLO_GLOBAL) != 0) &&
+		                 ((EntryLo1 & ENTRYLO_GLOBAL) != 0);
 
 		// Checks for multiple entries
 		for (int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
