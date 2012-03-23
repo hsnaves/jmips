@@ -164,6 +164,7 @@ public final class Cpu {
 	private final int[] gpr = new int[32];
 	private int hi, lo;
 	private int pc, npc;
+	private int beforeCounter;
 	private long counter;
 	private boolean delaySlot;
 
@@ -687,7 +688,7 @@ public final class Cpu {
 
 	public void step(int num) {
 		checkInterrupts();
-		int before = getCounter();
+		beforeCounter = getCounter();
 		while(num > 0 && !halted) {
 			int opcode;
 
@@ -701,6 +702,7 @@ public final class Cpu {
 
 			pc = pc + 4;
 			microstep(opcode);
+
 			if (delaySlot) {
 				int nextPc = npc;
 
@@ -711,7 +713,6 @@ public final class Cpu {
 					microstep(opcode);
 					if (delaySlot) {
 						pc = nextPc;
-						num--;
 					}
 				}
 			}
@@ -721,8 +722,7 @@ public final class Cpu {
 		delaySlot = false;
 		npc = pc;
 
-		int after = getCounter();
-		checkTimerInterrupt(before, after);
+		checkTimerInterrupt(beforeCounter, getCounter());
 	}
 
 	public String disassemble(int count) {
@@ -1813,7 +1813,9 @@ public final class Cpu {
 			// Ignore BadVAddr writes
 			break;
 		case COP0_REG_COUNT:
+			checkTimerInterrupt(beforeCounter, getCounter());
 			setCounter(value);
+			beforeCounter = value;
 			break;
 		case COP0_REG_ENTRYHI:
 			EntryHi = value & ENTRYHI_WRITE_MASK;
@@ -1821,6 +1823,7 @@ public final class Cpu {
 			break;
 		case COP0_REG_COMPARE:
 			Compare = value;
+			beforeCounter = getCounter();
 			lowerIrq(TIMER_IRQ);
 			break;
 		case COP0_REG_STATUS:
@@ -1933,6 +1936,7 @@ public final class Cpu {
 			retval = Status;
 			break;
 		case COP0_REG_CAUSE:
+			checkTimerInterrupt(beforeCounter, getCounter());
 			retval = Cause;
 			break;
 		case COP0_REG_EPC:

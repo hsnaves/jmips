@@ -87,7 +87,7 @@ public final class Uart implements Device {
 		divider = 12;  // 9600 bps
 		rbr = 0;
 		ier = 0;
-		iir = UART_IIR_FIFO | UART_IIR_NO_INT;
+		iir = UART_IIR_NO_INT | UART_IIR_FIFO;
 		lcr = 0;
 		lsr = UART_LSR_TEMT | UART_LSR_THRE;
 		msr = 0;
@@ -103,7 +103,7 @@ public final class Uart implements Device {
 	}
 
 	private void updateIrq() {
-		iir &= ~(UART_IIR_NO_INT | UART_IIR_THRI | UART_IIR_RDI);
+		iir &= ~(UART_IIR_NO_INT | UART_IIR_THRI | UART_IIR_RDI | UART_IIR_CTO);
 		if ((lsr & UART_LSR_DR) != 0 && (ier & UART_IER_ERBFI) != 0 && (recvFifo.size() + 1 >= fifo_threshold)) {
 			iir |= UART_IIR_RDI;
 		} else if ((lsr & UART_LSR_THRE) != 0 && (ier & UART_IER_ETBEI) != 0) {
@@ -120,8 +120,8 @@ public final class Uart implements Device {
 			byte b = recvFifo.remove();
 			rbr = b;
 			lsr |= UART_LSR_DR;
-			updateIrq();
 		}
+		updateIrq();
 	}
 
 	private void updateFifoControlRegister(int fcr) {
@@ -175,6 +175,17 @@ public final class Uart implements Device {
 		if (recvFifo.size() < UART_FIFO_SIZE - 1)
 			recvFifo.add(b);
 		receiveByteFromFifo();
+	}
+
+	public void expireReceiveBufferData() {
+		if (!recvFifo.isEmpty() || (lsr & UART_LSR_DR) != 0) {
+			updateIrq();
+			if ((iir & UART_IIR_NO_INT) != 0) {
+				iir &= ~UART_IIR_NO_INT;
+				iir |= UART_IIR_CTO;
+				controller.changeIrqStatus(true);
+			}
+		}
 	}
 
 	@Override

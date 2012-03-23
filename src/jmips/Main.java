@@ -26,11 +26,11 @@ public class Main {
 
 		frame.pack();
 		tty.open();
-		tty.setEchoEnabled(true);
+		//tty.setEchoEnabled(true);
 		return tty;
 	}
 
-	public static void main(String[] args) throws FileNotFoundException, IOException {
+	public static void main(String[] args) throws FileNotFoundException, IOException, InterruptedException {
 		final JFrame frame = createConsoleFrame();
 		final SwingTTY tty = createSwingTTY(frame);
 		final MipsSystem system = new MipsSystem(tty);
@@ -53,8 +53,13 @@ public class Main {
 		//GdbServer server = new GdbServer(cpu, tty);
 		//server.startServer(1234);
 		//return;
-		for(int i = 0; i < 500000000; i++) {
-			cpu.step();
+
+		while(true) {
+			cpu.step(4000);
+			while (system.getTTY().available()) {
+				system.getUart().receiveByte(system.getTTY().read());
+			}
+			system.getUart().expireReceiveBufferData();
 		}
 	}
 
