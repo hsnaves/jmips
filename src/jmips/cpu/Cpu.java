@@ -261,10 +261,6 @@ public final class Cpu {
 		return halted;
 	}
 
-	public void wakeUp() {
-		halted = false;
-	}
-
 	public void setPc(int pc) {
 		this.pc = pc;
 		this._nextPc = pc;
@@ -688,11 +684,9 @@ public final class Cpu {
 	}
 
 	public void step(int num) {
-		if (halted) return;
-
 		checkInterrupts();
 		int before = getCounter();
-		while(num-- > 0 && !halted) {
+		while(num > 0 && !halted) {
 			int opcode = fetchOpcode();
 			if (memoryError != MEMORY_ERROR_NOERROR) {
 				opcode = fetchOpcode();
@@ -707,7 +701,10 @@ public final class Cpu {
 			microstep(opcode);
 			delaySlot = nextDelaySlot;
 			pc = _nextPc;
+			num--;
 		}
+		counter += num;
+
 		int after = getCounter();
 		checkTimerInterrupt(before, after);
 	}
@@ -2102,7 +2099,7 @@ public final class Cpu {
 		Cause &= ~(1 << (CAUSE_INTERRUPT_SHIFT + irqno));
 	}
 
-	private boolean interruptEnabled() {
+	public boolean interruptEnabled() {
 		return (Status & (STATUS_IE | STATUS_EXL | STATUS_ERL)) == STATUS_IE;
 	}
 
@@ -2119,9 +2116,9 @@ public final class Cpu {
 	}
 
 	private boolean checkTimerInterrupt(int before, int after) {
-		//if (after != Compare || before == after) return false;
-		if (Utils.compareUnsigned(before, Compare) >= 0) return false;
-		if (Utils.compareUnsigned(after - before, Compare - before) < 0) return false;
+		int diff = Compare - before;
+		if (diff <= 0) return false;
+		if (after - before < diff) return false;
 
 		raiseIrq(TIMER_IRQ);
 		checkInterrupts();

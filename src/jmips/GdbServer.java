@@ -195,16 +195,13 @@ public class GdbServer {
 	}
 
 	private void commandStep(String cmd) throws IOException {
-		cpu.wakeUp();
 		cpu.step();
 		sendPacket("S05");
 	}
 
 	private void commandContinue(String cmd) throws IOException {
 		sendData("+");
-		cpu.wakeUp();
 		while(true) {
-			if (cpu.isHalted()) break;
 			int pc = cpu.getPc();
 			if (breakPoints.contains(pc)) break;
 			cpu.step();
