@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jmips.cpu.Cpu;
-import jmips.serial.TTY;
 
 /**
  * GdbStub class 
@@ -23,12 +22,10 @@ public class GdbServer {
 	private String lastData;
 	private List<Integer> breakPoints = new ArrayList<Integer>();
 
-	private Cpu cpu;
-	private TTY tty;
+	private MipsSystem system;
 
-	public GdbServer(Cpu cpu, TTY tty) {
-		this.cpu = cpu;
-		this.tty = tty;
+	public GdbServer(MipsSystem system) {
+		this.system = system;
 	}
 
 	public void startServer(int port) throws IOException {
@@ -140,7 +137,7 @@ public class GdbServer {
 	private void commandReadRegisters(String cmd) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i < 32; i++) {
-			sb.append(String.format("%08x", cpu.getGpr(i)));
+			sb.append(String.format("%08x", system.getCpu().getGpr(i)));
 		}
 		sendPacket(sb.toString());
 	}
@@ -153,6 +150,7 @@ public class GdbServer {
 	}
 
 	private int readRegister(int reg) {
+		final Cpu cpu = system.getCpu();
 		if (reg < 32) return cpu.getGpr(reg);
 
 		switch (reg) {
@@ -176,7 +174,7 @@ public class GdbServer {
 		int len = Integer.parseInt(cmd.substring(divider + 1));
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i < len ; i++) {
-			byte b = cpu.load8(address + i);
+			byte b = system.getCpu().load8(address + i);
 			sb.append(String.format("%02X", ((int) b) & 0xFF));
 		}
 		sendPacket(sb.toString());
@@ -195,16 +193,16 @@ public class GdbServer {
 	}
 
 	private void commandStep(String cmd) throws IOException {
-		cpu.step();
+		system.step(1);
 		sendPacket("S05");
 	}
 
 	private void commandContinue(String cmd) throws IOException {
 		sendData("+");
 		while(true) {
-			int pc = cpu.getPc();
+			int pc = system.getCpu().getPc();
 			if (breakPoints.contains(pc)) break;
-			cpu.step();
+			system.step(1);
 		}
 		sendPacket("S05");
 	}

@@ -6,13 +6,10 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 
-import jmips.cpu.Cpu;
-import jmips.cpu.Utils;
 import jmips.serial.SwingTTY;
 
 public class Main {
 	private static final int BASE_ADDRESS = 0x80100000;
-	private static final int INITRD_ADDRESS = 0x803D9000;
 
 	private static JFrame createConsoleFrame() {
 		JFrame frame = new JFrame("JMIPS");
@@ -26,7 +23,6 @@ public class Main {
 
 		frame.pack();
 		tty.open();
-		//tty.setEchoEnabled(true);
 		return tty;
 	}
 
@@ -36,30 +32,19 @@ public class Main {
 		final MipsSystem system = new MipsSystem(tty);
 		frame.setVisible(true);
 
-		system.reset();
-		final Cpu cpu = system.getCpu();
-		byte[] data = Utils.readFile(new FileInputStream("vmlinux.bin"));
-		for(int i = 0; i < data.length; i++) {
-			cpu.store8(BASE_ADDRESS + i, data[i]);
-		}
+		int initrdAddress = system.load(BASE_ADDRESS, new FileInputStream("vmlinux.bin"));
+		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;
+		int size = system.load(initrdAddress, new FileInputStream("initrd.gz")) - initrdAddress;
 
-		data = Utils.readFile(new FileInputStream("initrd.gz"));
-		for(int i = 0; i < data.length; i++) {
-			cpu.write8(INITRD_ADDRESS + i, data[i]);
-		}
-
-		cpu.setPc(BASE_ADDRESS);
-
+		system.reset(BASE_ADDRESS);
+		String cmdLine = String.format("rd_start=0x%08X rd_size=%d", initrdAddress, size);
+		system.setKernelCommandLine(cmdLine, initrdAddress + size);
 		//GdbServer server = new GdbServer(cpu, tty);
 		//server.startServer(1234);
 		//return;
 
 		while(true) {
-			cpu.step(4000);
-			while (system.getTTY().available()) {
-				system.getUart().receiveByte(system.getTTY().read());
-			}
-			system.getUart().expireReceiveBufferData();
+			system.step(4000);
 		}
 	}
 

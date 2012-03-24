@@ -1,5 +1,8 @@
 package jmips;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import jmips.cpu.Cpu;
 import jmips.cpu.Device;
 import jmips.dev.RealTimeClock;
@@ -21,7 +24,6 @@ public final class MipsSystem {
 	public static final int UART_IRQ = 1;                   // IRQ number for the UART
 
 	public static final int DEFAULT_RAM_SIZE = 64 * 1024 * 1024; // The default size of the RAM
-	public static final int DEFAULT_KERNEL_START = 0x80100000;   // Where to load the kernel
 
 	private final Cpu cpu;
 	private final Uart uart;
@@ -141,7 +143,6 @@ public final class MipsSystem {
 
 			@Override
 			public void reset() {
-				MipsSystem.this.reset();
 			}
 			
 		};
@@ -187,10 +188,43 @@ public final class MipsSystem {
 		return tty;
 	}
 
-	public void reset() {
+	public void reset(int pc) {
 		uart.reset();
 		rtc.reset();
 		tty.reset();
 		cpu.reset();
+		cpu.setPc(pc);
+	}
+
+	public void setKernelCommandLine(String cmdLine, int address) {
+		cpu.setGpr(Cpu.GPR_A0, address);
+		for (int i = 0; i < cmdLine.length(); i++) {
+			byte b = (byte) cmdLine.charAt(i);
+			cpu.store8(address, b);
+			address++;
+		}
+		cpu.store8(address, (byte) 0);
+	}
+
+	public int load(int address, InputStream is) throws IOException {
+		try {
+			while(true) {
+				int data = is.read();
+				if (data == -1) break;
+				cpu.store8(address, (byte) data);
+				address++;
+			}
+			return address;
+		} finally {
+			is.close();
+		}
+	}
+
+	public void step(int num) {
+		cpu.step(num);
+		while (tty.available()) {
+			uart.receiveByte(tty.read());
+		}
+		uart.expireReceiveBufferData();
 	}
 }

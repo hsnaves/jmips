@@ -1,4 +1,4 @@
-CROSS=mips-linux-gnu-
+CROSS=mips-unknown-linux-uclibc-
 
 AS      = $(CROSS)as
 CC      = $(CROSS)gcc

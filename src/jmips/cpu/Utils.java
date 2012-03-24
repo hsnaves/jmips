@@ -1,9 +1,5 @@
 package jmips.cpu;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-
 public class Utils {
 	private static final int[] LEADING_ZEROS = {
 		8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -177,15 +173,4 @@ public class Utils {
 		m |= (n << 24);
 		return m;
 	}
-
-	public static byte[] readFile(InputStream is) throws IOException {
-		byte[] data = new byte[is.available()];
-		int size = is.read(data);
-		if (size < data.length) {
-			data = Arrays.copyOf(data, size);
-		}
-		is.close();
-		return data;
-	}
-
 }
