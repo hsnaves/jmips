@@ -699,6 +699,7 @@ public final class Cpu {
 				halted = true;
 				break;
 			}
+			//System.out.print(disassemble(1));
 
 			pc = pc + 4;
 			microstep(opcode);

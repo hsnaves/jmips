@@ -1,13 +1,17 @@
 package jmips;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 
 import jmips.cpu.Cpu;
 import jmips.cpu.Device;
 import jmips.dev.RealTimeClock;
 import jmips.dev.Uart;
 import jmips.dev.UartController;
+import jmips.elf.Elf32;
+import jmips.elf.Elf32Program;
 import jmips.serial.TTY;
 
 /**
@@ -29,6 +33,7 @@ public final class MipsSystem {
 	private final Uart uart;
 	private final RealTimeClock rtc;
 	private final TTY tty;
+	private int entryPoint;
 
 	public MipsSystem(TTY tty) {
 		this(DEFAULT_RAM_SIZE, tty);
@@ -188,12 +193,20 @@ public final class MipsSystem {
 		return tty;
 	}
 
-	public void reset(int pc) {
+	public int getEntryPoint() {
+		return entryPoint;
+	}
+
+	public void setEntryPoint(int entryPoint) {
+		this.entryPoint = entryPoint;
+	}
+
+	public void reset() {
 		uart.reset();
 		rtc.reset();
 		tty.reset();
 		cpu.reset();
-		cpu.setPc(pc);
+		cpu.setPc(entryPoint);
 	}
 
 	public void setKernelCommandLine(String cmdLine, int address) {
@@ -206,18 +219,37 @@ public final class MipsSystem {
 		cpu.store8(address, (byte) 0);
 	}
 
-	public int load(int address, InputStream is) throws IOException {
-		try {
-			while(true) {
-				int data = is.read();
-				if (data == -1) break;
-				cpu.store8(address, (byte) data);
-				address++;
-			}
-			return address;
-		} finally {
-			is.close();
+	public int load(int address, ByteBuffer bb) {
+		while(bb.hasRemaining()) {
+			byte data = bb.get();
+			cpu.store8(address, data);
+			address++;
 		}
+		return address;
+	}
+
+	public int load(int address, FileChannel fc) throws IOException {
+		return load(address, fc.map(MapMode.READ_ONLY, 0, fc.size()));
+	}
+
+	public int loadElf32(ByteBuffer bb) {
+		Elf32 elf = new Elf32();
+		if (elf.readElf32(bb) == Elf32.READ_SUCCESS) {
+			for(int i = 0; i < elf.getNumPrograms(); i++) {
+				Elf32Program program = elf.getProgram(i);
+				if (program != null && program.getType() == Elf32Program.PT_LOAD) {
+					ByteBuffer data = program.getData();
+					int ret = load(program.getVirtualAddress(), data);
+					setEntryPoint(elf.getEntry());
+					return ret;
+				}
+			}
+		}
+		return 0;
+	}
+
+	public int loadElf32(FileChannel fc) throws IOException {
+		return loadElf32(fc.map(MapMode.READ_ONLY, 0, fc.size()));
 	}
 
 	public void step(int num) {

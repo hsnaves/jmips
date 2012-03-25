@@ -32,14 +32,20 @@ public class Main {
 		final MipsSystem system = new MipsSystem(tty);
 		frame.setVisible(true);
 
-		int initrdAddress = system.load(BASE_ADDRESS, new FileInputStream("vmlinux.bin"));
-		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;
-		int size = system.load(initrdAddress, new FileInputStream("initrd.gz")) - initrdAddress;
+		String kernelFileName = "asm/sha1.bin";
+		String initrdFileName = null; //"initrd.gz";
+		system.setEntryPoint(BASE_ADDRESS);
 
-		system.reset(BASE_ADDRESS);
-		String cmdLine = String.format("rd_start=0x%08X rd_size=%d", initrdAddress, size);
-		system.setKernelCommandLine(cmdLine, initrdAddress + size);
-		//GdbServer server = new GdbServer(cpu, tty);
+		int initrdAddress = system.loadElf32(new FileInputStream(kernelFileName).getChannel());
+		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;
+		if (initrdFileName != null) {
+			int size = system.load(initrdAddress, new FileInputStream(initrdFileName).getChannel()) - initrdAddress;
+			String cmdLine = String.format("rd_start=0x%08X rd_size=%d", initrdAddress, size);
+			system.setKernelCommandLine(cmdLine, initrdAddress + size);
+		}
+
+		system.reset();
+		//GdbServer server = new GdbServer(system);
 		//server.startServer(1234);
 		//return;
 

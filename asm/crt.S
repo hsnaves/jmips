@@ -2,13 +2,13 @@
 	.align 4
 	.set noreorder
 
-	.global	_start
-_start:
-	lui	$sp, %hi(0x09000000)
-	ori	$sp, $sp, %lo(0x09000000)
-	jal	_main
+	.global	__start
+__start:
+	lui	$sp, %hi(0x80200000)
+	ori	$sp, $sp, %lo(0x80200000)
+	b	_main
 	nop
 
 1:
-	j	1b
+	b	1b
 	nop
