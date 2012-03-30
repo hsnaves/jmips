@@ -6,12 +6,12 @@ LD      = $(CROSS)ld
 OBJCOPY = $(CROSS)objcopy
 
 ASFLAGS = -g
-CFLAGS  = -Wall -mno-abicalls -g
+CFLAGS  = -Wall -mno-abicalls -g -O3
 LDFLAGS = -Ttext=0x80100000
 
-CRT = crt.o
-SERIAL = serial.o
+COMMON = crt.o printf.o serial.o r4kc.o
 BINS += sha1.bin
+BINS += test.bin
 
 all: build
 
@@ -23,7 +23,7 @@ all: build
 	$(AS) $(ASFLAGS) $< -o $@
 	$(OBJCOPY) -R .reginfo $@ $@
 
-%.elf: $(CRT) $(SERIAL) %.o
+%.elf: $(COMMON) %.o
 	$(LD) $(LDFLAGS) $^ -o $@
 
 %.bin: %.elf

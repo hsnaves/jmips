@@ -1,13 +1,16 @@
 
-
-void send_str(char *s)
+void putchar (char c)
 {
   volatile char *send = (char *) 0xBFD003F8;
   volatile char *lsr = (char *)  0xBFD003FD;
-  while (*s) {
-    char c = s[0];
-    while (((*lsr) & 0x20) == 0);
-    *send = c;
-    s++;
+  while (((*lsr) & 0x20) == 0);
+  *send = c;
+}
+
+void send_str (char *str)
+{
+  while (*str) {
+    putchar (*str);
+    str++;
   }
 }

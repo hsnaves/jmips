@@ -3,104 +3,53 @@
 	.align 4
 	.set noreorder
 
-#define COP0_REG_INDEX		$0
-#define COP0_REG_RANDOM		$1
-#define COP0_REG_ENTRYLO0	$2
-#define COP0_REG_ENTRYLO1	$3
-#define COP0_REG_CONTEXT	$4
-#define COP0_REG_PAGEMASK	$5
-#define COP0_REG_WIRED		$6
-#define COP0_REG_BADVADDR	$8
-#define COP0_REG_COUNT		$9
-#define COP0_REG_ENTRYHI	$10
-#define COP0_REG_COMPARE	$11
-#define COP0_REG_STATUS		$12
-#define COP0_REG_CAUSE		$13
-#define COP0_REG_EPC		$14
-#define COP0_REG_PRID		$15
-#define COP0_REG_CONFIG		$16
-#define COP0_REG_LLADDR		$17
-#define COP0_REG_ERROREPC	$30
+	.set	cop0_reg_index,		$0
+	.set	cop0_reg_random,	$1
+	.set	cop0_reg_entrylo0,	$2
+	.set	cop0_reg_entrylo1,	$3
+	.set	cop0_reg_context,	$4
+	.set	cop0_reg_pagemask,	$5
+	.set	cop0_reg_wired,		$6
+	.set	cop0_reg_badvaddr,	$8
+	.set	cop0_reg_count,		$9
+	.set	cop0_reg_entryhi,	$10
+	.set	cop0_reg_compare,	$11
+	.set	cop0_reg_status,	$12
+	.set	cop0_reg_cause,		$13
+	.set	cop0_reg_epc,		$14
+	.set	cop0_reg_prid,		$15
+	.set	cop0_reg_config,	$16
+	.set	cop0_reg_lladdr,	$17
+	.set	cop0_reg_errorepc,	$30
 
+	.macro	get_set_c0_reg register
+	.global	get_c0_\register
+get_c0_\register:
+	jr		$ra
+	mfc0	$v0, cop0_reg_\register
 
-	.global	get_c0_index
-get_c0_index:
-	jr	$ra
-	mfc0	$v0, COP0_REG_INDEX
+	.global	set_c0_\register
+set_c0_\register:
+	jr		$ra
+	mtc0	$a0, cop0_reg_\register
+	.endm
 
-	.global	set_c0_index
-set_c0_index:
-	jr	$ra
-	mtc0	$a0, COP0_REG_INDEX
-
-
-	.global	get_c0_random
-get_c0_random:
-	jr	$ra
-	mfc0	$v0, COP0_REG_RANDOM
-
-	.global	set_c0_random
-set_c0_random:
-	jr	$ra
-	mtc0	$a0, COP0_REG_RANDOM
-
-	.global	get_c0_entrylo0
-get_c0_entrylo0:
-	jr	$ra
-	mfc0	$v0, COP0_REG_ENTRYLO0
-
-	.global	set_c0_entrylo0
-set_c0_entrylo0:
-	jr	$ra
-	mtc0	$a0, COP0_REG_ENTRYLO0
-
-	.global	get_c0_entrylo1
-get_c0_entrylo1:
-	jr	$ra
-	mfc0	$v0, COP0_REG_ENTRYLO1
-
-	.global	set_c0_entrylo1
-set_c0_entrylo1:
-	jr	$ra
-	mtc0	$a0, COP0_REG_ENTRYLO1
-
-	.global	get_c0_context
-get_c0_context:
-	jr	$ra
-	mfc0	$v0, COP0_REG_CONTEXT
-
-	.global	set_c0_context
-set_c0_context:
-	jr	$ra
-	mtc0	$a0, COP0_REG_CONTEXT
-
-	.global	get_c0_pagemask
-get_c0_pagemask:
-	jr	$ra
-	mfc0	$v0, COP0_REG_PAGEMASK
-
-	.global	set_c0_pagemask
-set_c0_pagemask:
-	jr	$ra
-	mtc0	$a0, COP0_REG_PAGEMASK
-
-	.global	get_c0_wired
-get_c0_wired:
-	jr	$ra
-	mfc0	$v0, COP0_REG_WIRED
-
-	.global	set_c0_wired
-set_c0_wired:
-	jr	$ra
-	mtc0	$a0, COP0_REG_WIRED
-
-	.global	get_c0_status
-get_c0_status:
-	jr	$ra
-	mfc0	$v0, COP0_REG_STATUS
-
-	.global	set_c0_status
-set_c0_status:
-	jr	$ra
-	mtc0	$a0, COP0_REG_STATUS
+	get_set_c0_reg	index
+	get_set_c0_reg	random
+	get_set_c0_reg	entrylo0
+	get_set_c0_reg	entrylo1
+	get_set_c0_reg	context
+	get_set_c0_reg	pagemask
+	get_set_c0_reg	wired
+	get_set_c0_reg	badvaddr
+	get_set_c0_reg	count
+	get_set_c0_reg	entryhi
+	get_set_c0_reg	compare
+	get_set_c0_reg	status
+	get_set_c0_reg	cause
+	get_set_c0_reg	epc
+	get_set_c0_reg	prid
+	get_set_c0_reg	config
+	get_set_c0_reg	lladdr
+	get_set_c0_reg	errorepc
 
