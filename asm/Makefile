@@ -9,7 +9,7 @@ ASFLAGS = -g
 CFLAGS  = -Wall -mno-abicalls -g -O3
 LDFLAGS = -Ttext=0x80100000
 
-COMMON = crt.o printf.o serial.o r4kc.o
+COMMON = crt.o printf.o io.o r4kc.o
 BINS += sha1.bin
 BINS += test.bin
 
