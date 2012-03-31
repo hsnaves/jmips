@@ -27,11 +27,11 @@ import javax.swing.Timer;
 public class SwingTTY extends JComponent implements TTY {
 	private static final long serialVersionUID = -8337907135507323599L;
 	private final Font terminalFont;
-	private final int numRows;
+	private final int numDisplayRows;
+	private final int numDisplayColumns;
 	private final int totalRows;
-	private final int numColumns;
-	private int cursorRow;
-	private int cursorColumn;
+	private int cursorDisplayRow;
+	private int cursorDisplayColumn;
 	private int cursorRowDifference;
 	private int displayRow, baseRow;
 	
@@ -49,13 +49,13 @@ public class SwingTTY extends JComponent implements TTY {
 	private boolean echoEnabled;
 
 	public SwingTTY() {
-		this(40, 120, 1000);
+		this(25, 80, 1000);
 	}
 
 	public SwingTTY(int numRows, int numColumns, int totalRows) {
 		this.terminalFont = new Font(Font.MONOSPACED, Font.PLAIN, 14);
-		this.numRows = numRows;
-		this.numColumns = numColumns;
+		this.numDisplayRows = numRows;
+		this.numDisplayColumns = numColumns;
 		this.totalRows = totalRows;
 
 		this.cursorTimer = new Timer(1000, new ActionListener() {
@@ -92,9 +92,9 @@ public class SwingTTY extends JComponent implements TTY {
 					} else if (event.getKeyCode() == KeyEvent.VK_DOWN) {
 						scrollDisplay(+1);
 					} else if (event.getKeyCode() == KeyEvent.VK_PAGE_UP) {
-						scrollDisplay(-(SwingTTY.this.numRows - 1));
+						scrollDisplay(-(SwingTTY.this.numDisplayRows - 1));
 					} else if (event.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
-						scrollDisplay(SwingTTY.this.numRows - 1);
+						scrollDisplay(SwingTTY.this.numDisplayRows - 1);
 					}
 				} else {
 					if (event.getKeyCode() == KeyEvent.VK_UP) {
@@ -175,10 +175,10 @@ public class SwingTTY extends JComponent implements TTY {
 		this.baseRow = 0;
 		this.currentForegroundColor = COLOR_WHITE;
 		this.currentBackgroundColor = COLOR_BLACK;
-		for(int row = 0; row < numRows; row++)
-			for(int column = 0; column < numColumns; column++)
+		for(int row = 0; row < numDisplayRows; row++)
+			for(int column = 0; column < numDisplayColumns; column++)
 				characterMap[row][column].change(' ', currentForegroundColor, currentBackgroundColor);
-		this.cursorRow = this.cursorColumn = 0;
+		this.cursorDisplayRow = this.cursorDisplayColumn = 0;
 		this.inputState = 0;
 	}
 
@@ -196,8 +196,8 @@ public class SwingTTY extends JComponent implements TTY {
 	@Override
 	public Dimension getPreferredSize() {
 		FontMetrics fontMetrics = getGraphics().getFontMetrics(terminalFont);
-		final int screenWidth = numColumns * fontMetrics.charWidth(' ');
-		final int screenHeight = numRows * fontMetrics.getHeight();
+		final int screenWidth = numDisplayColumns * fontMetrics.charWidth(' ');
+		final int screenHeight = numDisplayRows * fontMetrics.getHeight();
 		return new Dimension(screenWidth, screenHeight);
 	}
 
@@ -212,16 +212,16 @@ public class SwingTTY extends JComponent implements TTY {
 		final FontMetrics fontMetrics = getGraphics().getFontMetrics(terminalFont);
 		final int charWidth = fontMetrics.charWidth(' ');
 		final int charHeight = fontMetrics.getHeight();
-		graphics2D.fillRect(0, 0, numColumns * charWidth, numRows * charHeight);
+		graphics2D.fillRect(0, 0, numDisplayColumns * charWidth, numDisplayRows * charHeight);
 
-		for (int rrow = 0; rrow < numRows; rrow++) {
+		for (int rrow = 0; rrow < numDisplayRows; rrow++) {
 			int row = rrow + this.displayRow;
 			if (row >= totalRows) row -= totalRows;
-			for (int col = 0; col < numColumns; col++) {
+			for (int col = 0; col < numDisplayColumns; col++) {
 				TerminalCharacter character = characterMap[row][col];
 				Color backgroundColor = character.getBackgroundAsAWT();
 				Color foregroundColor = character.getForegroundAsAWT();
-				if (rrow == this.cursorRow && col == this.cursorColumn && this.cursorBlink.get()) {
+				if (rrow == this.cursorDisplayRow && col == this.cursorDisplayColumn && this.cursorBlink.get()) {
 					foregroundColor = character.getBackgroundAsAWT();
 					backgroundColor = character.getForegroundAsAWT();
 				}
@@ -240,20 +240,20 @@ public class SwingTTY extends JComponent implements TTY {
 			for(int i = 0; i < amount; i++) {
 				if (this.displayRow == this.baseRow) break;
 				this.displayRow++;
-				this.cursorRow--;
+				this.cursorDisplayRow--;
 				this.cursorRowDifference++;
 				if (this.displayRow == this.totalRows)
 					this.displayRow = 0;
 			}
 		} else {
 			amount = -amount;
-			int end = this.baseRow + this.numRows;
+			int end = this.baseRow + this.numDisplayRows;
 			if (end >= this.totalRows) end -= this.totalRows;
 			for(int i = 0; i < amount; i++) {
 				if (this.displayRow == end) break;
 				this.displayRow--;
 				if (this.displayRow < 0) this.displayRow = this.totalRows - 1;
-				this.cursorRow++;
+				this.cursorDisplayRow++;
 				this.cursorRowDifference--;
 			}
 		}
@@ -261,24 +261,31 @@ public class SwingTTY extends JComponent implements TTY {
 	}
 
 	private void scroll() {
-		this.cursorRow--;
+		this.cursorDisplayRow--;
 		this.baseRow++;
 		if (this.baseRow >= this.totalRows) {
 			this.baseRow = 0;
 		}
 		this.displayRow = this.baseRow;
-		int row = this.baseRow + this.numRows - 1;
+		int row = this.baseRow + this.numDisplayRows - 1;
 		if (row >= this.totalRows) row -= this.totalRows;
-		for(int i = 0; i < this.numColumns; i++) {
+		for(int i = 0; i < this.numDisplayColumns; i++) {
 			characterMap[row][i].change(' ', COLOR_WHITE, COLOR_BLACK);
 		}
+	}
+
+	private void clear(int row, int column) {
+		row += this.baseRow;
+		if (row >= this.totalRows) row -= this.totalRows;
+		for(int i = column; i < this.numDisplayColumns; i++)
+			characterMap[row][i].change(' ', COLOR_WHITE, COLOR_BLACK);
 	}
 
 	@Override
 	public void write(byte b) {
 		char c = (char) b;
 		if (this.displayRow != this.baseRow) {
-			this.cursorRow += this.cursorRowDifference;
+			this.cursorDisplayRow += this.cursorRowDifference;
 			this.displayRow = this.baseRow;
 		}
 		this.cursorRowDifference = 0;
@@ -286,42 +293,42 @@ public class SwingTTY extends JComponent implements TTY {
 		if (this.inputState == 0) {
 			switch(c) {
 			case '\n':
-				this.cursorRow++;
-				this.cursorColumn = 0;
+				this.cursorDisplayRow++;
+				this.cursorDisplayColumn = 0;
 				break;
 			case '\r':
-				this.cursorColumn = 0;
+				this.cursorDisplayColumn = 0;
 				break;
 			case '\u0008': // backspace
-				if (this.cursorColumn > 0) {
-					this.cursorColumn--;
+				if (this.cursorDisplayColumn > 0) {
+					this.cursorDisplayColumn--;
 				}
 				break;
 			case '\t':
-				int newcolumn = (this.cursorColumn + 8) & ~7;
-				if (newcolumn < numColumns) {
-					this.cursorColumn = newcolumn;
+				int newcolumn = (this.cursorDisplayColumn + 8) & ~7;
+				if (newcolumn < numDisplayColumns) {
+					this.cursorDisplayColumn = newcolumn;
 				} else {
-					this.cursorColumn = 0;
-					this.cursorRow++;
+					this.cursorDisplayColumn = 0;
+					this.cursorDisplayRow++;
 				}
 				break;
 			case '\u001B': // ESC
 				this.inputState = 1;
 				break;
 			default:
-				int row = this.cursorRow + this.baseRow;
+				int row = this.cursorDisplayRow + this.baseRow;
 				if (row >= totalRows) row -= totalRows;
-				characterMap[row][this.cursorColumn].change(c, currentForegroundColor, currentBackgroundColor);
+				characterMap[row][this.cursorDisplayColumn].change(c, currentForegroundColor, currentBackgroundColor);
 
-				this.cursorColumn++;
-				if (this.cursorColumn == numColumns) {
-					this.cursorRow++;
-					this.cursorColumn = 0;
+				this.cursorDisplayColumn++;
+				if (this.cursorDisplayColumn == numDisplayColumns) {
+					this.cursorDisplayRow++;
+					this.cursorDisplayColumn = 0;
 				}
 				break;
 			}
-			if (this.cursorRow >= numRows) {
+			if (this.cursorDisplayRow >= numDisplayRows) {
 				scroll();
 			}
 			showCursor();
@@ -345,30 +352,30 @@ public class SwingTTY extends JComponent implements TTY {
 					case 'A': // up
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
-						this.cursorRow -= n;
-						if (this.cursorRow < 0)
-							this.cursorRow = 0;
+						this.cursorDisplayRow -= n;
+						if (this.cursorDisplayRow < 0)
+							this.cursorDisplayRow = 0;
 						break;
 					case 'B': // down
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
-						this.cursorRow += n;
-						if (this.cursorRow >= this.numRows)
-							this.cursorRow = this.numRows - 1;
+						this.cursorDisplayRow += n;
+						if (this.cursorDisplayRow >= this.numDisplayRows)
+							this.cursorDisplayRow = this.numDisplayRows - 1;
 						break;
 					case 'C': // right
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
-						this.cursorColumn += n;
-						if (this.cursorColumn >= this.numColumns)
-							this.cursorColumn = this.numColumns - 1;
+						this.cursorDisplayColumn += n;
+						if (this.cursorDisplayColumn >= this.numDisplayColumns)
+							this.cursorDisplayColumn = this.numDisplayColumns - 1;
 						break;
 					case 'D': // left
 						n = this.escapeParameters.get(0);
 						if (n < 1) n = 1;
-						this.cursorColumn -= n;
-						if (this.cursorColumn < 0)
-							this.cursorColumn = 0;
+						this.cursorDisplayColumn -= n;
+						if (this.cursorDisplayColumn < 0)
+							this.cursorDisplayColumn = 0;
 						break;
 					case 'H': // home
 						int newRow = this.escapeParameters.get(0) - 1;
@@ -377,15 +384,19 @@ public class SwingTTY extends JComponent implements TTY {
 							newColumn = this.escapeParameters.get(1) - 1;
 						}
 						if (newRow < 0) newRow = 0;
-						else if (newRow >= numRows) newRow = numRows - 1;
+						else if (newRow >= numDisplayRows) newRow = numDisplayRows - 1;
 						if (newColumn < 0) newColumn = 0;
-						else if (newColumn >= numColumns) newColumn = numColumns - 1;
-						this.cursorRow = newRow;
-						this.cursorColumn = newColumn;
+						else if (newColumn >= numDisplayColumns) newColumn = numDisplayColumns - 1;
+						this.cursorDisplayRow = newRow;
+						this.cursorDisplayColumn = newColumn;
 						break;
 					case 'J':
+						clear(this.cursorDisplayRow, this.cursorDisplayColumn);
+						for(int j = this.cursorDisplayRow + 1; j < this.numDisplayRows; j++)
+							clear(j, 0);
 						break;
 					case 'K':
+						clear(this.cursorDisplayRow, this.cursorDisplayColumn);
 						break;
 					case 'm':
 						for(int i = 0; i < this.escapeParameters.size(); i++) {
@@ -400,8 +411,8 @@ public class SwingTTY extends JComponent implements TTY {
 							}
 						}
 						break;
-					case 'n':
-						break;
+					default:
+						System.out.println(c);
 					}
 					this.inputState = 0;
 					showCursor();

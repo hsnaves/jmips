@@ -1,5 +1,4 @@
-
-extern int printf (const char *format, ...);
+#include <stdio.h>
 
 int _main(void)
 {

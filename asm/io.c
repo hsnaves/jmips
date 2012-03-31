@@ -7,10 +7,3 @@ void putchar (char c)
   *send = c;
 }
 
-void send_str (char *str)
-{
-  while (*str) {
-    putchar (*str);
-    str++;
-  }
-}

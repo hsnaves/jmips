@@ -7,10 +7,9 @@ OBJCOPY = $(CROSS)objcopy
 
 ASFLAGS = -g
 CFLAGS  = -Wall -mno-abicalls -g -O3
-LDFLAGS = -Ttext=0x80100000
+LDFLAGS = #-Ttext=0x80400000
 
 COMMON = crt.o printf.o io.o r4kc.o
-BINS += sha1.bin
 BINS += test.bin
 
 all: build
@@ -27,8 +26,8 @@ all: build
 	$(LD) $(LDFLAGS) $^ -o $@
 
 %.bin: %.elf
-	cp $^ $@
-	#$(OBJCOPY) -R .reginfo $^ $@
+	#cp $^ $@
+	$(OBJCOPY) --change-addresses 0x80000000 $^ $@
 
 build: $(CRT) $(BINS)
 

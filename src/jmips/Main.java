@@ -9,10 +9,8 @@ import javax.swing.JFrame;
 import jmips.serial.SwingTTY;
 
 public class Main {
-	private static final int BASE_ADDRESS = 0x80100000;
-
 	private static JFrame createConsoleFrame() {
-		JFrame frame = new JFrame("JMIPS");
+		JFrame frame = new JFrame("Jmips");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		return frame;
 	}
@@ -32,9 +30,8 @@ public class Main {
 		final MipsSystem system = new MipsSystem(tty);
 		frame.setVisible(true);
 
-		String kernelFileName = "asm/sha1.bin";
-		String initrdFileName = null; //"initrd.gz";
-		system.setEntryPoint(BASE_ADDRESS);
+		String kernelFileName = "vmlinux"; //"asm/test.bin";
+		String initrdFileName = "initrd.gz";
 
 		int initrdAddress = system.loadElf32(new FileInputStream(kernelFileName).getChannel());
 		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;
@@ -47,10 +44,9 @@ public class Main {
 		system.reset();
 		//GdbServer server = new GdbServer(system);
 		//server.startServer(1234);
-		//return;
 
 		while(true) {
-			system.step(4000);
+			system.step(1);
 		}
 	}
 
