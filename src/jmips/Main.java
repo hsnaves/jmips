@@ -30,8 +30,9 @@ public class Main {
 		final MipsSystem system = new MipsSystem(tty);
 		frame.setVisible(true);
 
-		String kernelFileName = "vmlinux"; //"asm/test.bin";
-		String initrdFileName = "initrd.gz";
+		String kernelFileName = args[0];
+		String initrdFileName = null;
+		if (args.length > 1) initrdFileName = args[1];
 
 		int initrdAddress = system.loadElf32(new FileInputStream(kernelFileName).getChannel());
 		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;
@@ -43,11 +44,8 @@ public class Main {
 
 		system.reset();
 		GdbStub stub = new GdbStub(system);
-		stub.runServer(1234);
+		stub.runServer(1234, (args.length > 2));
 
-		//while(true) {
-		//	system.step(1);
-		//}
 		System.exit(1);
 	}
 

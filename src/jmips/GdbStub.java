@@ -43,7 +43,7 @@ public final class GdbStub {
 		return system;
 	}
 
-	public void runServer(int port) {
+	public void runServer(int port, boolean initiallyStopped) {
 		selector = null;
 		serverSocketChannel = null;
 		socketChannel = null;
@@ -74,6 +74,7 @@ public final class GdbStub {
 		input = ByteBuffer.allocate(1024);
 		serverShutdown = false;
 		serverRunning = true;
+		simulationRunning = initiallyStopped ? false : true;
 
 		while(serverRunning) {
 			try {
@@ -174,6 +175,7 @@ public final class GdbStub {
 		SocketChannel sc = ssc.accept();
 		if (sc != null) {
 			closeConnection = false;
+			simulationRunning = false;
 			pendingWrites.clear();
 			input.rewind();
 			sc.configureBlocking(false);
@@ -369,7 +371,7 @@ public final class GdbStub {
 
 	private void simulate() {
 		if (simulationRunning) {
-			for(int i = 0; i < 400000; i++) {
+			for(int i = 0; i < 1000000; i++) {
 				int pc = system.getCpu().getPc();
 				if (breakPoints.contains(pc)) {
 					simulationRunning = false;
@@ -526,6 +528,7 @@ public final class GdbStub {
 			@Override
 			public void processCommand(String command, GdbStub stub) {
 				stub.makePacketAndSend("OK", true);
+				stub.simulationRunning = true;
 				stub.detachServer();
 			}
 		};
