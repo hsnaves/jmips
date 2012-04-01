@@ -14,7 +14,7 @@ import jmips.cpu.Cpu;
  * GdbStub class 
  * @author Humberto Silva Naves
  */
-public class GdbServer {
+public class GdbStub {
 	private ServerSocket server;
 	private Socket socket;
 	private InputStream is;
@@ -24,7 +24,7 @@ public class GdbServer {
 
 	private MipsSystem system;
 
-	public GdbServer(MipsSystem system) {
+	public GdbStub(MipsSystem system) {
 		this.system = system;
 	}
 
