@@ -1,12 +1,18 @@
 package jmips;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import jmips.cpu.Cpu;
 
@@ -14,139 +20,319 @@ import jmips.cpu.Cpu;
  * GdbStub class 
  * @author Humberto Silva Naves
  */
-public class GdbStub {
-	private ServerSocket server;
-	private Socket socket;
-	private InputStream is;
-	private OutputStream os;
-	private String lastData;
-	private List<Integer> breakPoints = new ArrayList<Integer>();
+public final class GdbStub {
+	private final MipsSystem system;
+	private List<Integer> breakPoints;
 
-	private MipsSystem system;
+	private String lastPacket;
+	private StringBuilder currentInputPacket;
+	private int packetChecksum, packetFinished;
+	private boolean closeConnection, serverShutdown, serverRunning, simulationRunning;
+
+	private Selector selector;
+	private ServerSocketChannel serverSocketChannel;
+	private SocketChannel socketChannel;
+	private ByteBuffer input;
+	private List<ByteBuffer> pendingWrites;
 
 	public GdbStub(MipsSystem system) {
 		this.system = system;
 	}
 
-	public void startServer(int port) throws IOException {
-		server = null;
-		socket = null;
-		is = null;
-		os = null;
-		try {
-			StringBuilder sb = new StringBuilder();
-			server = new ServerSocket(port);
-			socket = server.accept();
-			is = socket.getInputStream();
-			os = socket.getOutputStream();
+	public MipsSystem getSystem() {
+		return system;
+	}
 
-			boolean stop = false;
-			while (!stop && socket.isConnected()) {
-				int c = is.read();
-				if (c == '+' || c == '-') {
-					if (c == '-') retransmitLastData();
-				} else {
-					int sum = 0, test = 0;
-					if (c == '$') {
-						char ch1, ch2;
-						sb.setLength(0);
-						while(true) {
-							c = is.read();
-							if (c == '#') break;
-							sb.append((char) c);
-							sum += c;
+	public void runServer(int port) {
+		selector = null;
+		serverSocketChannel = null;
+		socketChannel = null;
+		try {
+			serverSocketChannel = ServerSocketChannel.open();
+			serverSocketChannel.configureBlocking(false);
+
+			serverSocketChannel.socket().bind(new InetSocketAddress(port));
+
+			selector = Selector.open();
+			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+		} catch(IOException ex) {
+			ex.printStackTrace();
+			try {
+				closeServerSocketChannel();
+			} catch(Throwable t) { t.printStackTrace(); }
+
+			try {
+				closeSelector();
+			} catch(Throwable t) { t.printStackTrace(); }
+
+			return;
+		}
+
+		pendingWrites = new LinkedList<ByteBuffer>();
+		breakPoints = new ArrayList<Integer>();
+		currentInputPacket = new StringBuilder();
+		input = ByteBuffer.allocate(1024);
+		serverShutdown = false;
+		serverRunning = true;
+
+		while(serverRunning) {
+			try {
+				selector.select(50);
+				Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
+				while (selectedKeys.hasNext()) {
+					SelectionKey key = selectedKeys.next();
+					if (key.isValid()) {
+						if (key.isAcceptable()) {
+							onSelectAccept(key); 
 						}
-						ch1 = (char) is.read();
-						ch2 = (char) is.read();
-						test = Integer.parseInt("" + ch1 + ch2, 16);
-						if (test != (sum & 0xFF)) {
-							sendData("-");
-						} else {
-							if (!processCommand(sb.toString()))
-								stop = true;
+						if (key.isReadable()) {
+							onSelectRead(key);
+						}
+						if (key.isWritable()) {
+							onSelectWrite(key);
 						}
 					}
+					selectedKeys.remove();
 				}
+				processCommandsAndSimulate();
+			} catch(IOException ex) {
+				ex.printStackTrace();
 			}
+		}
+
+		try {
+			closeServerSocketChannel();
+		} catch(Throwable t) { t.printStackTrace(); }
+
+		try {
+			closeSelector();
+		} catch(Throwable t) { t.printStackTrace(); }
+
+		try {
+			closeSocketChannel();
+		} catch(Throwable t) { t.printStackTrace(); }
+	}
+
+	private void enableNewConnections(boolean enable) {
+		if (serverSocketChannel == null) return;
+		SelectionKey key = serverSocketChannel.keyFor(selector);
+		key.interestOps(enable ? SelectionKey.OP_ACCEPT : 0);
+	}
+
+	private void enableWrites(boolean enable) {
+		if (socketChannel == null) return;
+		SelectionKey key = socketChannel.keyFor(selector);
+		key.interestOps(enable ? SelectionKey.OP_WRITE : SelectionKey.OP_READ);
+	}
+
+	private void closeServerSocketChannel() throws IOException {
+		if (serverSocketChannel == null) return;
+		try {
+			serverSocketChannel.close();
 		} finally {
-			if (is != null) is.close();
-			if (os != null) os.close();
-			if (socket != null) socket.close();
-			if (server != null) server.close();
+			serverSocketChannel = null;
 		}
 	}
 
-	private boolean processCommand(String cmd) throws IOException {
-		//System.out.println("Recv: " + cmd);
-		if (cmd.startsWith("qSupported")) {
-			sendPacket("PacketSize=1024");
-		} else if (cmd.startsWith("H")) {
-			sendPacket("OK");
-		} else if (cmd.startsWith("?")) {
-			sendPacket("S05");
-		} else if (cmd.startsWith("qAttached")) {
-			sendPacket("0");
-		} else if (cmd.startsWith("qOffsets")) {
-			commandQOffsets(cmd);
-		} else if (cmd.startsWith("g")) {
-			commandReadRegisters(cmd);
-		} else if (cmd.startsWith("p")) {
-			commandReadRegister(cmd);
-		} else if (cmd.startsWith("m")) {
-			commandReadMemory(cmd);
-		} else if (cmd.startsWith("qSymbol::")) {
-			sendPacket("OK");
-		} else if (cmd.startsWith("s")) {
-			commandStep(cmd);
-		} else if (cmd.startsWith("c")) {
-			commandContinue(cmd);
-		} else if (cmd.toLowerCase().startsWith("z0")) {
-			commandBreakpoint(cmd);
-		} else if (cmd.startsWith("k")) {
-			return false;
-		} else {
-			sendPacket("");
+	private void closeSelector() throws IOException {
+		if (selector == null) return;
+		try {
+			selector.close();
+		} finally {
+			selector = null;
 		}
-		return true;
 	}
 
-	private void sendData(String data) throws IOException {
-		//System.out.println("Send: " + data);
-		lastData = data;
-		os.write(data.getBytes());
+	private void closeSocketChannel() throws IOException {
+		if (socketChannel == null) return;
+		SelectionKey key = socketChannel.keyFor(selector);
+		if (key != null) key.cancel();
+		try {
+			socketChannel.close();
+		} finally {
+			socketChannel = null;
+			if (!serverShutdown)
+				enableNewConnections(true);
+			else
+				serverRunning = false;
+		}
 	}
 
-	private void sendPacket(String packet) throws IOException {
-		int sum = 0;
+	private void shutdownServer() {
+		serverShutdown = true;
+		closeConnection = true;
+		enableWrites(true);
+	}
+
+	private void detachServer() {
+		closeConnection = true;
+		enableWrites(true);
+	}
+
+	private void onSelectAccept(SelectionKey key) throws IOException {
+		ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
+		SocketChannel sc = ssc.accept();
+		if (sc != null) {
+			closeConnection = false;
+			pendingWrites.clear();
+			input.rewind();
+			sc.configureBlocking(false);
+			sc.register(key.selector(), SelectionKey.OP_READ);
+			socketChannel = sc;
+			enableNewConnections(false);
+		}
+	}
+
+	private void onSelectRead(SelectionKey key) throws IOException {
+		SocketChannel sc = (SocketChannel) key.channel();
+
+		int numRead;
+		try {
+			numRead = sc.read(input);
+		} catch(IOException ex) {
+			numRead = -1;
+		}
+
+		if (numRead == -1) closeSocketChannel();
+	}
+
+	private void onSelectWrite(SelectionKey key) throws IOException {
+		SocketChannel sc = (SocketChannel) key.channel();
+		if (pendingWrites.isEmpty() && closeConnection) {
+			closeSocketChannel();
+			return;
+		}
+
+		while(!pendingWrites.isEmpty()) {
+			ByteBuffer bb = pendingWrites.get(0);
+			try {
+				sc.write(bb);
+			} catch(IOException ex) {
+				closeSocketChannel();
+				throw ex;
+			}
+			if (bb.remaining() > 0) break;
+			pendingWrites.remove(0);
+		}
+
+		if (pendingWrites.isEmpty() && !closeConnection) {
+			enableWrites(false);
+		}
+	}
+
+	private void send(String packet) {
+		ByteBuffer bb = ByteBuffer.wrap(packet.getBytes());
+		pendingWrites.add(bb);
+		enableWrites(true);
+	}
+
+	private void sendPacket(String packet) {
+		lastPacket = packet;
+		send(packet);
+	}
+
+	private void makePacketAndSend(String data, boolean acknowledge) {
+		int checksum = 0;
+		data = escapePacketData(data);
 		StringBuilder sb = new StringBuilder();
-		sb.append("+$");
-		for(int i = 0; i < packet.length(); i++) {
-			sb.append(packet.charAt(i));
-			sum += (byte) packet.charAt(i);
+		if (acknowledge) sb.append("+");
+		sb.append("$");
+		for(int i = 0; i < data.length(); i++) {
+			sb.append(data.charAt(i));
+			checksum += (byte) data.charAt(i);
 		}
 		sb.append("#");
-		sum = sum & 0xFF;
-		sb.append(String.format("%02x", sum));
-		sendData(sb.toString());
+		checksum = checksum & 0xFF;
+		sb.append(String.format("%02x", checksum));
+		sendPacket(sb.toString());
 	}
 
-	private void retransmitLastData() throws IOException {
-		sendData(lastData);
-	}
-
-	private void commandReadRegisters(String cmd) throws IOException {
+	private String escapePacketData(String data) {
 		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < 32; i++) {
-			sb.append(String.format("%08x", system.getCpu().getGpr(i)));
+		for(int i = 0; i < data.length(); i++) {
+			char c = data.charAt(i);
+			if (c == '$' || c == '#' || c == '}') {
+				sb.append("}");
+				sb.append(((char) c ^ 0x20));
+			} else {
+				sb.append(c);
+			}
 		}
-		sendPacket(sb.toString());
+		return sb.toString();
 	}
 
-	private void commandReadRegister(String cmd) throws IOException {
-		int reg = Integer.parseInt(cmd.substring(1), 16);
-		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%08x", readRegister(reg)));
-		sendPacket(sb.toString());
+	private void processCommandsAndSimulate() {
+		input.flip();
+		while(input.hasRemaining()) {
+			char c = (char) input.get();
+			if (currentInputPacket.length() == 0) {
+				if (c == '-') {
+					retrasmitLastPacket();
+				} else if (c == '+') {
+					// Silently discard '+' packets
+				} else if (c == 0x03) {
+					// Ctrl-C requests
+					if (simulationRunning) {
+						makePacketAndSend("S05", true);
+					}
+					simulationRunning = false;
+				} else {
+					if (c != '$') {
+						requestRetransmit();
+					} else {
+						currentInputPacket.append(c);
+						packetChecksum = 0;
+						packetFinished = 0;
+					}
+				}
+			} else {
+				currentInputPacket.append(c);
+				if (packetFinished > 0) {
+					if (++packetFinished == 3) {
+						if (checkPacket()) {
+							processCommand(currentInputPacket.substring(1, currentInputPacket.length() - 3));
+						} else {
+							requestRetransmit();
+						}
+						currentInputPacket.setLength(0);
+					}
+				} else if (c == '#') {
+					packetFinished = 1;
+				} else {
+					packetChecksum += c;
+				}
+			}
+		}
+		input.clear();
+		simulate();
+	}
+
+	private void requestRetransmit() {
+		send("-");
+	}
+
+	private void retrasmitLastPacket() {
+		send(lastPacket);
+	}
+
+	private boolean checkPacket() {
+		try {
+			int checksum = Integer.parseInt(currentInputPacket.substring(currentInputPacket.length() - 2), 16);
+			return (checksum == (packetChecksum & 0xFF));
+		} catch(NumberFormatException ex) {
+			return false;
+		}
+	}
+
+	private void processCommand(String command) {
+		for(String prefix : commands.keySet()) {
+			if (command.startsWith(prefix)) {
+				GdbStubCommand cmd = commands.get(prefix);
+				cmd.processCommand(command, this);
+				return;
+			}
+		}
+		makePacketAndSend("", true);
 	}
 
 	private int readRegister(int reg) {
@@ -164,47 +350,185 @@ public class GdbStub {
 		}
 	}
 
-	private void commandQOffsets(String cmd) throws IOException {
-		sendPacket("Text=0;Data=0;Bss=0");
-	}
-
-	private void commandReadMemory(String cmd) throws IOException {
-		int divider = cmd.indexOf(",");
-		int address = (int) Long.parseLong(cmd.substring(1, divider), 16);
-		int len = Integer.parseInt(cmd.substring(divider + 1));
-		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < len ; i++) {
-			byte b = system.getCpu().load8(address + i);
-			sb.append(String.format("%02X", ((int) b) & 0xFF));
+	private void writeRegister(int reg, int val) {
+		final Cpu cpu = system.getCpu();
+		if (reg < 32) {
+			cpu.setGpr(reg, val);
+			return;
 		}
-		sendPacket(sb.toString());
-	}
 
-	private void commandBreakpoint(String cmd) throws IOException {
-		int divider = cmd.substring(3).indexOf(",");
-		int address = (int) Long.parseLong(cmd.substring(3, divider + 3), 16);
-
-		if (cmd.startsWith("Z0")) {
-			breakPoints.add(address);
-		} else {
-			breakPoints.remove(new Integer(address));
+		switch (reg) {
+		case 32: cpu.setCop0Reg(Cpu.COP0_REG_STATUS, 0, val); break;
+		case 33: cpu.setLo(val); break;
+		case 34: cpu.setHi(val); break;
+		case 35: cpu.setCop0Reg(Cpu.COP0_REG_BADVADDR, 0, val); break;
+		case 36: cpu.setCop0Reg(Cpu.COP0_REG_CAUSE, 0, val); break;
+		case 37: cpu.setPc(val); break;
 		}
-		sendPacket("OK");
 	}
 
-	private void commandStep(String cmd) throws IOException {
-		system.step(1);
-		sendPacket("S05");
-	}
-
-	private void commandContinue(String cmd) throws IOException {
-		sendData("+");
-		while(true) {
-			int pc = system.getCpu().getPc();
-			if (breakPoints.contains(pc)) break;
-			system.step(1);
+	private void simulate() {
+		if (simulationRunning) {
+			for(int i = 0; i < 400000; i++) {
+				int pc = system.getCpu().getPc();
+				if (breakPoints.contains(pc)) {
+					simulationRunning = false;
+					break;
+				} else {
+					system.step(1);
+				}
+			}
 		}
-		sendPacket("S05");
 	}
 
+	private static interface GdbStubCommand {
+		public void processCommand(String command, GdbStub stub);
+	}
+
+	private static final Map<String, GdbStubCommand> commands;
+	private static void registerCommand(String commandPrefix, GdbStubCommand command) {
+		commands.put(commandPrefix, command);
+	}
+
+	static {
+		commands = new HashMap<String, GdbStubCommand>();
+		GdbStubCommand commandContinue = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				stub.send("+");
+				stub.simulationRunning = true;
+			}
+		};
+		registerCommand("c", commandContinue);
+
+		GdbStubCommand commandStep = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				stub.system.step(1);
+				stub.makePacketAndSend("S05", true);
+			}
+		};
+		registerCommand("s", commandStep);
+
+		GdbStubCommand commandBreakpoint = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				int divider = command.substring(3).indexOf(",");
+				int address = (int) Long.parseLong(command.substring(3, divider + 3), 16);
+
+				if (command.startsWith("Z0")) {
+					stub.breakPoints.add(address);
+				} else {
+					stub.breakPoints.remove(new Integer(address));
+				}
+				stub.makePacketAndSend("OK", true);
+			}
+		};
+		registerCommand("z0", commandBreakpoint);
+		registerCommand("Z0", commandBreakpoint);
+
+		GdbStubCommand commandMemory = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				int divider = command.indexOf(",");
+				int address = (int) Long.parseLong(command.substring(1, divider), 16);
+				if (command.startsWith("m")) {
+					int len = Integer.parseInt(command.substring(divider + 1));
+					int val;
+					String resp = "00";
+					switch(len) {
+					case 1: val = stub.system.getCpu().load8(address) & 0xFF;
+						resp = String.format("%02X", val); break;
+					case 2: val = stub.system.getCpu().load16(address) & 0xFFFF;
+						resp = String.format("%04X", val); break;
+					case 4: val = stub.system.getCpu().load32(address);
+						resp = String.format("%08X", val); break;
+					}
+					stub.makePacketAndSend(resp, true);
+				} else {
+					int divider2 = command.indexOf(":");
+					int len = Integer.parseInt(command.substring(divider + 1, divider2));
+					int val = (int) Long.parseLong(command.substring(divider2 + 1), 16);
+					switch(len) {
+					case 1: stub.system.getCpu().write8(address, (byte) val); break;
+					case 2: stub.system.getCpu().write16(address, (short) val); break;
+					case 4: stub.system.getCpu().write32(address, val); break;
+					}
+					stub.makePacketAndSend("OK", true);
+				}
+			}
+		};
+		registerCommand("m", commandMemory);
+		registerCommand("M", commandMemory);
+
+		GdbStubCommand commandRegisters = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				if (command.startsWith("g")) {
+					StringBuilder sb = new StringBuilder();
+					for(int i = 0; i < 32; i++) {
+						sb.append(String.format("%08x", stub.readRegister(i)));
+					}
+					stub.makePacketAndSend(sb.toString(), true);
+				} else {
+					for(int i = 0; i < 32; i++) {
+						stub.system.getCpu().setGpr(i, (int) Long.parseLong(command.substring(1 + 8 * i, 9 + 8 * i), 16));
+					}
+				}
+			}
+		};
+		registerCommand("g", commandRegisters);
+		registerCommand("G", commandRegisters);
+
+		GdbStubCommand commandRegister = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				if (command.startsWith("p")) {
+					int reg = Integer.parseInt(command.substring(1), 16);
+					stub.makePacketAndSend(String.format("%08x", stub.readRegister(reg)), true);
+				} else {
+					int reg = Integer.parseInt(command.substring(1, command.indexOf('=')), 16);
+					int val = Integer.parseInt(command.substring(command.indexOf('=') +  1), 16);
+					stub.writeRegister(reg, val);
+					stub.makePacketAndSend("OK", true);
+				}
+			}
+		};
+		registerCommand("p", commandRegister);
+		registerCommand("P", commandRegister);
+
+		GdbStubCommand commandKill = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				stub.send("+");
+				stub.shutdownServer();
+			}
+		};
+		registerCommand("k", commandKill);
+
+		GdbStubCommand commandQSupported = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				stub.makePacketAndSend("PacketSize=1024", true);
+			}
+		};
+		registerCommand("qSupported", commandQSupported);
+
+		GdbStubCommand commandLastSignal = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				stub.makePacketAndSend("S05", true);
+			}
+		};
+		registerCommand("?", commandLastSignal);
+
+		GdbStubCommand commandDetach = new GdbStubCommand() {
+			@Override
+			public void processCommand(String command, GdbStub stub) {
+				stub.makePacketAndSend("OK", true);
+				stub.detachServer();
+			}
+		};
+		registerCommand("D", commandDetach);
+	}
 }

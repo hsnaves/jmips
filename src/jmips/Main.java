@@ -42,12 +42,13 @@ public class Main {
 		}
 
 		system.reset();
-		//GdbStub stub = new GdbStub(system);
-		//stub.startServer(1234);
+		GdbStub stub = new GdbStub(system);
+		stub.runServer(1234);
 
-		while(true) {
-			system.step(1);
-		}
+		//while(true) {
+		//	system.step(1);
+		//}
+		System.exit(1);
 	}
 
 

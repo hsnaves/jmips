@@ -41,12 +41,12 @@
 
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false" debug="true"/>
     </target>
 
     <target name="compile-tests" depends="compile">
         <mkdir dir="${test-classes.dir}"/>
-        <javac srcdir="${test-src.dir}" destdir="${test-classes.dir}" includeantruntime="false">
+        <javac srcdir="${test-src.dir}" destdir="${test-classes.dir}" includeantruntime="false" debug="true">
             <classpath refid="tests.path" />
         </javac>
     </target>
