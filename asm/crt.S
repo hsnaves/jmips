@@ -19,7 +19,6 @@ __start:
 	jal	_main
 	ori	$gp, %lo(_gp)
 
-	syscall
 	b	cpu_die
 	nop
 	.end	__start

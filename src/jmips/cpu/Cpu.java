@@ -135,7 +135,7 @@ public final class Cpu {
 	public static final int CAUSE_EXCCODE_SHIFT = 2;
 	public static final int CAUSE_INTERRUPT_MASK = 0x0000FF00;
 	public static final int CAUSE_INTERRUPT_SHIFT = 8;
-	public static final int CAUSE_WP = 0x00400000;
+	public static final int CAUSE_WP = 0x00400000; // Watch exception deferred
 	public static final int CAUSE_IV = 0x00800000; // Use special interrupt vector
 	public static final int CAUSE_CE_MASK = 0x30000000; // Coprocessor unit
 	public static final int CAUSE_CE_SHIFT = 28;
