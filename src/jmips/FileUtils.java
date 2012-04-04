@@ -34,7 +34,7 @@ public class FileUtils {
 		try {
 			fc.position(pos);
 			fragment = ByteBuffer.allocate(size);
-			if (fc.read(fragment) != fc.size())
+			if (fc.read(fragment) != size)
 				return null;
 			fragment.rewind();
 		} catch(IOException ex) {
@@ -47,7 +47,8 @@ public class FileUtils {
 	public static boolean writeFileFragment(FileChannel fc, long pos, ByteBuffer fragment) {
 		try {
 			fc.position(pos);
-			if (fc.write(fragment) != fc.size())
+			int size = fragment.remaining();
+			if (fc.write(fragment) != size)
 				return false;
 			fc.force(false);
 		} catch(IOException ex) {

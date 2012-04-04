@@ -1,6 +1,7 @@
 package jmips.dev;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
@@ -22,13 +23,13 @@ public class BlockDevice implements Device {
 	public static final int CMD_RESET = 0;
 	public static final int CMD_READ  = 1;
 	public static final int CMD_WRITE = 2;
-	public static final int CMD_FLUSH = 3;
+	public static final int CMD_GEO = 3;
 
 	public static final int STATUS_IDLE = 0;
 	public static final int STATUS_BUSY = 0x00000001;
 	public static final int STATUS_ERROR = 0x80000000;
 
-	public static final int SECTOR_SIZE = 4096;
+	public static final int SECTOR_SIZE = 512;
 
 	private final BlockDeviceController controller;
 	private RandomAccessFile diskFile;
@@ -69,6 +70,7 @@ public class BlockDevice implements Device {
 		default:
 			ioError = true;
 		}
+		//System.out.printf("R%d = %d\n", offset, val);
 		return val;
 	}
 
@@ -79,6 +81,7 @@ public class BlockDevice implements Device {
 			return;
 		}
 		ioError = false;
+		//System.out.printf("W%d = %d\n", offset, value);
 		switch (offset) {
 		case REG_STATUS:  break;
 		case REG_CONTROL: writeControlRegister(value); break;
@@ -130,7 +133,16 @@ public class BlockDevice implements Device {
 				status = STATUS_ERROR;
 			}
 			break;
-		case CMD_FLUSH:
+		case CMD_GEO:
+			status = STATUS_BUSY;
+			try {
+				sector = ((int) diskFile.getChannel().size()) / SECTOR_SIZE;
+				status = STATUS_IDLE;
+			} catch(IOException ex) {
+				ex.printStackTrace();
+				sector = 0;
+				status = STATUS_ERROR;
+			}
 			break;
 		default:
 			status = STATUS_ERROR;

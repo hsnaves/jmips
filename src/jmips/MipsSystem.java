@@ -189,12 +189,26 @@ public final class MipsSystem {
 		final BlockDeviceController controller = new BlockDeviceController() {
 			@Override
 			public boolean readFromMemory(ByteBuffer sector, int address) {
-				return false;
+				while(sector.hasRemaining()) {
+					byte b = cpu.load8(address);
+					if (cpu.getLastMemoryError() != Cpu.MEMORY_ERROR_NOERROR)
+						return false;
+					sector.put(b);
+					address++;
+				}
+				return true;
 			}
 
 			@Override
 			public boolean writeToMemory(ByteBuffer sector, int address) {
-				return false;
+				while(sector.hasRemaining()) {
+					byte b = sector.get();
+					cpu.store8(address, b);
+					if (cpu.getLastMemoryError() != Cpu.MEMORY_ERROR_NOERROR)
+						return false;
+					address++;
+				}
+				return true;
 			}
 		};
 		BlockDevice block = new BlockDevice(controller);

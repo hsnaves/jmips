@@ -27,11 +27,13 @@ public class Main {
 
 		String kernelFileName = null;
 		String initrdFileName = null;
+		String diskFileName = null;
 		boolean stop = false;
 
 		if (args.length == 0) {
 			kernelFileName = "vmlinux";
 			initrdFileName = "initrd.gz";
+			diskFileName = "disk.raw";
 		} else {
 			kernelFileName = args[0];
 			if (kernelFileName.startsWith("-")) {
@@ -40,6 +42,8 @@ public class Main {
 			}
 			if (args.length > 1)
 				initrdFileName = args[1];
+			if (args.length > 2)
+				diskFileName = args[2];
 		}
 
 		int initrdAddress = system.loadElf32(kernelFileName);
@@ -59,6 +63,16 @@ public class Main {
 			int size = lastAddress - initrdAddress;
 			String cmdLine = String.format("rd_start=0x%08X rd_size=%d", initrdAddress, size);
 			system.setKernelCommandLine(cmdLine, initrdAddress + size);
+		} else {
+			diskFileName = "disk.raw";
+			system.setKernelCommandLine("root=/dev/sb1", initrdAddress);
+		}
+
+		if (diskFileName != null) {
+			if (!system.setDiskFile(diskFileName)) {
+				System.err.println("Can't use disk!");
+				System.exit(1);
+			}
 		}
 
 		system.reset();
