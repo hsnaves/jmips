@@ -1,7 +1,5 @@
 package jmips.cpu;
 
-import java.util.Random;
-
 /**
  * Java implementation of a MIPS32 4Kc processor
  */
@@ -213,7 +211,7 @@ public final class Cpu {
 
 	private boolean loadLinkedStatus = false;
 
-	private final Random rand = new Random(System.currentTimeMillis());
+	private long rand = 0;
 	private final TlbEntry[] tlbEntries = new TlbEntry[NUM_TLB_ENTRIES];;
 	private TlbEntry lastTlbEntryCode;
 	private TlbEntry lastTlbEntryData;
@@ -258,6 +256,10 @@ public final class Cpu {
 		this.lo = lo;
 	}
 
+	public Ram getRam() {
+		return ram;
+	}
+
 	public boolean isHalted() {
 		return halted;
 	}
@@ -297,7 +299,7 @@ public final class Cpu {
 		return ret;
 	}
 
-	private void _store8phys(final int physicalAddress, final byte value) {
+	private void _store8phys(final int physicalAddress, byte value) {
 		if (physicalAddress < ram.getRamSize()) {
 			ram.write8(physicalAddress, value);
 		} else {
@@ -310,20 +312,22 @@ public final class Cpu {
 	private short _load16phys(final int physicalAddress) {
 		short ret;
 		if (physicalAddress < ram.getRamSize()) {
-			ret = ram.read16(physicalAddress, bigEndian);
+			ret = ram.read16(physicalAddress);
 		} else {
-			ret = ioController.read16(physicalAddress, bigEndian);
+			ret = ioController.read16(physicalAddress);
 			if (ioController.ioError())
 				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
 		}
+		if (!bigEndian) ret = Utils.byteSwap(ret);
 		return ret;
 	}
 
-	private void _store16phys(final int physicalAddress, final short value) {
+	private void _store16phys(final int physicalAddress, short value) {
+		if (!bigEndian) value = Utils.byteSwap(value);
 		if (physicalAddress < ram.getRamSize()) {
-			ram.write16(physicalAddress, value, bigEndian);
+			ram.write16(physicalAddress, value);
 		} else {
-			ioController.write16(physicalAddress, value, bigEndian);
+			ioController.write16(physicalAddress, value);
 			if (ioController.ioError())
 				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
 		}
@@ -332,20 +336,22 @@ public final class Cpu {
 	private int _load32phys(final int physicalAddress) {
 		int ret;
 		if (physicalAddress < ram.getRamSize()) {
-			ret = ram.read32(physicalAddress, bigEndian);
+			ret = ram.read32(physicalAddress);
 		} else {
-			ret = ioController.read32(physicalAddress, bigEndian);
+			ret = ioController.read32(physicalAddress);
 			if (ioController.ioError())
 				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
 		}
+		if (!bigEndian) ret = Utils.byteSwap(ret);
 		return ret;
 	}
 
 	private void _store32phys(final int physicalAddress, int value) {
+		if (!bigEndian) value = Utils.byteSwap(value);
 		if (physicalAddress < ram.getRamSize()) {
-			ram.write32(physicalAddress, value, bigEndian);
+			ram.write32(physicalAddress, value);
 		} else {
-			ioController.write32(physicalAddress, value, bigEndian);
+			ioController.write32(physicalAddress, value);
 			if (ioController.ioError())
 				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
 		}
@@ -356,7 +362,7 @@ public final class Cpu {
 		return _load8phys(physicalAddress);
 	}
 
-	public void store8phys(final int physicalAddress, final byte value) {
+	public void store8phys(final int physicalAddress, byte value) {
 		memoryError = MEMORY_ERROR_NOERROR;
 		_store8phys(physicalAddress, value);
 	}
@@ -371,7 +377,7 @@ public final class Cpu {
 		}
 	}
 
-	public void store16phys(final int physicalAddress, final short value) {
+	public void store16phys(final int physicalAddress, short value) {
 		if ((physicalAddress & 1) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
 			_store16phys(physicalAddress, value);
@@ -390,7 +396,7 @@ public final class Cpu {
 		}
 	}
 
-	public void store32phys(final int physicalAddress, final int value) {
+	public void store32phys(final int physicalAddress, int value) {
 		if ((physicalAddress & 3) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
 			_store32phys(physicalAddress, value);
@@ -400,7 +406,7 @@ public final class Cpu {
 	}
 
 
-	public byte load8(int address) {
+	public byte load8(final int address) {
 		memoryError = MEMORY_ERROR_NOERROR;
 
 		int physicalAddress = translate(address, false, true);
@@ -410,7 +416,7 @@ public final class Cpu {
 		return 0;
 	}
 
-	public void store8(int address, byte value) {
+	public void store8(final int address, byte value) {
 		memoryError = MEMORY_ERROR_NOERROR;
 
 		int physicalAddress = translate(address, true, true);
@@ -419,7 +425,7 @@ public final class Cpu {
 		}
 	}
 
-	public short load16(int address) {
+	public short load16(final int address) {
 		if ((address & 1) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
 
@@ -433,7 +439,7 @@ public final class Cpu {
 		return 0;
 	}
 
-	public void store16(int address, short value) {
+	public void store16(final int address, short value) {
 		if ((address & 1) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
 
@@ -446,7 +452,7 @@ public final class Cpu {
 		}
 	}
 
-	public int load32(int address) {
+	public int load32(final int address) {
 		if ((address & 3) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
 
@@ -460,7 +466,7 @@ public final class Cpu {
 		return 0;
 	}
 
-	public void store32(int address, int value) {
+	public void store32(final int address, int value) {
 		if ((address & 3) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
 
@@ -473,7 +479,7 @@ public final class Cpu {
 		}
 	}
 
-	private void raiseMemoryException(int address) {
+	private void raiseMemoryException(final int address) {
 		switch(memoryError) {
 		case MEMORY_ERROR_ADDRESS_ERROR_LOAD:
 			exception_ADDRESS_ERROR(address, true);
@@ -505,46 +511,46 @@ public final class Cpu {
 		}
 	}
 
-	public byte read8(int address) {
+	public byte read8(final int address) {
 		byte ret = load8(address);
 		if (memoryError != MEMORY_ERROR_NOERROR)
 			raiseMemoryException(address);
 		return ret;
 	}
 
-	public void write8(int address, byte value) {
+	public void write8(final int address, byte value) {
 		store8(address, value);
 		if (memoryError != MEMORY_ERROR_NOERROR)
 			raiseMemoryException(address);
 	}
 
-	public short read16(int address) {
+	public short read16(final int address) {
 		short ret = load16(address);
 		if (memoryError != MEMORY_ERROR_NOERROR)
 			raiseMemoryException(address);
 		return ret;
 	}
 
-	public void write16(int address, short value) {
+	public void write16(final int address, short value) {
 		store16(address, value);
 		if (memoryError != MEMORY_ERROR_NOERROR)
 			raiseMemoryException(address);
 	}
 
-	public int read32(int address) {
+	public int read32(final int address) {
 		int ret = load32(address);
 		if (memoryError != MEMORY_ERROR_NOERROR)
 			raiseMemoryException(address);
 		return ret;
 	}
 	
-	public void write32(int address, int value) {
+	public void write32(final int address, int value) {
 		store32(address, value);
 		if (memoryError != MEMORY_ERROR_NOERROR)
 			raiseMemoryException(address);
 	}
 
-	public int read32linked(int address) {
+	public int read32linked(final int address) {
 		int ret;
 		if ((address & 3) == 0) {
 			memoryError = MEMORY_ERROR_NOERROR;
@@ -569,7 +575,7 @@ public final class Cpu {
 	}
 
 
-	public boolean write32conditional(int address, int value) {
+	public boolean write32conditional(final int address, int value) {
 		if ((address & 3) == 0) {
 			if (loadLinkedStatus) {
 				write32(address, value);
@@ -586,7 +592,7 @@ public final class Cpu {
 		return false;
 	}
 
-	public int read32UnalignedLeft(int address, int oldValue) {
+	public int read32UnalignedLeft(final int address, int oldValue) {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
@@ -598,7 +604,7 @@ public final class Cpu {
 		}
 	}
 
-	public int read32UnalignedRight(int address, int oldValue) {
+	public int read32UnalignedRight(final int address, int oldValue) {
 		int alignedAddress = address & (~3);
 		int value = read32(alignedAddress);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
@@ -610,7 +616,7 @@ public final class Cpu {
 		}
 	}
 
-	public void write32UnalignedLeft(int address, int value) {
+	public void write32UnalignedLeft(final int address, int value) {
 		int alignedAddress = address & (~3);
 
 		memoryError = MEMORY_ERROR_NOERROR;
@@ -628,7 +634,7 @@ public final class Cpu {
 			raiseMemoryException(address);
 	}
 
-	public void write32UnalignedRight(int address, int value) {
+	public void write32UnalignedRight(final int address, int value) {
 		int alignedAddress = address & (~3);
 
 		memoryError = MEMORY_ERROR_NOERROR;
@@ -654,12 +660,13 @@ public final class Cpu {
 			int physicalAddress = translate(pc, false, false);
 			if (memoryError == MEMORY_ERROR_NOERROR) {
 				if (physicalAddress < ram.getRamSize()) {
-					ret = ram.read32(physicalAddress, bigEndian);
+					ret = ram.read32(physicalAddress);
 				} else {
-					ret = ioController.read32(physicalAddress, bigEndian);
+					ret = ioController.read32(physicalAddress);
 					if (ioController.ioError())
 						memoryError = MEMORY_ERROR_BUS_ERROR_INSTRUCTION;
 				}
+				if (!bigEndian) ret = Utils.byteSwap(ret);
 			}
 		} else {
 			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
@@ -1767,7 +1774,29 @@ public final class Cpu {
 	}
 
 	private int readRegisterRandom() {
-		return Wired + rand.nextInt(NUM_TLB_ENTRIES - Wired);
+		return Wired + nextRandomInteger(NUM_TLB_ENTRIES - Wired);
+	}
+
+	public void setRandomSeed(long seed) {
+		this.rand = (seed ^ 0x5DEECE66DL) & ((1L << 48) - 1);
+	}
+
+	private int nextRandom(int bits) {
+		rand = (rand * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
+		return (int) (rand >>> (48 - bits));
+	}
+
+	private int nextRandomInteger(int n) {
+		if (n <= 0)
+			throw new IllegalArgumentException("n must be positive");
+		if ((n & -n) == n) // i.e., n is a power of 2
+			return (int) ((n * (long) nextRandom(31)) >> 31);
+		int bits, val;
+		do {
+			bits = nextRandom(31);
+			val = bits % n;
+		} while (bits - val + (n - 1) < 0);
+		return val;
 	}
 
 	private static int changeValue(int oldValue, int newValue, int mask) {

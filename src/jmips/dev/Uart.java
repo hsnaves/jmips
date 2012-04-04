@@ -303,27 +303,27 @@ public final class Uart implements Device {
 
 	// Reads/writes of sizes different than 8 aren't supported
 	@Override
-	public int read32(int offset, boolean bigEndian) {
+	public int read32(int offset) {
 		// Invalid read
 		error = true;
 		return 0;
 	}
 
 	@Override
-	public void write32(int offset, int value, boolean bigEndian) {
+	public void write32(int offset, int value) {
 		// Invalid write
 		error = true;
 	}
 
 	@Override
-	public short read16(int offset, boolean bigEndian) {
+	public short read16(int offset) {
 		// Invalid read
 		error = true;
 		return 0;
 	}
 
 	@Override
-	public void write16(int offset, short value, boolean bigEndian) {
+	public void write16(int offset, short value) {
 		// Invalid write
 		error = true;
 	}

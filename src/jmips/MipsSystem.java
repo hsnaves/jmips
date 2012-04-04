@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 
 import jmips.cpu.Cpu;
 import jmips.cpu.Device;
+import jmips.dev.BlockDevice;
+import jmips.dev.BlockDeviceController;
 import jmips.dev.RealTimeClock;
 import jmips.dev.Uart;
 import jmips.dev.UartController;
@@ -21,6 +23,8 @@ public final class MipsSystem {
 	public static final int UART_END = UART_BASE + 32;      // End of the UART when mapped into memory
 	public static final int RTC_BASE = IO_START + 0x0070;   // Base physical address of the RTC
 	public static final int RTC_END = RTC_BASE + 64;        // End of the RTC
+	public static final int BLOCK_BASE = IO_START + 0x0100; // Base physical address of the Block device
+	public static final int BLOCK_END = BLOCK_BASE + 16;    // End of the block device
 
 	public static final int UART_IRQ = 1;                   // IRQ number for the UART
 
@@ -29,6 +33,7 @@ public final class MipsSystem {
 	private final Cpu cpu;
 	private final Uart uart;
 	private final RealTimeClock rtc;
+	private final BlockDevice block;
 	private final TTY tty;
 	private int entryPoint;
 
@@ -40,6 +45,7 @@ public final class MipsSystem {
 		this.cpu = createCpu(ramSize);
 		this.uart = createUart();
 		this.rtc = createRealTimeClock();
+		this.block = createBlockDevice();
 		this.tty = tty;
 	}
 
@@ -49,8 +55,13 @@ public final class MipsSystem {
 			private int deviceOffset;
 
 			private Device findDevice(int address) {
-				if (address >= UART_BASE) {
-					if (address < UART_END) {
+				if (address >= BLOCK_BASE) {
+					if (address < BLOCK_END) {
+						deviceOffset = address - BLOCK_BASE;
+						return block;
+					}
+
+					if (address >= UART_BASE && address < UART_END) {
 						deviceOffset = address - UART_BASE;
 						return uart;
 					}
@@ -64,11 +75,11 @@ public final class MipsSystem {
 			}
 
 			@Override
-			public int read32(int offset, boolean bigEndian) {
+			public int read32(int offset) {
 				Device dev = findDevice(offset);
 				int ret;
 				if (dev != null) {
-					ret = dev.read32(deviceOffset, bigEndian);
+					ret = dev.read32(deviceOffset);
 					error = dev.ioError();
 				} else {
 					ret = 0;
@@ -78,10 +89,10 @@ public final class MipsSystem {
 			}
 
 			@Override
-			public void write32(int offset, int value, boolean bigEndian) {
+			public void write32(int offset, int value) {
 				Device dev = findDevice(offset);
 				if (dev != null) {
-					dev.write32(deviceOffset, value, bigEndian);
+					dev.write32(deviceOffset, value);
 					error = dev.ioError();
 				} else {
 					error = true;
@@ -89,11 +100,11 @@ public final class MipsSystem {
 			}
 
 			@Override
-			public short read16(int offset, boolean bigEndian) {
+			public short read16(int offset) {
 				Device dev = findDevice(offset);
 				short ret;
 				if (dev != null) {
-					ret = dev.read16(deviceOffset, bigEndian);
+					ret = dev.read16(deviceOffset);
 					error = dev.ioError();
 				} else {
 					ret = 0;
@@ -103,10 +114,10 @@ public final class MipsSystem {
 			}
 
 			@Override
-			public void write16(int offset, short value, boolean bigEndian) {
+			public void write16(int offset, short value) {
 				Device dev = findDevice(offset);
 				if (dev != null) {
-					dev.write16(deviceOffset, value, bigEndian);
+					dev.write16(deviceOffset, value);
 					error = dev.ioError();
 				} else {
 					error = true;
@@ -174,6 +185,22 @@ public final class MipsSystem {
 		return rtc;
 	}
 
+	public BlockDevice createBlockDevice() {
+		final BlockDeviceController controller = new BlockDeviceController() {
+			@Override
+			public boolean readFromMemory(ByteBuffer sector, int address) {
+				return false;
+			}
+
+			@Override
+			public boolean writeToMemory(ByteBuffer sector, int address) {
+				return false;
+			}
+		};
+		BlockDevice block = new BlockDevice(controller);
+		return block;
+	}
+
 	public Cpu getCpu() {
 		return cpu;
 	}
@@ -214,6 +241,10 @@ public final class MipsSystem {
 			address++;
 		}
 		cpu.store8(address, (byte) 0);
+	}
+
+	public boolean setDiskFile(String fileName) {
+		return block.setDiskFile(fileName);
 	}
 
 	public int load(int address, ByteBuffer bb) {

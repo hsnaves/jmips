@@ -9,24 +9,24 @@ public class RealTimeClock implements Device {
 	}
 
 	@Override
-	public int read32(int offset, boolean bigEndian) {
+	public int read32(int offset) {
 		error = true;
 		return 0;
 	}
 
 	@Override
-	public void write32(int offset, int value, boolean bigEndian) {
+	public void write32(int offset, int value) {
 		error = true;
 	}
 
 	@Override
-	public short read16(int offset, boolean bigEndian) {
+	public short read16(int offset) {
 		error = true;
 		return 0;
 	}
 
 	@Override
-	public void write16(int offset, short value, boolean bigEndian) {
+	public void write16(int offset, short value) {
 		error = true;
 	}
 

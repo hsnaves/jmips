@@ -173,4 +173,11 @@ public class Utils {
 		m |= (n << 24);
 		return m;
 	}
+
+	public static short byteSwap(short n) {
+		int v1 = n & 0xFF;
+		int v2 = (n >> 8) & 0xFF;
+		return (short) (v1 << 8 | v2);
+	}
 }
+

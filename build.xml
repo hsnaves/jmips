@@ -13,6 +13,7 @@
     <property name="jar.dir"          value="${build.dir}/jar"/>
 
     <property name="main-class"       value="jmips.Main"/>
+    <property name="command-line"     value=""/>
 
     <property file="build.properties" />
     <property name="make"             value="/usr/bin/make"/>

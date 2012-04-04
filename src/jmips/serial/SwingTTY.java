@@ -15,10 +15,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JComponent;
@@ -41,7 +42,7 @@ public class SwingTTY extends JComponent implements TTY {
 	private final List<Integer> escapeParameters = new LinkedList<Integer>();
 	private int currentEscapeParameter;
 
-	private final List<Byte> inputChars = new ArrayList<Byte>();
+	private final Queue<Byte> inputChars = new ConcurrentLinkedQueue<Byte>();
 
 	private final TerminalCharacter[][] characterMap;
 	private final Timer cursorTimer;
@@ -143,7 +144,6 @@ public class SwingTTY extends JComponent implements TTY {
 		setFocusable(true);
 		setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Collections.<AWTKeyStroke> emptySet());
 		setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, Collections.<AWTKeyStroke> emptySet());
-		//setFocusCycleRoot(true);
 	}
 
 	public void setEchoEnabled(boolean echoEnabled) {
@@ -428,7 +428,7 @@ public class SwingTTY extends JComponent implements TTY {
 
 	@Override
 	public byte read() {
-		return inputChars.remove(0);
+		return inputChars.remove();
 	}
 
 	@Override
