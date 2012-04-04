@@ -101,7 +101,7 @@
 
     <target name="run" depends="compile-asm,jar">
         <java jar="${jar.dir}/${ant.project.name}.jar" fork="true">
-            <!--<arg line="vmlinux initrd.gz stop"/>-->
+            <arg line="${command-line}"/>
         </java>
     </target>
 

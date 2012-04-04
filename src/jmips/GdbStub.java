@@ -375,6 +375,7 @@ public final class GdbStub {
 				int pc = system.getCpu().getPc();
 				if (breakPoints.contains(pc)) {
 					simulationRunning = false;
+					makePacketAndSend("S05", true);
 					break;
 				} else {
 					system.step(1);

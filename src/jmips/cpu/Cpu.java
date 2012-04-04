@@ -113,18 +113,18 @@ public final class Cpu {
 	public static final int ENTRYHI_VPN2_MASK = 0xFFFFE000;
 	public static final int ENTRYHI_WRITE_MASK = ENTRYHI_ASID_MASK | ENTRYHI_VPN2_MASK;
 
-	public static final int STATUS_IE  = 0x00000001;
-	public static final int STATUS_EXL = 0x00000002;
-	public static final int STATUS_ERL = 0x00000004;
-	public static final int STATUS_UM  = 0x00000010;
+	public static final int STATUS_IE  = 0x00000001; // Interrupt enabled
+	public static final int STATUS_EXL = 0x00000002; // Exception
+	public static final int STATUS_ERL = 0x00000004; // Error
+	public static final int STATUS_UM  = 0x00000010; // User mode
 	public static final int STATUS_INT_MASK  = 0x0000FF00;
 	public static final int STATUS_INT_SHIFT = 8;
-	public static final int STATUS_NMI = 0x00080000;
-	public static final int STATUS_SR  = 0x00100000;
-	public static final int STATUS_TS  = 0x00200000;
-	public static final int STATUS_BEV = 0x00400000;
-	public static final int STATUS_RE  = 0x02000000;
-	public static final int STATUS_RP  = 0x08000000;
+	public static final int STATUS_NMI = 0x00080000; // Nmi
+	public static final int STATUS_SR  = 0x00100000; // Soft reset
+	public static final int STATUS_TS  = 0x00200000; // TLB Shutdown
+	public static final int STATUS_BEV = 0x00400000; // Bootstrap exception vector
+	public static final int STATUS_RE  = 0x02000000; // Reverse-endian in user mode
+	public static final int STATUS_RP  = 0x08000000; // Reduced power mode
 	public static final int STATUS_COP_MASK  = 0xF0000000;
 	public static final int STATUS_COP_SHIFT = 28;
 	public static final int STATUS_WRITE_MASK = STATUS_IE | STATUS_EXL | STATUS_ERL | STATUS_UM | STATUS_INT_MASK |
@@ -136,10 +136,10 @@ public final class Cpu {
 	public static final int CAUSE_INTERRUPT_MASK = 0x0000FF00;
 	public static final int CAUSE_INTERRUPT_SHIFT = 8;
 	public static final int CAUSE_WP = 0x00400000;
-	public static final int CAUSE_IV = 0x00800000;
-	public static final int CAUSE_CE_MASK = 0x30000000;
+	public static final int CAUSE_IV = 0x00800000; // Use special interrupt vector
+	public static final int CAUSE_CE_MASK = 0x30000000; // Coprocessor unit
 	public static final int CAUSE_CE_SHIFT = 28;
-	public static final int CAUSE_BD = 0x80000000;
+	public static final int CAUSE_BD = 0x80000000; // In delay slot
 	public static final int CAUSE_WRITE_MASK = (3 << CAUSE_INTERRUPT_SHIFT) | CAUSE_WP | CAUSE_IV;
 
 	public static final int CONTEXT_PTE_MASK = 0xFF800000;

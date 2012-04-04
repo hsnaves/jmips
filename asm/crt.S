@@ -1,14 +1,25 @@
-	.section .text
-	.align 4
-	.set noreorder
+	.section	.text
+	.align		4
+	.set		noreorder
+
+	.include	"cpudefs.S"
 
 	.global	__start
+	.ent	__start
+	.type	__start, @function
 __start:
-	lui	$sp, %hi(0x80200000)
-	ori	$sp, $sp, %lo(0x80200000)
-	b	_main
-	nop
+	mtc0	$0, cop0_reg_status
 
-1:
-	b	1b
+	lui	$t0, %hi(.text)
+	ori	$t2, $t0, %lo(.text)
+	lui	$t1, 0x0010
+	addu	$sp, $t0, $t1
+
+	lui	$gp, %hi(_gp)
+	jal	_main
+	ori	$gp, %lo(_gp)
+
+	syscall
+	b	cpu_die
 	nop
+	.end	__start

@@ -27,22 +27,34 @@ public class Main {
 
 		String kernelFileName = null;
 		String initrdFileName = null;
+		boolean stop = false;
+
 		if (args.length == 0) {
 			kernelFileName = "vmlinux";
 			initrdFileName = "initrd.gz";
 		} else {
 			kernelFileName = args[0];
+			if (kernelFileName.startsWith("-")) {
+				stop = true;
+				kernelFileName = kernelFileName.substring(1);
+			}
 			if (args.length > 1)
 				initrdFileName = args[1];
 		}
 
 		int initrdAddress = system.loadElf32(kernelFileName);
-		if (initrdAddress == 0) System.exit(1);
+		if (initrdAddress == 0) {
+			System.err.println("Can't load kernel!");
+			System.exit(1);
+		}
 
 		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;
 		if (initrdFileName != null) {
 			int lastAddress = system.load(initrdAddress, initrdFileName);
-			if (lastAddress == 0) System.exit(1);
+			if (lastAddress == 0) {
+				System.err.println("Can't load initrd!");
+				System.exit(1);
+			}
 
 			int size = lastAddress - initrdAddress;
 			String cmdLine = String.format("rd_start=0x%08X rd_size=%d", initrdAddress, size);
@@ -51,7 +63,7 @@ public class Main {
 
 		system.reset();
 		GdbStub stub = new GdbStub(system);
-		stub.runServer(1234, (args.length > 2));
+		stub.runServer(1234, stop);
 
 		System.exit(1);
 	}

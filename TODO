@@ -3,3 +3,7 @@ Todo:
 - Provide a minimal linux distro in order to test
 - Implement more exhaustive tests
 - Implement dynamic recompilation
+- Implement a network device
+- Implement a real time clock device
+- Implement a storage/block device
+

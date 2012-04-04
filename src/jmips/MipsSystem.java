@@ -233,18 +233,22 @@ public final class MipsSystem {
 
 	public int loadElf32(ByteBuffer bb) {
 		Elf32 elf = new Elf32();
+		int lastAddress = 0;
+
 		if (elf.readElf32(bb) == Elf32.READ_SUCCESS) {
+			setEntryPoint(elf.getEntry());
 			for(int i = 0; i < elf.getNumPrograms(); i++) {
 				Elf32Program program = elf.getProgram(i);
-				if (program != null && program.getType() == Elf32Program.PT_LOAD) {
+				if (program != null && program.getType() == Elf32Program.PT_LOAD &&
+						program.getFileSize() != 0) {
 					ByteBuffer data = program.getData();
 					int ret = load(program.getVirtualAddress(), data);
-					setEntryPoint(elf.getEntry());
-					return ret;
+					if (lastAddress < ret || lastAddress == 0)
+						lastAddress = ret;
 				}
 			}
 		}
-		return 0;
+		return lastAddress;
 	}
 
 	public int loadElf32(String fileName) {

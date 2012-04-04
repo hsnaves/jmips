@@ -9,7 +9,7 @@ ASFLAGS = -g
 CFLAGS  = -Wall -mno-abicalls -g -O3
 LDFLAGS = -Tlinker.ld
 
-COMMON = crt.o printf.o io.o r4kc.o
+COMMON = crt.o printf.o io.o cpu.o cpu_asm.o
 TARGETS += test.elf
 
 all: build
