@@ -30,9 +30,16 @@ public class Main {
 		final MipsSystem system = new MipsSystem(tty);
 		frame.setVisible(true);
 
-		String kernelFileName = args[0];
+		String kernelFileName = null;
 		String initrdFileName = null;
-		if (args.length > 1) initrdFileName = args[1];
+		if (args.length == 0) {
+			kernelFileName = "vmlinux";
+			initrdFileName = "initrd.gz";
+		} else {
+			kernelFileName = args[0];
+			if (args.length > 1)
+				initrdFileName = args[1];
+		}
 
 		int initrdAddress = system.loadElf32(new FileInputStream(kernelFileName).getChannel());
 		initrdAddress = (initrdAddress + 128 * 4096) & ~4095;

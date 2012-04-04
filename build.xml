@@ -14,6 +14,10 @@
 
     <property name="main-class"       value="jmips.Main"/>
 
+    <property file="build.properties" />
+    <property name="make"             value="/usr/bin/make"/>
+
+
     <path id="base.path">
         <pathelement path="${classpath}"/>
         <fileset dir="lib">
@@ -35,7 +39,22 @@
         <dirset dir="${test-classes.dir}" />
     </path>
 
-    <target name="clean">
+    <target name="clean-asm">
+        <exec executable="${make}">
+            <arg value="-C"/>
+            <arg value="asm"/>
+            <arg value="clean"/>
+        </exec>
+    </target>
+
+    <target name="compile-asm">
+        <exec executable="${make}">
+            <arg value="-C"/>
+            <arg value="asm"/>
+        </exec>
+    </target>
+
+    <target name="clean" depends="clean-asm">
         <delete dir="${build.dir}"/>
     </target>
 
@@ -80,12 +99,12 @@
         </junitreport>
     </target>
 
-    <target name="run" depends="jar">
+    <target name="run" depends="compile-asm,jar">
         <java jar="${jar.dir}/${ant.project.name}.jar" fork="true">
             <arg line="vmlinux initrd.gz stop"/>
         </java>
     </target>
 
     <target name="clean-build" depends="clean,jar"/>
-    <target name="main" depends="clean,test,report"/>
+    <target name="main" depends="clean,test,report,jar,compile-asm"/>
 </project>

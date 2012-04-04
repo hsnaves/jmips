@@ -7,31 +7,25 @@ OBJCOPY = $(CROSS)objcopy
 
 ASFLAGS = -g
 CFLAGS  = -Wall -mno-abicalls -g -O3
-LDFLAGS = #-Ttext=0x80400000
+LDFLAGS = -Tlinker.ld
 
 COMMON = crt.o printf.o io.o r4kc.o
-BINS += test.bin
+TARGETS += test.elf
 
 all: build
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-	$(OBJCOPY) -R .reginfo $@ $@
 
 %.o: %.S
 	$(AS) $(ASFLAGS) $< -o $@
-	$(OBJCOPY) -R .reginfo $@ $@
 
 %.elf: $(COMMON) %.o
 	$(LD) $(LDFLAGS) $^ -o $@
 
-%.bin: %.elf
-	#cp $^ $@
-	$(OBJCOPY) --change-addresses 0x80000000 $^ $@
-
-build: $(CRT) $(BINS)
+build: $(COMMON) $(TARGETS)
 
 .PHONY: clean
 
 clean:
-	$(RM) -fr $(BINS) $(CRT)
+	$(RM) -fr $(TARGETS) $(COMMON)
