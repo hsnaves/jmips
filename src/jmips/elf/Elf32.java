@@ -1,13 +1,8 @@
 package jmips.elf;
 
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -285,31 +280,5 @@ public class Elf32 {
 			sb.append((char) b);
 		}
 		return sb.toString();
-	}
-
-	public static void main(String[] args) throws IOException {
-		RandomAccessFile raf = null;
-		FileChannel fc = null;
-		try {
-			raf = new RandomAccessFile("asm/primes.bin", "r");
-			fc = raf.getChannel();
-			MappedByteBuffer mbb = fc.map(MapMode.READ_ONLY, 0, fc.size());
-			Elf32 elf = new Elf32();
-			if (elf.readElf32(mbb) == READ_SUCCESS) {
-				System.out.println(elf);
-				for(int i = 0; i < elf.getNumSections(); i++) {
-					Elf32Section section = elf.getSection(i);
-					if (section != null && section.getType() == Elf32Section.SHT_SYMTAB) {
-						Elf32SymbolTable symbolTable = new Elf32SymbolTable();
-						if (symbolTable.readElf32SymbolTable(elf, i)) {
-							System.out.println(symbolTable);
-						}
-					}
-				}
-			}
-		} finally {
-			if (fc != null) fc.close();
-			if (raf != null) raf.close();
-		}
 	}
 }

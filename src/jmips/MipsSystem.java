@@ -1,9 +1,6 @@
 package jmips;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 
 import jmips.cpu.Cpu;
 import jmips.cpu.Device;
@@ -228,8 +225,10 @@ public final class MipsSystem {
 		return address;
 	}
 
-	public int load(int address, FileChannel fc) throws IOException {
-		return load(address, fc.map(MapMode.READ_ONLY, 0, fc.size()));
+	public int load(int address, String fileName) {
+		ByteBuffer bb = FileUtils.readFile(fileName);
+		if (bb == null) return 0;
+		return load(address, bb);
 	}
 
 	public int loadElf32(ByteBuffer bb) {
@@ -248,8 +247,10 @@ public final class MipsSystem {
 		return 0;
 	}
 
-	public int loadElf32(FileChannel fc) throws IOException {
-		return loadElf32(fc.map(MapMode.READ_ONLY, 0, fc.size()));
+	public int loadElf32(String fileName) {
+		ByteBuffer bb = FileUtils.readFile(fileName);
+		if (bb == null) return 0;
+		return loadElf32(bb);
 	}
 
 	public void step(int num) {
