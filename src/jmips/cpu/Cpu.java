@@ -4,75 +4,6 @@ package jmips.cpu;
  * Java implementation of a MIPS32 4Kc processor
  */
 public final class Cpu {
-	// General purpose register constants
-	public static final int GPR_ZR = 0;
-	public static final int GPR_AT = 1;
-	public static final int GPR_V0 = 2;
-	public static final int GPR_V1 = 3;
-	public static final int GPR_A0 = 4;
-	public static final int GPR_A1 = 5;
-	public static final int GPR_A2 = 6;
-	public static final int GPR_A3 = 7;
-	public static final int GPR_T0 = 8;
-	public static final int GPR_T1 = 9;
-	public static final int GPR_T2 = 10;
-	public static final int GPR_T3 = 11;
-	public static final int GPR_T4 = 12;
-	public static final int GPR_T5 = 13;
-	public static final int GPR_T6 = 14;
-	public static final int GPR_T7 = 15;
-	public static final int GPR_S0 = 16;
-	public static final int GPR_S1 = 17;
-	public static final int GPR_S2 = 18;
-	public static final int GPR_S3 = 19;
-	public static final int GPR_S4 = 20;
-	public static final int GPR_S5 = 21;
-	public static final int GPR_S6 = 22;
-	public static final int GPR_S7 = 23;
-	public static final int GPR_T8 = 24;
-	public static final int GPR_T9 = 25;
-	public static final int GPR_K0 = 26;
-	public static final int GPR_K1 = 27;
-	public static final int GPR_GP = 28;
-	public static final int GPR_SP = 29;
-	public static final int GPR_FP = 30;
-	public static final int GPR_RA = 31;
-
-	// Coprocessor0 register constants
-	public static final int COP0_REG_INDEX = 0;            // Index into TLB array
-	public static final int COP0_REG_RANDOM = 1;           // Random generated index into the TLB array
-	public static final int COP0_REG_ENTRYLO0 = 2;         // Low portion of the TLB entry for even virtual pages
-	public static final int COP0_REG_ENTRYLO1 = 3;         // Low portion of the TLB entry for odd virtual pages
-	public static final int COP0_REG_CONTEXT = 4;          // Pointer to page table entry in memory
-	public static final int COP0_REG_PAGEMASK = 5;         // Controls the page sizes in TLB entries
-	public static final int COP0_REG_WIRED = 6;            // Controls the number of fixed TLB entries
-	public static final int COP0_REG_RESERVED1 = 7;        // Reserved
-	public static final int COP0_REG_BADVADDR = 8;         // ASddress for the most recent address-related exception
-	public static final int COP0_REG_COUNT = 9;            // Processor cycle count
-	public static final int COP0_REG_ENTRYHI = 10;         // High-order portion of the TLB entry
-	public static final int COP0_REG_COMPARE = 11;         // Timer interrupt control
-	public static final int COP0_REG_STATUS = 12;          // Processor status and control
-	public static final int COP0_REG_CAUSE = 13;           // Cause of last exception
-	public static final int COP0_REG_EPC = 14;             // Program counter at last exception
-	public static final int COP0_REG_PRID = 15;            // Processor identification and revision
-	public static final int COP0_REG_CONFIG = 16;          // Configuration registers
-	public static final int COP0_REG_LLADDR = 17;          // Load linked address
-	public static final int COP0_REG_WATCHLO = 18;         // Watchpoint address(low order)
-	public static final int COP0_REG_WATCHHI = 19;         // Watchpoint address(high order) and mask
-	public static final int COP0_REG_RESERVED2 = 20;       // Reserved
-	public static final int COP0_REG_RESERVED3 = 21;       // Reserved
-	public static final int COP0_REG_RESERVED4 = 22;       // Reserved
-	public static final int COP0_REG_DEBUG = 23;           // Debug control and exception status
-	public static final int COP0_REG_DEPC = 24;            // Program counter at last debug exception
-	public static final int COP0_REG_RESERVED5 = 25;       // Reserved
-	public static final int COP0_REG_ERRCTRL = 26;         // Control access to data for CACHE instruction
-	public static final int COP0_REG_RESERVED6 = 27;       // Reserved
-	public static final int COP0_REG_TAGLO = 28;           // Low-order portion of cache tag interface
-	public static final int COP0_REG_RESERVED7 = 29;       // Reserved
-	public static final int COP0_REG_ERROREPC = 30;        // Program counter at last error
-	public static final int COP0_REG_DESAVE = 31;          // Debug handler scratchpad register
-
-
 	// Exception codes
 	public static final int EXCEPTION_CODE_INT = 0;        // Interrupt
 	public static final int EXCEPTION_CODE_MOD = 1;        // TLB modification exception
@@ -233,7 +164,7 @@ public final class Cpu {
 	}
 
 	public void setGpr(int regno, int val) {
-		if (regno != GPR_ZR) gpr[regno] = val;
+		if (regno != Instruction.GPR_ZR) gpr[regno] = val;
 	}
 
 	public int getGpr(int regno) {
@@ -755,7 +686,7 @@ public final class Cpu {
 	private void microstep(int opcode) {
 		counter++;
 
-		switch (I_OP(opcode)) {
+		switch (Instruction.I_OP(opcode)) {
 		case 0: stepSpecial(opcode); break;
 		case 1: stepRegImm(opcode); break;
 		case 2: j(opcode); break;
@@ -831,7 +762,7 @@ public final class Cpu {
 	}
 
 	private void stepSpecial(int opcode) {
-		switch(I_FUNCT(opcode)) {
+		switch(Instruction.I_FUNCT(opcode)) {
 		case 0: sll(opcode); break;
 		case 1: reserved(); break; // ???
 		case 2: srl(opcode); break;
@@ -882,7 +813,7 @@ public final class Cpu {
 	}
 
 	private void stepSpecial2(int opcode) {
-		switch(I_FUNCT(opcode)) {
+		switch(Instruction.I_FUNCT(opcode)) {
 		case 0: madd(opcode); break;
 		case 1: maddu(opcode); break;
 		case 2: mul(opcode); break;
@@ -896,7 +827,7 @@ public final class Cpu {
 	}
 
 	private void stepRegImm(int opcode) {
-		switch(I_RT(opcode)) {
+		switch(Instruction.I_RT(opcode)) {
 		case 0: bltz(opcode); break;
 		case 1: bgez(opcode); break;
 		case 2: bltzl(opcode); break;
@@ -916,7 +847,7 @@ public final class Cpu {
 	}
 
 	private void stepCop0(int opcode) {
-		switch(I_RS(opcode)) {
+		switch(Instruction.I_RS(opcode)) {
 		case 0: mfc0(opcode); break;
 		case 4: mtc0(opcode); break;
 		case 16:
@@ -940,7 +871,7 @@ public final class Cpu {
 	}
 
 	private void stepCop0Co(int opcode) {
-		switch(I_FUNCT(opcode)) {
+		switch(Instruction.I_FUNCT(opcode)) {
 		case 1: tlbr(opcode); break;
 		case 2: tlbwi(opcode); break;
 		case 6: tlbwr(opcode); break;
@@ -953,60 +884,60 @@ public final class Cpu {
 	}
 
 	private void add(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs + rt;
 		if (checkOverflow(rs, rt, result, true)) return;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void addi(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		int result = rs + imm;
 		if (checkOverflow(rs, imm, result, true)) return;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void addiu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		int result = rs + imm;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void addu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs + rt;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void and(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs & rt;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void andi(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int immu = I_IMM16U(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int immu = Instruction.I_IMM16U(opcode);
 		int result = rs & immu;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void beq(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs == rt) {
 			branch(opcode);
 		}
 	}
 
 	private void beql(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs == rt) {
 			branch(opcode);
 		} else {
@@ -1015,14 +946,14 @@ public final class Cpu {
 	}
 
 	private void bgez(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs >= 0) {
 			branch(opcode);
 		}
 	}
 
 	private void bgezal(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		link();
 		if (rs >= 0) {
 			branch(opcode);
@@ -1030,7 +961,7 @@ public final class Cpu {
 	}
 
 	private void bgezall(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		link();
 		if (rs >= 0) {
 			branch(opcode);
@@ -1040,7 +971,7 @@ public final class Cpu {
 	}
 
 	private void bgezl(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs >= 0) {
 			branch(opcode);
 		} else {
@@ -1049,14 +980,14 @@ public final class Cpu {
 	}
 
 	private void bgtz(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs > 0) {
 			branch(opcode);
 		}
 	}
 
 	private void bgtzl(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs > 0) {
 			branch(opcode);
 		} else {
@@ -1065,14 +996,14 @@ public final class Cpu {
 	}
 
 	private void blez(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs <= 0) {
 			branch(opcode);
 		}
 	}
 
 	private void blezl(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs <= 0) {
 			branch(opcode);
 		} else {
@@ -1081,14 +1012,14 @@ public final class Cpu {
 	}
 
 	private void bltz(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs < 0) {
 			branch(opcode);
 		}
 	}
 
 	private void bltzal(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		link();
 		if (rs < 0) {
 			branch(opcode);
@@ -1096,7 +1027,7 @@ public final class Cpu {
 	}
 
 	private void bltzall(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		link();
 		if (rs < 0) {
 			branch(opcode);
@@ -1106,7 +1037,7 @@ public final class Cpu {
 	}
 
 	private void bltzl(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		if (rs < 0) {
 			branch(opcode);
 		} else {
@@ -1115,16 +1046,16 @@ public final class Cpu {
 	}
 
 	private void bne(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs != rt) {
 			branch(opcode);
 		}
 	}
 
 	private void bnel(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs != rt) {
 			branch(opcode);
 		} else {
@@ -1143,15 +1074,15 @@ public final class Cpu {
 	}
 
 	private void clo(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = Helper.countLeadingOnes(rs);
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void clz(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = Helper.countLeadingZeros(rs);
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void deret(int opcode) {
@@ -1159,8 +1090,8 @@ public final class Cpu {
 	}
 
 	private void div(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rt == 0) {
 			lo = hi = 0;
 		} else {
@@ -1170,8 +1101,8 @@ public final class Cpu {
 	}
 
 	private void divu(int opcode) {
-		long rs = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
 		if (rt == 0) {
 			lo = hi = 0;
 		} else {
@@ -1187,7 +1118,7 @@ public final class Cpu {
 	}
 
 	private void j(int opcode) {
-		npc = I_JUMP(opcode, pc - 4);
+		npc = Instruction.I_JUMP(opcode, pc - 4);
 		delaySlot = true;
 	}
 
@@ -1197,87 +1128,87 @@ public final class Cpu {
 	}
 
 	private void jalr(int opcode) {
-		link(I_RD(opcode));
+		link(Instruction.I_RD(opcode));
 		jr(opcode);
 	}
 
 	private void jr(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		npc = rs;
 		delaySlot = true;
 	}
 
 	private void lb(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read8(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(I_RT(opcode), val);
+			setGpr(Instruction.I_RT(opcode), val);
 		}
 	}
 
 	private void lbu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read8(address) & 0xFF;
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(I_RT(opcode), val);
+			setGpr(Instruction.I_RT(opcode), val);
 		}
 	}
 
 	private void lh(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read16(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(I_RT(opcode), val);
+			setGpr(Instruction.I_RT(opcode), val);
 		}
 	}
 
 	private void lhu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read16(address) & 0xFFFF;
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(I_RT(opcode), val);
+			setGpr(Instruction.I_RT(opcode), val);
 		}
 	}
 
 	private void ll(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read32linked(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(I_RT(opcode), val);
+			setGpr(Instruction.I_RT(opcode), val);
 		}
 	}
 
 	private void lui(int opcode) {
-		int imm = I_IMM16(opcode);
+		int imm = Instruction.I_IMM16(opcode);
 		int result = imm << 16;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void lw(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read32(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(I_RT(opcode), val);
+			setGpr(Instruction.I_RT(opcode), val);
 		}
 	}
 
 	private void lwl(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = I_RT(opcode);
+		int rt = Instruction.I_RT(opcode);
 		int val = read32UnalignedLeft(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, val);
@@ -1285,10 +1216,10 @@ public final class Cpu {
 	}
 
 	private void lwr(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = I_RT(opcode);
+		int rt = Instruction.I_RT(opcode);
 		int val = read32UnalignedRight(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, val);
@@ -1296,8 +1227,8 @@ public final class Cpu {
 	}
 
 	private void madd(int opcode) {
-		long rs = gpr[I_RS(opcode)];
-		long rt = gpr[I_RT(opcode)];
+		long rs = gpr[Instruction.I_RS(opcode)];
+		long rt = gpr[Instruction.I_RT(opcode)];
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo + rs * rt;
 		lo = (int) result;
@@ -1305,8 +1236,8 @@ public final class Cpu {
 	}
 
 	private void maddu(int opcode) {
-		long rs = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo + rs * rt;
 		lo = (int) result;
@@ -1315,40 +1246,40 @@ public final class Cpu {
 
 	private void mfc0(int opcode) {
 		if (checkCoprocessor(0)) {
-			int rt = I_RT(opcode);
-			int rd = I_RD(opcode);
-			int sel = I_COP0SEL(opcode);
+			int rt = Instruction.I_RT(opcode);
+			int rd = Instruction.I_RD(opcode);
+			int sel = Instruction.I_COP0SEL(opcode);
 			setGpr(rt, getCop0Reg(rd, sel));
 		}
 	}
 
 	private void mfhi(int opcode) {
-		setGpr(I_RD(opcode), hi);
+		setGpr(Instruction.I_RD(opcode), hi);
 	}
 
 	private void mflo(int opcode) {
-		setGpr(I_RD(opcode), lo);
+		setGpr(Instruction.I_RD(opcode), lo);
 	}
 
 	private void movn(int opcode) {
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rt != 0) {
-			int rs = gpr[I_RS(opcode)];
-			setGpr(I_RD(opcode), rs);
+			int rs = gpr[Instruction.I_RS(opcode)];
+			setGpr(Instruction.I_RD(opcode), rs);
 		}
 	}
 
 	private void movz(int opcode) {
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rt == 0) {
-			int rs = gpr[I_RS(opcode)];
-			setGpr(I_RD(opcode), rs);
+			int rs = gpr[Instruction.I_RS(opcode)];
+			setGpr(Instruction.I_RD(opcode), rs);
 		}
 	}
 
 	private void msub(int opcode) {
-		long rs = gpr[I_RS(opcode)];
-		long rt = gpr[I_RT(opcode)];
+		long rs = gpr[Instruction.I_RS(opcode)];
+		long rt = gpr[Instruction.I_RT(opcode)];
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo - rs * rt;
 		lo = (int) result;
@@ -1356,8 +1287,8 @@ public final class Cpu {
 	}
 
 	private void msubu(int opcode) {
-		long rs = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo - rs * rt;
 		lo = (int) result;
@@ -1366,66 +1297,66 @@ public final class Cpu {
 
 	private void mtc0(int opcode) {
 		if (checkCoprocessor(0)) {
-			int rt = I_RT(opcode);
-			int rd = I_RD(opcode);
-			int sel = I_COP0SEL(opcode);
+			int rt = Instruction.I_RT(opcode);
+			int rd = Instruction.I_RD(opcode);
+			int sel = Instruction.I_COP0SEL(opcode);
 			setCop0Reg(rd, sel, gpr[rt]);
 		}
 	}
 
 	private void mthi(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		hi = rs;
 	}
 
 	private void mtlo(int opcode) {
-		int rs = gpr[I_RS(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		lo = rs;
 	}
 
 	private void mul(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs * rt;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 		// hi = lo = 0; // Unpredictable
 	}
 
 	private void mult(int opcode) {
-		long rs = gpr[I_RS(opcode)];
-		long rt = gpr[I_RT(opcode)];
+		long rs = gpr[Instruction.I_RS(opcode)];
+		long rt = gpr[Instruction.I_RT(opcode)];
 		long result = rs * rt;
 		lo = (int) result;
 		hi = (int) (result >> 32);
 	}
 
 	private void multu(int opcode) {
-		long rs = gpr[I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
 		long result = rs * rt;
 		lo = (int) result;
 		hi = (int) (result >> 32);
 	}
 
 	private void nor(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = ~(rs | rt);
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void or(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs | rt;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void ori(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int immu = I_IMM16U(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int immu = Instruction.I_IMM16U(opcode);
 		int result = rs | immu;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void pref(int opcode) {
@@ -1433,18 +1364,18 @@ public final class Cpu {
 	}
 
 	private void sb(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		write8(address, (byte) rt);
 	}
 
 	private void sc(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = I_RT(opcode);
+		int rt = Instruction.I_RT(opcode);
 		boolean ok = write32conditional(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, ok ? 1 : 0);
@@ -1456,119 +1387,119 @@ public final class Cpu {
 	}
 
 	private void sh(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		write16(address, (short) rt);
 	}
 
 	private void sll(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int sa = I_SA(opcode);
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int sa = Instruction.I_SA(opcode);
 		int result = rt << sa;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void sllv(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int rs = gpr[I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = rt << rs;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void slt(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int rs = gpr[I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = (rs < rt) ? 1 : 0;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void slti(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		int result = (rs < imm) ? 1 : 0;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void sltiu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		int result = (Helper.compareUnsigned(rs, imm) < 0) ? 1 : 0;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void sltu(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int rs = gpr[I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = (Helper.compareUnsigned(rs, rt) < 0) ? 1 : 0;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void sra(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int sa = I_SA(opcode);
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int sa = Instruction.I_SA(opcode);
 		int result = rt >> sa;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void srav(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int rs = gpr[I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = rt >> rs;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void srl(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int sa = I_SA(opcode);
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int sa = Instruction.I_SA(opcode);
 		int result = rt >>> sa;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void srlv(int opcode) {
-		int rt = gpr[I_RT(opcode)];
-		int rs = gpr[I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
 		int result = rt >>> rs;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void sub(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs - rt;
 		if (checkOverflow(rs, rt, result, false)) return;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void subu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs - rt;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void sw(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		write32(address, rt);
 	}
 
 	private void swl(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		write32UnalignedLeft(address, rt);
 	}
 
 	private void swr(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int offset = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int offset = Instruction.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[I_RT(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		write32UnalignedRight(address, rt);
 	}
 
@@ -1581,48 +1512,48 @@ public final class Cpu {
 	}
 
 	private void teq(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs == rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void teqi(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		if (rs == imm) {
 			exception_TRAP();
 		}
 	}
 
 	private void tge(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs >= rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void tgei(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		if (rs >= imm) {
 			exception_TRAP();
 		}
 	}
 
 	private void tgeiu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		if (Helper.compareUnsigned(rs, imm) >= 0) {
 			exception_TRAP();
 		}
 	}
 
 	private void tgeu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (Helper.compareUnsigned(rs, rt) >= 0) {
 			exception_TRAP();
 		}
@@ -1653,48 +1584,48 @@ public final class Cpu {
 	}
 
 	private void tlt(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs < rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void tlti(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		if (rs < imm) {
 			exception_TRAP();
 		}
 	}
 
 	private void tltiu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		if (Helper.compareUnsigned(rs, imm) < 0) {
 			exception_TRAP();
 		}
 	}
 
 	private void tltu(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (Helper.compareUnsigned(rs, rt) < 0) {
 			exception_TRAP();
 		}
 	}
 
 	private void tne(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		if (rs != rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void tnei(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int imm = I_IMM16(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int imm = Instruction.I_IMM16(opcode);
 		if (rs != imm) {
 			exception_TRAP();
 		}
@@ -1707,17 +1638,17 @@ public final class Cpu {
 	}
 
 	private void xor(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int rt = gpr[I_RT(opcode)];
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Instruction.I_RT(opcode)];
 		int result = rs ^ rt;
-		setGpr(I_RD(opcode), result);
+		setGpr(Instruction.I_RD(opcode), result);
 	}
 
 	private void xori(int opcode) {
-		int rs = gpr[I_RS(opcode)];
-		int immu = I_IMM16U(opcode);
+		int rs = gpr[Instruction.I_RS(opcode)];
+		int immu = Instruction.I_IMM16U(opcode);
 		int result = rs ^ immu;
-		setGpr(I_RT(opcode), result);
+		setGpr(Instruction.I_RT(opcode), result);
 	}
 
 	private void invalid(int copno) {
@@ -1751,12 +1682,12 @@ public final class Cpu {
 	}
 
 	private void branch(int opcode) {
-		npc = I_BRANCH(opcode, pc - 4);
+		npc = Instruction.I_BRANCH(opcode, pc - 4);
 		delaySlot = true;
 	}
 
 	private void link() {
-		link(GPR_RA);
+		link(Instruction.GPR_RA);
 	}
 
 	private void link(int regno) {
@@ -1815,109 +1746,109 @@ public final class Cpu {
 
 	public void setCop0Reg(int reg, int sel, int value) {
 		switch(reg) {
-		case COP0_REG_INDEX:
+		case Instruction.COP0_REG_INDEX:
 			Index = changeValue(Index, value, INDEX_MASK);
 			break;
-		case COP0_REG_RANDOM:
+		case Instruction.COP0_REG_RANDOM:
 			// Ignore random writes
 			break;
-		case COP0_REG_ENTRYLO0:
+		case Instruction.COP0_REG_ENTRYLO0:
 			EntryLo0 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case COP0_REG_ENTRYLO1:
+		case Instruction.COP0_REG_ENTRYLO1:
 			EntryLo1 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case COP0_REG_CONTEXT:
+		case Instruction.COP0_REG_CONTEXT:
 			Context = changeValue(Context, value, CONTEXT_WRITE_MASK);
 			break;
-		case COP0_REG_PAGEMASK:
+		case Instruction.COP0_REG_PAGEMASK:
 			PageMask = value & 0x01FFE000;
 			break;
-		case COP0_REG_WIRED:
+		case Instruction.COP0_REG_WIRED:
 			Wired = value & INDEX_MASK;
 			break;
-		case COP0_REG_RESERVED1:
+		case Instruction.COP0_REG_RESERVED1:
 			Reserved1 = value;
 			break;
-		case COP0_REG_BADVADDR:
+		case Instruction.COP0_REG_BADVADDR:
 			// Ignore BadVAddr writes
 			break;
-		case COP0_REG_COUNT:
+		case Instruction.COP0_REG_COUNT:
 			checkTimerInterrupt(beforeCounter, getCounter());
 			setCounter(value);
 			beforeCounter = value;
 			break;
-		case COP0_REG_ENTRYHI:
+		case Instruction.COP0_REG_ENTRYHI:
 			EntryHi = value & ENTRYHI_WRITE_MASK;
 			ASID = value & ENTRYHI_ASID_MASK;
 			break;
-		case COP0_REG_COMPARE:
+		case Instruction.COP0_REG_COMPARE:
 			Compare = value;
 			beforeCounter = getCounter();
 			lowerIrq(TIMER_IRQ);
 			break;
-		case COP0_REG_STATUS:
+		case Instruction.COP0_REG_STATUS:
 			writeStatus(value);
 			break;
-		case COP0_REG_CAUSE:
+		case Instruction.COP0_REG_CAUSE:
 			Cause = changeValue(Cause, value, CAUSE_WRITE_MASK);
 			break;
-		case COP0_REG_EPC:
+		case Instruction.COP0_REG_EPC:
 			EPC = value;
 			break;
-		case COP0_REG_PRID:
+		case Instruction.COP0_REG_PRID:
 			// Ignore PRId writes
 			break;
-		case COP0_REG_CONFIG:
+		case Instruction.COP0_REG_CONFIG:
 			if (sel == 0) {
 				Config = changeValue(Config,  value, 0x07);
 			}
 			// Ignores Config1 writes
 			break;
-		case COP0_REG_LLADDR:
+		case Instruction.COP0_REG_LLADDR:
 			// Ignore LLAddr writes
 			break;
-		case COP0_REG_WATCHLO:
+		case Instruction.COP0_REG_WATCHLO:
 			WatchLo = value;
 			break;
-		case COP0_REG_WATCHHI:
+		case Instruction.COP0_REG_WATCHHI:
 			WatchHi = value;
 			break;
-		case COP0_REG_RESERVED2:
+		case Instruction.COP0_REG_RESERVED2:
 			Reserved2 = value;
 			break;
-		case COP0_REG_RESERVED3:
+		case Instruction.COP0_REG_RESERVED3:
 			Reserved3 = value;
 			break;
-		case COP0_REG_RESERVED4:
+		case Instruction.COP0_REG_RESERVED4:
 			Reserved4 = value;
 			break;
-		case COP0_REG_DEBUG:
+		case Instruction.COP0_REG_DEBUG:
 			Debug = value;
 			break;
-		case COP0_REG_DEPC:
+		case Instruction.COP0_REG_DEPC:
 			DEPC = value;
 			break;
-		case COP0_REG_RESERVED5:
+		case Instruction.COP0_REG_RESERVED5:
 			Reserved5 = value;
 			break;
-		case COP0_REG_ERRCTRL:
+		case Instruction.COP0_REG_ERRCTRL:
 			ErrCtrl = value;
 			break;
-		case COP0_REG_RESERVED6:
+		case Instruction.COP0_REG_RESERVED6:
 			Reserved6 = value;
 			break;
-		case COP0_REG_TAGLO:
+		case Instruction.COP0_REG_TAGLO:
 			if (sel == 0) TagLo = value;
 			else DataLo = value;
 			break;
-		case COP0_REG_RESERVED7:
+		case Instruction.COP0_REG_RESERVED7:
 			Reserved7 = value;
 			break;
-		case COP0_REG_ERROREPC:
+		case Instruction.COP0_REG_ERROREPC:
 			ErrorEPC = value;
 			break;
-		case COP0_REG_DESAVE:
+		case Instruction.COP0_REG_DESAVE:
 			DESAVE = value;
 			break;
 		}
@@ -1926,103 +1857,103 @@ public final class Cpu {
 	public int getCop0Reg(int reg, int sel) {
 		int retval = 0;
 		switch(reg) {
-		case COP0_REG_INDEX:
+		case Instruction.COP0_REG_INDEX:
 			retval = Index;
 			break;
-		case COP0_REG_RANDOM:
+		case Instruction.COP0_REG_RANDOM:
 			retval = readRegisterRandom();
 			break;
-		case COP0_REG_ENTRYLO0:
+		case Instruction.COP0_REG_ENTRYLO0:
 			retval = EntryLo0;
 			break;
-		case COP0_REG_ENTRYLO1:
+		case Instruction.COP0_REG_ENTRYLO1:
 			retval = EntryLo1;
 			break;
-		case COP0_REG_CONTEXT:
+		case Instruction.COP0_REG_CONTEXT:
 			retval = Context;
 			break;
-		case COP0_REG_PAGEMASK:
+		case Instruction.COP0_REG_PAGEMASK:
 			retval = PageMask;
 			break;
-		case COP0_REG_WIRED:
+		case Instruction.COP0_REG_WIRED:
 			retval = Wired;
 			break;
-		case COP0_REG_RESERVED1:
+		case Instruction.COP0_REG_RESERVED1:
 			retval = Reserved1;
 			break;
-		case COP0_REG_BADVADDR:
+		case Instruction.COP0_REG_BADVADDR:
 			retval = BadVAddr;
 			break;
-		case COP0_REG_COUNT:
+		case Instruction.COP0_REG_COUNT:
 			retval = getCounter();
 			break;
-		case COP0_REG_ENTRYHI:
+		case Instruction.COP0_REG_ENTRYHI:
 			retval = EntryHi;
 			break;
-		case COP0_REG_COMPARE:
+		case Instruction.COP0_REG_COMPARE:
 			retval = Compare;
 			break;
-		case COP0_REG_STATUS:
+		case Instruction.COP0_REG_STATUS:
 			retval = Status;
 			break;
-		case COP0_REG_CAUSE:
+		case Instruction.COP0_REG_CAUSE:
 			checkTimerInterrupt(beforeCounter, getCounter());
 			retval = Cause;
 			break;
-		case COP0_REG_EPC:
+		case Instruction.COP0_REG_EPC:
 			retval = EPC;
 			break;
-		case COP0_REG_PRID:
+		case Instruction.COP0_REG_PRID:
 			retval = PRId;
 			break;
-		case COP0_REG_CONFIG:
+		case Instruction.COP0_REG_CONFIG:
 			if (sel == 0) retval = Config;
 			else retval = Config1;
 			break;
-		case COP0_REG_LLADDR:
+		case Instruction.COP0_REG_LLADDR:
 			retval = LLAddr;
 			break;
-		case COP0_REG_WATCHLO:
+		case Instruction.COP0_REG_WATCHLO:
 			retval = WatchLo;
 			break;
-		case COP0_REG_WATCHHI:
+		case Instruction.COP0_REG_WATCHHI:
 			retval = WatchHi;
 			break;
-		case COP0_REG_RESERVED2:
+		case Instruction.COP0_REG_RESERVED2:
 			retval = Reserved2;
 			break;
-		case COP0_REG_RESERVED3:
+		case Instruction.COP0_REG_RESERVED3:
 			retval = Reserved3;
 			break;
-		case COP0_REG_RESERVED4:
+		case Instruction.COP0_REG_RESERVED4:
 			retval = Reserved4;
 			break;
-		case COP0_REG_DEBUG:
+		case Instruction.COP0_REG_DEBUG:
 			retval = Debug;
 			break;
-		case COP0_REG_DEPC:
+		case Instruction.COP0_REG_DEPC:
 			retval = DEPC;
 			break;
-		case COP0_REG_RESERVED5:
+		case Instruction.COP0_REG_RESERVED5:
 			retval = Reserved5;
 			break;
-		case COP0_REG_ERRCTRL:
+		case Instruction.COP0_REG_ERRCTRL:
 			retval = ErrCtrl;
 			break;
-		case COP0_REG_RESERVED6:
+		case Instruction.COP0_REG_RESERVED6:
 			retval = Reserved6;
 			break;
-		case COP0_REG_TAGLO:
+		case Instruction.COP0_REG_TAGLO:
 			if (sel == 0) retval = TagLo;
 			else retval = DataLo;
 			break;
-		case COP0_REG_RESERVED7:
+		case Instruction.COP0_REG_RESERVED7:
 			retval = Reserved7;
 			break;
-		case COP0_REG_ERROREPC:
+		case Instruction.COP0_REG_ERROREPC:
 			retval = ErrorEPC;
 			break;
-		case COP0_REG_DESAVE:
+		case Instruction.COP0_REG_DESAVE:
 			retval = DESAVE;
 			break;
 		}
@@ -2412,63 +2343,5 @@ public final class Cpu {
 			return String.format("PFN: %08X Cacheability: %d %s %s", PFN,
 			                     cacheability, dirty ? "DT" : "ND", valid ? "VL" : "NV");
 		}
-	}
-
-
-	// Auxiliary functions to decode the opcode
-	public static int I_OP(int opcode) {
-		return (opcode >>> 26);
-	}
-
-	public static int I_FUNCT(int opcode) {
-		return opcode & 0x3F;
-	}
-
-	public static int I_RS(int opcode) {
-		return ((opcode >> 21) & 0x1F);
-	}
-
-	public static int I_RT(int opcode) {
-		return ((opcode >> 16) & 0x1F);
-	}
-
-	public static int I_RD(int opcode) {
-		return ((opcode >> 11) & 0x1F);
-	}
-
-	public static int I_SA(int opcode) {
-		return ((opcode >> 6) & 0x1F);
-	}
-
-	public static int I_IMM16(int opcode) {
-		return (int) ((short) opcode);
-	}
-
-	public static int I_IMM16U(int opcode) {
-		return opcode & 0xFFFF;
-	}
-
-	public static int I_BRANCH(int opcode, int pc) {
-		return pc + 4 + 4 * I_IMM16(opcode);
-	}
-
-	public static int I_JUMP(int opcode, int pc) {
-		return ((pc & 0xF0000000) | ((opcode & 0x3FFFFFF) << 2));
-	}
-
-	public static int I_SYSCALLCODE(int opcode) {
-		return ((opcode >> 6) & 0xFFFFF);
-	}
-
-	public static int I_TRAPCODE(int opcode) {
-		return ((opcode >> 6) & 0x3FF);
-	}
-
-	public static int I_WAITCODE(int opcode) {
-		return ((opcode >> 6) & 0x7FFFF);
-	}
-
-	public static int I_COP0SEL(int opcode) {
-		return (opcode & 0x07);
 	}
 }
