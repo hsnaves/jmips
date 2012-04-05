@@ -115,878 +115,880 @@ public class Mips {
 		"(unknown exception: 28)", "(unknown exception: 29)", "(unknown exception: 30)", "(unknown exception: 31)"
 	};
 
+	// Instructions
+	public static final int I_SPECIAL  = 0;
+	public static final int I_REGIMM   = 1;
+	public static final int I_J        = 2;
+	public static final int I_JAL      = 3;
+	public static final int I_BEQ      = 4;
+	public static final int I_BNE      = 5;
+	public static final int I_BLEZ     = 6;
+	public static final int I_BGTZ     = 7;
+	public static final int I_ADDI     = 8;
+	public static final int I_ADDIU    = 9;
+	public static final int I_SLTI     = 10;
+	public static final int I_SLTIU    = 11;
+	public static final int I_ANDI     = 12;
+	public static final int I_ORI      = 13;
+	public static final int I_XORI     = 14;
+	public static final int I_LUI      = 15;
+	public static final int I_COP0     = 16;
+
+	public static final int I_BEQL     = 20;
+	public static final int I_BNEL     = 21;
+	public static final int I_BLEZL    = 22;
+	public static final int I_BGTZL    = 23;
+
+	public static final int I_SPECIAL2 = 28;
+	
+	public static final int I_LB       = 32;
+	public static final int I_LH       = 33;
+	public static final int I_LWL      = 34;
+	public static final int I_LW       = 35;
+	public static final int I_LBU      = 36;
+	public static final int I_LHU      = 37;
+	public static final int I_LWR      = 38;
+
+	public static final int I_SB       = 40;
+	public static final int I_SH       = 41;
+	public static final int I_SWL      = 42;
+	public static final int I_SW       = 43;
+
+	public static final int I_SWR      = 46;
+	public static final int I_CACHE    = 47;
+	public static final int I_LL       = 48;
+
+	public static final int I_PREF     = 51;
+
+	public static final int I_SC       = 56;
+
+	public static final int I_SPEC_SLL       = 0;
+
+	public static final int I_SPEC_SRL       = 2;
+	public static final int I_SPEC_SRA       = 3;
+	public static final int I_SPEC_SLLV      = 4;
+	public static final int I_SPEC_SRLV      = 6;
+	public static final int I_SPEC_SRAV      = 7;
+
+	public static final int I_SPEC_JR        = 8;
+	public static final int I_SPEC_JALR      = 9;
+	public static final int I_SPEC_MOVZ      = 10;
+	public static final int I_SPEC_MOVN      = 11;
+	public static final int I_SPEC_SYSCALL   = 12;
+	public static final int I_SPEC_BREAK     = 13;
+	public static final int I_SPEC_SYNC      = 15;
+
+	public static final int I_SPEC_MFHI      = 16;
+	public static final int I_SPEC_MTHI      = 17;
+	public static final int I_SPEC_MFLO      = 18;
+	public static final int I_SPEC_MTLO      = 19;
+
+	public static final int I_SPEC_MULT      = 24;
+	public static final int I_SPEC_MULTU     = 25;
+	public static final int I_SPEC_DIV       = 26;
+	public static final int I_SPEC_DIVU      = 27;
+
+	public static final int I_SPEC_ADD       = 32;
+	public static final int I_SPEC_ADDU      = 33;
+	public static final int I_SPEC_SUB       = 34;
+	public static final int I_SPEC_SUBU      = 35;
+	public static final int I_SPEC_AND       = 36;
+	public static final int I_SPEC_OR        = 37;
+
+	public static final int I_SPEC_XOR       = 38;
+	public static final int I_SPEC_NOR       = 39;
+
+	public static final int I_SPEC_SLT       = 42;
+	public static final int I_SPEC_SLTU      = 43;
+
+	public static final int I_SPEC_TGE       = 48;
+	public static final int I_SPEC_TGEU      = 49;
+	public static final int I_SPEC_TLT       = 50;
+	public static final int I_SPEC_TLTU      = 51;
+	public static final int I_SPEC_TEQ       = 52;
+
+	public static final int I_SPEC_TNE       = 54;
+
+	public static final int I_SPEC2_MADD     = 0;
+	public static final int I_SPEC2_MADDU    = 1;
+	public static final int I_SPEC2_MUL      = 2;
+	public static final int I_SPEC2_MSUB     = 4;
+	public static final int I_SPEC2_MSUBU    = 5;
+	public static final int I_SPEC2_CLZ      = 32;
+	public static final int I_SPEC2_CLO      = 33;
+	public static final int I_SPEC2_SDBBP    = 63;
+
+	public static final int I_REGIMM_BLTZ    = 0;
+	public static final int I_REGIMM_BGEZ    = 1;
+	public static final int I_REGIMM_BLTZL   = 2;
+	public static final int I_REGIMM_BGEZL   = 3;
+	public static final int I_REGIMM_TGEI    = 8;
+	public static final int I_REGIMM_TGEIU   = 9;
+	public static final int I_REGIMM_TLTI    = 10;
+	public static final int I_REGIMM_TLTIU   = 11;
+	public static final int I_REGIMM_TEQI    = 12;
+	public static final int I_REGIMM_TNEI    = 14;
+	public static final int I_REGIMM_BLTZAL  = 16;
+	public static final int I_REGIMM_BGEZAL  = 17;
+	public static final int I_REGIMM_BLTZALL = 18;
+	public static final int I_REGIMM_BGEZALL = 19;
+
+	public static final int I_COP0_MFC0    = 0;
+	public static final int I_COP0_MTC0    = 4;
+	public static final int I_COP0_CO_MIN  = 16;
+	public static final int I_COP0_CO_MAX  = 31;
+
+	public static final int I_COP0CO_TLBR  = 1;
+	public static final int I_COP0CO_TLBWI = 2;
+	public static final int I_COP0CO_TLBWR = 6;
+	public static final int I_COP0CO_TLBP  = 8;
+	public static final int I_COP0CO_ERET  = 24;
+	public static final int I_COP0CO_DERET = 31;
+	public static final int I_COP0CO_WAIT  = 32;
+
 	// Auxiliary functions to decode the opcode
-	public static int I_OP(int opcode) {
+	public static int DECODE_OP(int opcode) {
 		return (opcode >>> 26);
 	}
 
-	public static int I_FUNCT(int opcode) {
+	public static int DECODE_FUNCT(int opcode) {
 		return opcode & 0x3F;
 	}
 
-	public static int I_RS(int opcode) {
+	public static int DECODE_RS(int opcode) {
 		return ((opcode >> 21) & 0x1F);
 	}
 
-	public static int I_RT(int opcode) {
+	public static int DECODE_RT(int opcode) {
 		return ((opcode >> 16) & 0x1F);
 	}
 
-	public static int I_RD(int opcode) {
+	public static int DECODE_RD(int opcode) {
 		return ((opcode >> 11) & 0x1F);
 	}
 
-	public static int I_SA(int opcode) {
+	public static int DECODE_SA(int opcode) {
 		return ((opcode >> 6) & 0x1F);
 	}
 
-	public static int I_IMM16(int opcode) {
+	public static int DECODE_IMM16(int opcode) {
 		return (int) ((short) opcode);
 	}
 
-	public static int I_IMM16U(int opcode) {
+	public static int DECODE_IMM16U(int opcode) {
 		return opcode & 0xFFFF;
 	}
 
-	public static int I_BRANCH(int opcode, int pc) {
-		return pc + 4 + 4 * I_IMM16(opcode);
+	public static int DECODE_BRANCH(int opcode, int pc) {
+		return pc + 4 + 4 * DECODE_IMM16(opcode);
 	}
 
-	public static int I_JUMP(int opcode, int pc) {
+	public static int DECODE_JUMP(int opcode, int pc) {
 		return ((pc & 0xF0000000) | ((opcode & 0x3FFFFFF) << 2));
 	}
 
-	public static int I_SYSCALLCODE(int opcode) {
+	public static int DECODE_SYSCALLCODE(int opcode) {
 		return ((opcode >> 6) & 0xFFFFF);
 	}
 
-	public static int I_TRAPCODE(int opcode) {
+	public static int DECODE_TRAPCODE(int opcode) {
 		return ((opcode >> 6) & 0x3FF);
 	}
 
-	public static int I_WAITCODE(int opcode) {
+	public static int DECODE_WAITCODE(int opcode) {
 		return ((opcode >> 6) & 0x7FFFF);
 	}
 
-	public static int I_COP0SEL(int opcode) {
+	public static int DECODE_COP0SEL(int opcode) {
 		return (opcode & 0x07);
 	}
 
 
 	// Disassemble functions
-	private static void printInsn(StringBuilder sb, String insn) {
-		sb.append(insn);
-		for (int i = insn.length(); i < 16; i++)
-			sb.append(" ");
-	}
-
-	private static void disassembleSyscallAndBreak(StringBuilder sb, int opcode) {
-		int code = I_SYSCALLCODE(opcode);
-		if (code != 0) sb.append(String.format("0x%X", code));
-	}
-
-	private static void disassembleSync(StringBuilder sb, int opcode) {
-		int code = I_SA(opcode);
-		if (code != 0) sb.append(String.format("0x%X", code));
-	}
-
-	private static void disassembleWait(StringBuilder sb, int opcode) {
-		int code = I_WAITCODE(opcode);
-		if (code != 0) sb.append(String.format("0x%X", code));
-	}
-
-	private static void disassembleJump(StringBuilder sb, int pc, int opcode) {
-		sb.append(String.format("0x%08X", I_JUMP(opcode, pc)));
-	}
-
-	private static void disassembleLoadStore(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(I_IMM16(opcode));
-		sb.append("(").append(REGISTER_NAMES[I_RS(opcode)]).append(")");
-	}
-
-	private static void disassembleBranch(StringBuilder sb, int pc, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		sb.append(String.format("0x%08X", I_BRANCH(opcode, pc)));
-	}
-
-	private static void disassembleBranch2(StringBuilder sb, int pc, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(String.format("0x%08X", I_BRANCH(opcode, pc)));
-	}
-
-	private static void disassembleBranch3(StringBuilder sb, int pc, int opcode) {
-		sb.append(String.format("0x%08X", I_BRANCH(opcode, pc)));
-	}
-
-	private static void disassemble3Registers(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]);
-	}
-
-	private static void disassemble2Registers(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]);
-	}
-
-	private static void disassemble2Registers2(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RS(opcode)]);
-	}
-
-	private static void disassemble2Registers3(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]);
-	}
-
-	private static void disassemble2RegistersImmediate(StringBuilder sb, int opcode, boolean signed) {
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		if (signed) {
-			sb.append(I_IMM16(opcode));
-		} else {
-			sb.append(String.format("0x%04X", I_IMM16U(opcode)));
+	private static void disassembleInstruction(StringBuilder sb, String format, int opcode, int pc) {
+		for(int i = 0; i < format.length(); i++) {
+			char c = format.charAt(i);
+			if (c == '%') {
+				if (++i == format.length()) {
+					sb.append('%');
+					break;
+				}
+				c = format.charAt(i);
+				switch(c) {
+				case 's': // Rs
+					sb.append(REGISTER_NAMES[DECODE_RS(opcode)]);
+					break;
+				case 't': // Rt
+					sb.append(REGISTER_NAMES[DECODE_RT(opcode)]);
+					break;
+				case 'd': // Rd
+					sb.append(REGISTER_NAMES[DECODE_RD(opcode)]);
+					break;
+				case 'b': // Branch target
+					sb.append(String.format("0x%08X", DECODE_BRANCH(opcode, pc)));
+					break;
+				case 'j': // Jump target
+					sb.append(String.format("0x%08X", DECODE_JUMP(opcode, pc)));
+					break;
+				case 'i': // Signed immediate
+					sb.append(DECODE_IMM16(opcode));
+					break;
+				case 'I': // Unsigned immediate
+					sb.append(String.format("0x%04X", DECODE_IMM16U(opcode)));
+					break;
+				case 'a': // SA (for shift operations and others)
+					sb.append(DECODE_SA(opcode));
+					break;
+				case 'x': // For cache operations
+					sb.append(DECODE_RT(opcode));
+					break;
+				case 'C': // Cop0 register
+					int sel = DECODE_COP0SEL(opcode);
+					int reg = DECODE_RD(opcode);
+					if (sel == 1 && (reg == COP0_CONFIG || reg == COP0_TAGLO)) {
+						if (reg == COP0_CONFIG)
+							sb.append("Config1");
+						else
+							sb.append("DataLo");
+					} else {
+						sb.append(COP0_REGISTER_NAMES[reg]);
+					}
+					break;
+				case 'T': // Trap code
+					int trapCode = DECODE_TRAPCODE(opcode);
+					if (trapCode != 0) sb.append(String.format("(0x%04X)", trapCode));
+					break;
+				case 'S': // Syscall or Break code
+					int syscallCode = DECODE_SYSCALLCODE(opcode);
+					if (syscallCode != 0) sb.append(String.format("(0x%X)", syscallCode));
+					break;
+				case 'W': // Wait code
+					int waitCode = DECODE_WAITCODE(opcode);
+					if (waitCode != 0) sb.append(String.format("(0x%X)", waitCode));
+					break;
+				case 'A': // Sync code
+					int syncCode = DECODE_SA(opcode);
+					if (syncCode != 0) sb.append(String.format("0x%X", syncCode));
+					break;
+				default:
+					sb.append(c);
+				}
+			} else {
+				sb.append(c);
+			}
 		}
 	}
 
-	private static void disassembleLi(StringBuilder sb, int opcode, boolean signed) {
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		if (signed) {
-			sb.append(I_IMM16(opcode));
-		} else {
-			sb.append(String.format("0x%04X", I_IMM16U(opcode)));
-		}
-	}
-
-	private static void disassembleJumpRegisterAndLink(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RS(opcode)]);
-	}
-
-	private static void disassembleJumpRegister(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]);
-	}
-
-	private static void disassembleShift(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RS(opcode)]);
-	}
-
-	private static void disassembleShiftImmediate(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(I_SA(opcode));
-	}
-
-	private static void disassembleMoveFrom(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RD(opcode)]);
-	}
-
-	private static void disassembleMoveTo(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]);
-	}
-
-	private static void disassembleMoveFromToCop0(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		int sel = I_COP0SEL(opcode);
-		int rd = I_RD(opcode);
-		if (sel == 1 && (rd == COP0_CONFIG || rd == COP0_TAGLO)) {
-			if (rd == COP0_CONFIG)
-				sb.append("Config1");
-			else
-				sb.append("DataLo");
-		} else {
-			sb.append(COP0_REGISTER_NAMES[rd]);
-		}
-	}
-
-	private static void disassembleTrap(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(String.format("0x%4X", I_TRAPCODE(opcode)));
-	}
-
-	private static void disassembleTrapImmediate(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RS(opcode)]).append(", ");
-		sb.append(I_IMM16(opcode));
-	}
-
-	private static void disassembleLui(StringBuilder sb, int opcode) {
-		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
-		sb.append(String.format("0x%04X", I_IMM16U(opcode)));
-	}
-
-	private static void disassembleCache(StringBuilder sb, int opcode) {
-		// TODO
-		sb.append(I_RT(opcode)).append(", ");
-		sb.append(I_IMM16(opcode));
-		sb.append("(").append(REGISTER_NAMES[I_RS(opcode)]).append(")");
-	}
-
-	private static void disassemblePref(StringBuilder sb, int opcode) {
-		// TODO
-		sb.append(I_RT(opcode)).append(", ");
-		sb.append(I_IMM16(opcode));
-		sb.append("(").append(REGISTER_NAMES[I_RS(opcode)]).append(")");
-	}
-
-	private static void disassembleReserved(StringBuilder sb) {
+	private static void disassembleReserved(StringBuilder sb, int opcode, int pc) {
 		sb.append("(reserved)");
 	}
 
-	private static void disassembleCoprocessorUnusable(StringBuilder sb) {
+	private static void disassembleCoprocessorUnusable(StringBuilder sb, int opcode, int pc) {
 		sb.append("(coprocessor unusuable)");
 	}
 
-
-	private static void disassembleSpecial(StringBuilder sb, int pc, int opcode) {
-		switch(I_FUNCT(opcode)) {
-		case 0:
-			if (opcode == 0) printInsn(sb, "nop");
-			else if (opcode == 0x00000040) printInsn(sb, "ssnop");
+	private static void disassembleSpecial(StringBuilder sb, int opcode, int pc) {
+		switch(DECODE_FUNCT(opcode)) {
+		case I_SPEC_SLL:
+			if (opcode == 0) disassembleInstruction(sb, "nop", opcode, pc);
+			else if (opcode == 0x40) disassembleInstruction(sb, "ssnop", opcode, pc);
 			else {
-				printInsn(sb, "sll");
-				disassembleShiftImmediate(sb, opcode);
+				disassembleInstruction(sb, "sll %d, %t, %a", opcode, pc);
 			}
 			break;
 		case 1:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
-		case 2:
-			printInsn(sb, "srl");
-			disassembleShiftImmediate(sb, opcode);
+		case I_SPEC_SRL:
+			disassembleInstruction(sb, "srl %d, %t, %a", opcode, pc);
 			break;
-		case 3:
-			printInsn(sb, "sra");
-			disassembleShiftImmediate(sb, opcode);
+		case I_SPEC_SRA:
+			disassembleInstruction(sb, "sra %d, %t, %a", opcode, pc);
 			break;
-		case 4:
-			printInsn(sb, "sllv");
-			disassembleShift(sb, opcode);
+		case I_SPEC_SLLV:
+			disassembleInstruction(sb, "sllv %d, %t, %s", opcode, pc);
 			break;
-		case 6:
-			printInsn(sb, "srlv");
-			disassembleShift(sb, opcode);
+		case I_SPEC_SRLV:
+			disassembleInstruction(sb, "srlv %d, %t, %s", opcode, pc);
 			break;
-		case 7:
-			printInsn(sb, "srav");
-			disassembleShift(sb, opcode);
+		case I_SPEC_SRAV:
+			disassembleInstruction(sb, "srav %d, %t, %s", opcode, pc);
 			break;
 
-		case 8:
-			printInsn(sb, "jr");
-			disassembleJumpRegister(sb, opcode);
+		case I_SPEC_JR:
+			disassembleInstruction(sb, "jr %s", opcode, pc);
 			break;
-		case 9:
-			printInsn(sb, "jalr");
-			disassembleJumpRegisterAndLink(sb, opcode);
+		case I_SPEC_JALR:
+			disassembleInstruction(sb, "jalr %d, %s", opcode, pc);
 			break;
-		case 10:
-			printInsn(sb, "movz");
-			disassemble3Registers(sb, opcode);
+		case I_SPEC_MOVZ:
+			disassembleInstruction(sb, "movz %d, %s, %t", opcode, pc);
 			break;
-		case 11:
-			printInsn(sb, "movn");
-			disassemble3Registers(sb, opcode);
+		case I_SPEC_MOVN:
+			disassembleInstruction(sb, "movn %d, %s, %t", opcode, pc);
 			break;
-		case 12:
-			printInsn(sb, "syscall");
-			disassembleSyscallAndBreak(sb, opcode);
+		case I_SPEC_SYSCALL:
+			disassembleInstruction(sb, "syscall %S", opcode, pc);
 			break;
-		case 13:
-			printInsn(sb, "break");
-			disassembleSyscallAndBreak(sb, opcode);
+		case I_SPEC_BREAK:
+			disassembleInstruction(sb, "break %S", opcode, pc);
 			break;
-		case 15:
-			printInsn(sb, "sync");
-			disassembleSync(sb, opcode);
+		case I_SPEC_SYNC:
+			disassembleInstruction(sb, "sync %A", opcode, pc);
 			break;
 
-		case 16:
-			printInsn(sb, "mfhi");
-			disassembleMoveFrom(sb, opcode);
+		case I_SPEC_MFHI:
+			disassembleInstruction(sb, "mfhi %d", opcode, pc);
+			break;
+		case I_SPEC_MTHI:
+			disassembleInstruction(sb, "mthi %s", opcode, pc);
+			break;
+		case I_SPEC_MFLO:
+			disassembleInstruction(sb, "mflo %d", opcode, pc);
+			break;
+		case I_SPEC_MTLO:
+			disassembleInstruction(sb, "mtlo %s", opcode, pc);
+			break;
+
+		case I_SPEC_MULT:
+			disassembleInstruction(sb, "mult %s, %t", opcode, pc);
+			break;
+		case I_SPEC_MULTU:
+			disassembleInstruction(sb, "multu %s, %t", opcode, pc);
+			break;
+		case I_SPEC_DIV:
+			disassembleInstruction(sb, "div %s, %t", opcode, pc);
+			break;
+		case I_SPEC_DIVU:
+			disassembleInstruction(sb, "divu %s, %t", opcode, pc);
+			break;
+
+		case I_SPEC_ADD:
+			disassembleInstruction(sb, "add %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC_ADDU:
+			if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "move %d, %s", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "addu %d, %s, %t", opcode, pc);
+			}
+			break;
+		case I_SPEC_SUB:
+			if (DECODE_RS(opcode) == 0) {
+				disassembleInstruction(sb, "neg %d, %t", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "sub %d, %s, %t", opcode, pc);
+			}
+			break;
+		case I_SPEC_SUBU:
+			if (DECODE_RS(opcode) == 0) {
+				disassembleInstruction(sb, "negu %d, %t", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "subu %d, %s, %t", opcode, pc);
+			}
+			break;
+		case I_SPEC_AND:
+			disassembleInstruction(sb, "and %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC_OR:
+			if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "move %d, %s", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "or %d, %s, %t", opcode, pc);
+			}
+			break;
+		case I_SPEC_XOR:
+			disassembleInstruction(sb, "xor %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC_NOR:
+			if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "not %d, %s", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "nor %d, %s, %t", opcode, pc);
+			}
+			break;
+
+		case I_SPEC_SLT:
+			disassembleInstruction(sb, "slt %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC_SLTU:
+			disassembleInstruction(sb, "sltu %d, %s, %t", opcode, pc);
+			break;
+
+		case I_SPEC_TGE:
+			disassembleInstruction(sb, "tge %s, %t %T", opcode, pc);
+			break;
+		case I_SPEC_TGEU:
+			disassembleInstruction(sb, "tgeu %s, %t %T", opcode, pc);
+			break;
+		case I_SPEC_TLT:
+			disassembleInstruction(sb, "tlt %s, %t %T", opcode, pc);
+			break;
+		case I_SPEC_TLTU:
+			disassembleInstruction(sb, "tltu %s, %t %T", opcode, pc);
+			break;
+		case I_SPEC_TEQ:
+			disassembleInstruction(sb, "teq %s, %t %T", opcode, pc);
+			break;
+		case I_SPEC_TNE:
+			disassembleInstruction(sb, "tne %s, %t %T", opcode, pc);
+			break;
+
+		default:
+			disassembleReserved(sb, opcode, pc);
+			break;
+		}
+	}
+
+	private static void disassembleSpecial2(StringBuilder sb, int opcode, int pc) {
+		switch(DECODE_FUNCT(opcode)) {
+		case I_SPEC2_MADD:
+			disassembleInstruction(sb, "madd %s, %t", opcode, pc);
+			break;
+		case I_SPEC2_MADDU:
+			disassembleInstruction(sb, "maddu %s, %t", opcode, pc);
+			break;
+		case I_SPEC2_MUL:
+			disassembleInstruction(sb, "mul %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC2_MSUB:
+			disassembleInstruction(sb, "msub %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC2_MSUBU:
+			disassembleInstruction(sb, "msubu %d, %s, %t", opcode, pc);
+			break;
+		case I_SPEC2_CLZ:
+			disassembleInstruction(sb, "clz %d, %s", opcode, pc);
+			break;
+		case I_SPEC2_CLO:
+			disassembleInstruction(sb, "clo %d, %s", opcode, pc);
+			break;
+		case I_SPEC2_SDBBP:
+			disassembleInstruction(sb, "sdbbp %S", opcode, pc);
+			break;
+		default:
+			disassembleReserved(sb, opcode, pc);
+			break;
+		}
+	}
+
+	private static void disassembleRegImm(StringBuilder sb, int opcode, int pc) {
+		switch(DECODE_RT(opcode)) {
+		case I_REGIMM_BLTZ:
+			disassembleInstruction(sb, "bltz %s, %b", opcode, pc);
+			break;
+		case I_REGIMM_BGEZ:
+			if (DECODE_RS(opcode) == 0) {
+				disassembleInstruction(sb, "b %b", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "bgez %s, %b", opcode, pc);
+			}
+			break;
+		case I_REGIMM_BLTZL:
+			disassembleInstruction(sb, "bltzl %s, %b", opcode, pc);
+			break;
+		case I_REGIMM_BGEZL:
+			disassembleInstruction(sb, "bgezl %s, %b", opcode, pc);
+			break;
+		case I_REGIMM_TGEI:
+			disassembleInstruction(sb, "tgei %s, %i", opcode, pc);
+			break;
+		case I_REGIMM_TGEIU:
+			disassembleInstruction(sb, "tgeiu %s, %i", opcode, pc);
+			break;
+		case I_REGIMM_TLTI:
+			disassembleInstruction(sb, "tlti %s, %i", opcode, pc);
+			break;
+		case I_REGIMM_TLTIU:
+			disassembleInstruction(sb, "tltiu %s, %i", opcode, pc);
+			break;
+		case I_REGIMM_TEQI:
+			disassembleInstruction(sb, "teqi %s, %i", opcode, pc);
+			break;
+		case I_REGIMM_TNEI:
+			disassembleInstruction(sb, "tnei %s, %i", opcode, pc);
+			break;
+		case I_REGIMM_BLTZAL:
+			disassembleInstruction(sb, "bltzal %s, %b", opcode, pc);
+			break;
+		case I_REGIMM_BGEZAL:
+			if (DECODE_RS(opcode) == 0) {
+				disassembleInstruction(sb, "bal %b", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "bgezal %s, %b", opcode, pc);
+			}
+			break;
+		case I_REGIMM_BLTZALL:
+			disassembleInstruction(sb, "bltzall %s, %b", opcode, pc);
+			break;
+		case I_REGIMM_BGEZALL:
+			disassembleInstruction(sb, "bgezall %s, %b", opcode, pc);
+			break;
+		default:
+			disassembleReserved(sb, opcode, pc);
+			break;
+		}
+	}
+
+	private static void disassembleCop0Co(StringBuilder sb, int opcode, int pc) {
+		switch(DECODE_FUNCT(opcode)) {
+		case I_COP0CO_TLBR:
+			disassembleInstruction(sb, "tlbr", opcode, pc);
+			break;
+		case I_COP0CO_TLBWI:
+			disassembleInstruction(sb, "tlbwi", opcode, pc);
+			break;
+		case I_COP0CO_TLBWR:
+			disassembleInstruction(sb, "tlbwr", opcode, pc);
+			break;
+		case I_COP0CO_TLBP:
+			disassembleInstruction(sb, "tlbp", opcode, pc);
+			break;
+		case I_COP0CO_ERET:
+			disassembleInstruction(sb, "eret", opcode, pc);
+			break;
+		case I_COP0CO_DERET:
+			disassembleInstruction(sb, "deret", opcode, pc);
+			break;
+		case I_COP0CO_WAIT:
+			disassembleInstruction(sb, "wait %W", opcode, pc);
+			break;
+		default:
+			disassembleReserved(sb, opcode, pc);
+			break;
+		}
+	}
+
+	private static void disassembleCop0(StringBuilder sb, int opcode, int pc) {
+		int rs = DECODE_RS(opcode);
+		switch(rs) {
+		case I_COP0_MFC0:
+			disassembleInstruction(sb, "mfc0 %t, %C", opcode, pc);
+			break;
+		case I_COP0_MTC0:
+			disassembleInstruction(sb, "mtc0 %t, %C", opcode, pc);
+			break;
+		default:
+			if (rs >= I_COP0_CO_MIN && rs <= I_COP0_CO_MAX)
+				disassembleCop0Co(sb, opcode, pc);
+			else
+				disassembleReserved(sb, opcode, pc);
+			break;
+		}
+	}
+
+	private static void disassembleMips(StringBuilder sb, int opcode, int pc) {
+		switch (DECODE_OP(opcode)) {
+		case I_SPECIAL:
+			disassembleSpecial(sb, opcode, pc);
+			break;
+		case I_REGIMM:
+			disassembleRegImm(sb, opcode, pc);
+			break;
+		case I_J:
+			disassembleInstruction(sb, "j %j", opcode, pc);
+			break;
+		case I_JAL:
+			disassembleInstruction(sb, "jal %j", opcode, pc);
+			break;
+		case I_BEQ:
+			if (DECODE_RS(opcode) == 0 && DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "b %b", opcode, pc);
+			} else if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "beqz %s, %b", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "beq %s, %t, %b", opcode, pc);
+			}
+			break;
+		case I_BNE:
+			if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "bnez %s, %b", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "bne %s, %t, %b", opcode, pc);
+			}
+			break;
+		case I_BLEZ:
+			disassembleInstruction(sb, "blez %s, %b", opcode, pc);
+			break;
+		case I_BGTZ:
+			disassembleInstruction(sb, "bgtz %s, %b", opcode, pc);
+			break;
+
+		case I_ADDI:
+			disassembleInstruction(sb, "addi %t, %s, %i", opcode, pc);
+			break;
+		case I_ADDIU:
+			if (DECODE_RS(opcode) == 0) {
+				disassembleInstruction(sb, "li %t, %i", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "addiu %t, %s, %i", opcode, pc);
+			}
+			break;
+		case I_SLTI:
+			disassembleInstruction(sb, "slti %t, %s, %i", opcode, pc);
+			break;
+		case I_SLTIU:
+			disassembleInstruction(sb, "sltiu %t, %s, %i", opcode, pc);
+			break;
+		case I_ANDI:
+			disassembleInstruction(sb, "andi %t, %s, %I", opcode, pc);
+			break;
+		case I_ORI:
+			if (DECODE_RS(opcode) == 0) {
+				disassembleInstruction(sb, "li %t, %I", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "ori %t, %s, %I", opcode, pc);
+			}
+			break;
+		case I_XORI:
+			disassembleInstruction(sb, "xori %t, %s, %I", opcode, pc);
+			break;
+		case I_LUI:
+			disassembleInstruction(sb, "lui %t, %I", opcode, pc);
+			break;
+
+		case I_COP0:
+			disassembleCop0(sb, opcode, pc);
 			break;
 		case 17:
-			printInsn(sb, "mthi");
-			disassembleMoveTo(sb, opcode);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 18:
-			printInsn(sb, "mflo");
-			disassembleMoveFrom(sb, opcode);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 19:
-			printInsn(sb, "mtlo");
-			disassembleMoveTo(sb, opcode);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
+			break;
+		case I_BEQL:
+			if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "beqzl %s, %b", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "beql %s, %t, %b", opcode, pc);
+			}
+			break;
+		case I_BNEL:
+			if (DECODE_RT(opcode) == 0) {
+				disassembleInstruction(sb, "bnezl %s, %b", opcode, pc);
+			} else {
+				disassembleInstruction(sb, "bnel %s, %t, %b", opcode, pc);
+			}
+			break;
+		case I_BLEZL:
+			disassembleInstruction(sb, "blezl %s, %b", opcode, pc);
+			break;
+		case I_BGTZL:
+			disassembleInstruction(sb, "bgtzl %s, %b", opcode, pc);
 			break;
 
 		case 24:
-			printInsn(sb, "mult");
-			disassemble2Registers(sb, opcode);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 25:
-			printInsn(sb, "multu");
-			disassemble2Registers(sb, opcode);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 26:
-			printInsn(sb, "div");
-			disassemble2Registers(sb, opcode);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 27:
-			printInsn(sb, "divu");
-			disassemble2Registers(sb, opcode);
-			break;
-
-		case 32:
-			printInsn(sb, "add");
-			disassemble3Registers(sb, opcode);
-			break;
-		case 33:
-			if ((opcode & 0xFC1F07FF) == 0x00000021) {
-				printInsn(sb, "move");
-				disassemble2Registers2(sb, opcode);
-			} else {
-				printInsn(sb, "addu");
-				disassemble3Registers(sb, opcode);
-			}
-			break;
-		case 34:
-			if ((opcode & 0xFFE007FF) == 0x00000022) {
-				printInsn(sb, "neg");
-				disassemble2Registers3(sb, opcode);
-			} else {
-				printInsn(sb, "sub");
-				disassemble3Registers(sb, opcode);
-			}
-			break;
-		case 35:
-			if ((opcode & 0xFFE007FF) == 0x00000023) {
-				printInsn(sb, "negu");
-				disassemble2Registers3(sb, opcode);
-			} else {
-				printInsn(sb, "subu");
-				disassemble3Registers(sb, opcode);
-			}
-			break;
-		case 36:
-			printInsn(sb, "and");
-			disassemble3Registers(sb, opcode);
-			break;
-		case 37:
-			if ((opcode & 0xFC1F07FF) == 0x00000025) {
-				printInsn(sb, "move");
-				disassemble2Registers2(sb, opcode);
-			} else {
-				printInsn(sb, "or");
-				disassemble3Registers(sb, opcode);
-			}
-			break;
-		case 38:
-			printInsn(sb, "xor");
-			disassemble3Registers(sb, opcode);
-			break;
-		case 39:
-			if ((opcode & 0xFC1F07FF) == 0x00000027) {
-				printInsn(sb, "not");
-				disassemble2Registers2(sb, opcode);
-			} else {
-				printInsn(sb, "nor");
-				disassemble3Registers(sb, opcode);
-			}
-			break;
-
-		case 42:
-			printInsn(sb, "slt");
-			disassemble3Registers(sb, opcode);
-			break;
-		case 43:
-			printInsn(sb, "sltu");
-			disassemble3Registers(sb, opcode);
-			break;
-
-		case 48:
-			printInsn(sb, "tge");
-			disassembleTrap(sb, opcode);
-			break;
-		case 49:
-			printInsn(sb, "tgeu");
-			disassembleTrap(sb, opcode);
-			break;
-		case 50:
-			printInsn(sb, "tlt");
-			disassembleTrap(sb, opcode);
-			break;
-		case 51:
-			printInsn(sb, "tltu");
-			disassembleTrap(sb, opcode);
-			break;
-		case 52:
-			printInsn(sb, "teq");
-			disassembleTrap(sb, opcode);
-			break;
-		case 54:
-			printInsn(sb, "tne");
-			disassembleTrap(sb, opcode);
-			break;
-
-		default:
-			disassembleReserved(sb);
-			break;
-		}
-	}
-
-	private static void disassembleSpecial2(StringBuilder sb, int pc, int opcode) {
-		switch(I_FUNCT(opcode)) {
-		case 0:
-			printInsn(sb, "madd");
-			disassemble2Registers(sb, opcode);
-			break;
-		case 1:
-			printInsn(sb, "maddu");
-			disassemble2Registers(sb, opcode);
-			break;
-		case 2:
-			printInsn(sb, "mul");
-			disassemble3Registers(sb, opcode);
-			break;
-		case 4:
-			printInsn(sb, "msub");
-			disassemble2Registers(sb, opcode);
-			break;
-		case 5:
-			printInsn(sb, "msubu");
-			disassemble2Registers(sb, opcode);
-			break;
-		case 32:
-			printInsn(sb, "clz");
-			disassemble2Registers2(sb, opcode);
-			break;
-		case 33:
-			printInsn(sb, "clo");
-			disassemble2Registers2(sb, opcode);
-			break;
-		case 63:
-			printInsn(sb, "sdbbp");
-			disassembleSyscallAndBreak(sb, opcode);
-			break;
-		default:
-			disassembleReserved(sb);
-			break;
-		}
-	}
-
-	private static void disassembleRegImm(StringBuilder sb, int pc, int opcode) {
-		switch(I_RT(opcode)) {
-		case 0:
-			printInsn(sb, "bltz");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 1:
-			if ((opcode & 0xFFFF0000) == 0x04010000) {
-				printInsn(sb, "b");
-				disassembleBranch3(sb, pc, opcode);
-			} else {
-				printInsn(sb, "bgez");
-				disassembleBranch(sb, pc, opcode);
-			}
-			break;
-		case 2:
-			printInsn(sb, "bltzl");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 3:
-			printInsn(sb, "bgezl");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 8:
-			printInsn(sb, "tgei");
-			disassembleTrapImmediate(sb, opcode);
-			break;
-		case 9:
-			printInsn(sb, "tgeiu");
-			disassembleTrapImmediate(sb, opcode);
-			break;
-		case 10:
-			printInsn(sb, "tlti");
-			disassembleTrapImmediate(sb, opcode);
-			break;
-		case 11:
-			printInsn(sb, "tltiu");
-			disassembleTrapImmediate(sb, opcode);
-			break;
-		case 12:
-			printInsn(sb, "teqi");
-			disassembleTrapImmediate(sb, opcode);
-			break;
-		case 14:
-			printInsn(sb, "tnei");
-			disassembleTrapImmediate(sb, opcode);
-			break;
-		case 16:
-			printInsn(sb, "bltzal");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 17:
-			if ((opcode & 0xFFFF0000) == 0x04110000) {
-				printInsn(sb, "bal");
-				disassembleBranch3(sb, pc, opcode);
-			} else {
-				printInsn(sb, "bgezal");
-				disassembleBranch(sb, pc, opcode);
-			}
-			break;
-		case 18:
-			printInsn(sb, "bltzall");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 19:
-			printInsn(sb, "bgezall");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		default:
-			disassembleReserved(sb);
-			break;
-		}
-	}
-
-	private static void disassembleCop0Co(StringBuilder sb, int pc, int opcode) {
-		switch(I_FUNCT(opcode)) {
-		case 1:
-			printInsn(sb, "tlbr");
-			break;
-		case 2:
-			printInsn(sb, "tlbwi");
-			break;
-		case 6:
-			printInsn(sb, "tlbwr");
-			break;
-		case 8:
-			printInsn(sb, "tlbp");
-			break;
-		case 24:
-			printInsn(sb, "eret");
-			break;
-		case 31:
-			printInsn(sb, "deret");
-			break;
-		case 32:
-			printInsn(sb, "wait");
-			disassembleWait(sb, opcode);
-			break;
-		default:
-			disassembleReserved(sb);
-			break;
-		}
-	}
-
-	private static void disassembleCop0(StringBuilder sb, int pc, int opcode) {
-		switch(I_RS(opcode)) {
-		case 0:
-			printInsn(sb, "mfc0");
-			disassembleMoveFromToCop0(sb, opcode);
-			break;
-		case 4:
-			printInsn(sb, "mtc0");
-			disassembleMoveFromToCop0(sb, opcode);
-			break;
-		case 16:
-		case 17:
-		case 18:
-		case 19:
-		case 20:
-		case 21:
-		case 22:
-		case 23:
-		case 24:
-		case 25:
-		case 26:
-		case 27:
-		case 28:
-		case 29:
-		case 30:
-		case 31:
-			disassembleCop0Co(sb, pc, opcode);
-			break;
-		default:
-			disassembleReserved(sb);
-			break;
-		}
-	}
-
-
-	public static String disassemble(int pc, int opcode) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("0x%08X: 0x%08X ", pc, opcode));
-		switch (I_OP(opcode)) {
-		case 0:
-			disassembleSpecial(sb, pc, opcode);
-			break;
-		case 1:
-			disassembleRegImm(sb, pc, opcode);
-			break;
-		case 2:
-			printInsn(sb, "j");
-			disassembleJump(sb, pc, opcode);
-			break;
-		case 3:
-			printInsn(sb, "jal");
-			disassembleJump(sb, pc, opcode);
-			break;
-		case 4:
-			if ((opcode & 0xFFFF0000) == 0x10000000) {
-				printInsn(sb, "b");
-				disassembleBranch3(sb, pc, opcode);
-			} else if ((opcode & 0xFC1F0000) == 0x10000000) {
-				printInsn(sb, "beqz");
-				disassembleBranch(sb, pc, opcode);
-			} else {
-				printInsn(sb, "beq");
-				disassembleBranch2(sb, pc, opcode);
-			}
-			break;
-		case 5:
-			if ((opcode & 0xFC1F0000) == 0x14000000) {
-				printInsn(sb, "bnez");
-				disassembleBranch(sb, pc, opcode);
-			} else {
-				printInsn(sb, "bne");
-				disassembleBranch2(sb, pc, opcode);
-			}
-			break;
-		case 6:
-			printInsn(sb, "blez");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 7:
-			printInsn(sb, "bgtz");
-			disassembleBranch(sb, pc, opcode);
-			break;
-
-		case 8:
-			printInsn(sb, "addi");
-			disassemble2RegistersImmediate(sb, opcode, true);
-			break;
-		case 9:
-			if ((opcode & 0xFFE00000) == 0x24000000) {
-				printInsn(sb, "li");
-				disassembleLi(sb, opcode, true);
-			} else {
-				printInsn(sb, "addiu");
-				disassemble2RegistersImmediate(sb, opcode, true);
-			}
-			break;
-		case 10:
-			printInsn(sb, "slti");
-			disassemble2RegistersImmediate(sb, opcode, true);
-			break;
-		case 11:
-			printInsn(sb, "sltiu");
-			disassemble2RegistersImmediate(sb, opcode, true);
-			break;
-		case 12:
-			printInsn(sb, "andi");
-			disassemble2RegistersImmediate(sb, opcode, false);
-			break;
-		case 13:
-			if ((opcode & 0xFFE00000) == 0x34000000) {
-				printInsn(sb, "li");
-				disassembleLi(sb, opcode, false);
-			} else {
-				printInsn(sb, "ori");
-				disassemble2RegistersImmediate(sb, opcode, false);
-			}
-			break;
-		case 14:
-			printInsn(sb, "xori");
-			disassemble2RegistersImmediate(sb, opcode, false);
-			break;
-		case 15:
-			printInsn(sb, "lui");
-			disassembleLui(sb, opcode);
-			break;
-
-		case 16:
-			disassembleCop0(sb, pc, opcode);
-			break;
-		case 17:
-			disassembleCoprocessorUnusable(sb);
-			break;
-		case 18:
-			disassembleCoprocessorUnusable(sb);
-			break;
-		case 19:
-			disassembleCoprocessorUnusable(sb);
-			break;
-		case 20:
-			if ((opcode & 0xFC1F0000) == 0x50000000) {
-				printInsn(sb, "beqzl");
-				disassembleBranch(sb, pc, opcode);
-			} else {
-				printInsn(sb, "beql");
-				disassembleBranch2(sb, pc, opcode);
-			}
-			break;
-		case 21:
-			if ((opcode & 0xFC1F0000) == 0x54000000) {
-				printInsn(sb, "bnezl");
-				disassembleBranch(sb, pc, opcode);
-			} else {
-				printInsn(sb, "bnel");
-				disassembleBranch2(sb, pc, opcode);
-			}
-			break;
-		case 22:
-			printInsn(sb, "blezl");
-			disassembleBranch(sb, pc, opcode);
-			break;
-		case 23:
-			printInsn(sb, "bgtzl");
-			disassembleBranch(sb, pc, opcode);
-			break;
-
-		case 24:
-			disassembleReserved(sb);
-			break;
-		case 25:
-			disassembleReserved(sb);
-			break;
-		case 26:
-			disassembleReserved(sb);
-			break;
-		case 27:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 28:
-			disassembleSpecial2(sb, pc, opcode);
+			disassembleSpecial2(sb, opcode, pc);
 			break;
 		case 29:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 30:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 31:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 
-		case 32:
-			printInsn(sb, "lb");
-			disassembleLoadStore(sb, opcode);
+		case I_LB:
+			disassembleInstruction(sb, "lb %t, %i(%s)", opcode, pc);
 			break;
-		case 33:
-			printInsn(sb, "lh");
-			disassembleLoadStore(sb, opcode);
+		case I_LH:
+			disassembleInstruction(sb, "lh %t, %i(%s)", opcode, pc);
 			break;
-		case 34:
-			printInsn(sb, "lwl");
-			disassembleLoadStore(sb, opcode);
+		case I_LWL:
+			disassembleInstruction(sb, "lwl %t, %i(%s)", opcode, pc);
 			break;
-		case 35:
-			printInsn(sb, "lw");
-			disassembleLoadStore(sb, opcode);
+		case I_LW:
+			disassembleInstruction(sb, "lw %t, %i(%s)", opcode, pc);
 			break;
-		case 36:
-			printInsn(sb, "lbu");
-			disassembleLoadStore(sb, opcode);
+		case I_LBU:
+			disassembleInstruction(sb, "lbu %t, %i(%s)", opcode, pc);
 			break;
-		case 37:
-			printInsn(sb, "lhu");
-			disassembleLoadStore(sb, opcode);
+		case I_LHU:
+			disassembleInstruction(sb, "lhu %t, %i(%s)", opcode, pc);
 			break;
-		case 38:
-			printInsn(sb, "lwr");
-			disassembleLoadStore(sb, opcode);
+		case I_LWR:
+			disassembleInstruction(sb, "lwr %t, %i(%s)", opcode, pc);
 			break;
 		case 39:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 
-		case 40:
-			printInsn(sb, "sb");
-			disassembleLoadStore(sb, opcode);
+		case I_SB:
+			disassembleInstruction(sb, "sb %t, %i(%s)", opcode, pc);
 			break;
-		case 41:
-			printInsn(sb, "sh");
-			disassembleLoadStore(sb, opcode);
+		case I_SH:
+			disassembleInstruction(sb, "sh %t, %i(%s)", opcode, pc);
 			break;
-		case 42:
-			printInsn(sb, "swl");
-			disassembleLoadStore(sb, opcode);
+		case I_SWL:
+			disassembleInstruction(sb, "swl %t, %i(%s)", opcode, pc);
 			break;
-		case 43:
-			printInsn(sb, "sw");
-			disassembleLoadStore(sb, opcode);
+		case I_SW:
+			disassembleInstruction(sb, "sw %t, %i(%s)", opcode, pc);
 			break;
 		case 44:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 45:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
-		case 46:
-			printInsn(sb, "swr");
-			disassembleLoadStore(sb, opcode);
+		case I_SWR:
+			disassembleInstruction(sb, "swr %t, %i(%s)", opcode, pc);
 			break;
-		case 47:
-			printInsn(sb, "cache");
-			disassembleCache(sb, opcode);
+		case I_CACHE:
+			disassembleInstruction(sb, "cache %x, %i(%s)", opcode, pc);
 			break;
 
-		case 48:
-			printInsn(sb, "ll");
-			disassembleLoadStore(sb, opcode);
+		case I_LL:
+			disassembleInstruction(sb, "ll %t, %i(%s)", opcode, pc);
 			break;
 		case 49:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 50:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
-		case 51:
-			printInsn(sb, "pref");
-			disassemblePref(sb, opcode);
+		case I_PREF:
+			disassembleInstruction(sb, "pref %x, %i(%s)", opcode, pc);
 			break;
 		case 52:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 53:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 54:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 55:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 
-		case 56:
-			printInsn(sb, "sc");
-			disassembleLoadStore(sb, opcode);
+		case I_SC:
+			disassembleInstruction(sb, "sc %t, %i(%s)", opcode, pc);
 			break;
 		case 57:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 58:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 59:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 60:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		case 61:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 62:
-			disassembleCoprocessorUnusable(sb);
+			disassembleCoprocessorUnusable(sb, opcode, pc);
 			break;
 		case 63:
-			disassembleReserved(sb);
+			disassembleReserved(sb, opcode, pc);
 			break;
 		}
+	}
+
+
+	public static String disassemble(int opcode, int pc) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(String.format("0x%08X: 0x%08X ", pc, opcode));
+		disassembleMips(sb, opcode, pc);
 		return sb.toString();
 	}
+
+	// Auxiliary functions to encode the opcode
+	public static int ENCODE_OP(int op) {
+		return (op << 26);
+	}
+
+	public static int ENCODE_FUNCT(int funct) {
+		return funct;
+	}
+
+	public static int ENCODE_RS(int rs) {
+		return (rs << 21);
+	}
+
+	public static int ENCODE_RT(int rt) {
+		return (rt << 16);
+	}
+
+	public static int ENCODE_RD(int rd) {
+		return (rd << 11);
+	}
+
+	public static int ENCODE_SA(int sa) {
+		return (sa << 6);
+	}
+
+	public static int ENCODE_IMM16(int imm) {
+		return (imm & 0xFFFF);
+	}
+
+	public static int ENCODE_IMM16U(int immu) {
+		return (immu & 0xFFFF);
+	}
+
+	public static int ENCODE_BRANCH(int target, int pc) {
+		int diff = (target - pc - 4) >> 2;
+		return ENCODE_IMM16(diff);
+	}
+
+	public static int ENCODE_JUMP(int target, int pc) {
+		return ((target >> 2) & 0x3FFFFFF);
+	}
+
+	public static int ENCODE_SYSCALLCODE(int code) {
+		return (code << 6);
+	}
+
+	public static int ENCODE_TRAPCODE(int code) {
+		return (code << 6);
+	}
+
+	public static int ENCODE_WAITCODE(int code) {
+		return (code << 6);
+	}
+
+	public static int ENCODE_COP0SEL(int sel) {
+		return (sel);
+	}
+
+	// Function to generate opcodes for Mips
+	public static int I_ADD(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(0) | ENCODE_FUNCT(32);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	// Function to generate opcodes for Mips
+	public static int I_ADDI(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(8);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
 }
