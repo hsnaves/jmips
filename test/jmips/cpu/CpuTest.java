@@ -3,7 +3,7 @@ package jmips.cpu;
 import static org.junit.Assert.*;
 
 import jmips.MipsSystem;
-import jmips.serial.ConsoleTTY;
+import jmips.serial.DummyTTY;
 
 import org.junit.Test;
 
@@ -11,7 +11,7 @@ public class CpuTest {
 	private static final int BASE_ADDRESS = 0x80100000;
 
 	private Cpu createCpu() {
-		MipsSystem system = new MipsSystem(new ConsoleTTY());
+		MipsSystem system = new MipsSystem(new DummyTTY());
 		return system.getCpu();
 	}
 
