@@ -44,38 +44,38 @@ public class Mips {
 	};
 
 	// Coprocessor0 register constants
-	public static final int COP0_REG_INDEX = 0;            // Index into TLB array
-	public static final int COP0_REG_RANDOM = 1;           // Random generated index into the TLB array
-	public static final int COP0_REG_ENTRYLO0 = 2;         // Low portion of the TLB entry for even virtual pages
-	public static final int COP0_REG_ENTRYLO1 = 3;         // Low portion of the TLB entry for odd virtual pages
-	public static final int COP0_REG_CONTEXT = 4;          // Pointer to page table entry in memory
-	public static final int COP0_REG_PAGEMASK = 5;         // Controls the page sizes in TLB entries
-	public static final int COP0_REG_WIRED = 6;            // Controls the number of fixed TLB entries
-	public static final int COP0_REG_RESERVED1 = 7;        // Reserved
-	public static final int COP0_REG_BADVADDR = 8;         // ASddress for the most recent address-related exception
-	public static final int COP0_REG_COUNT = 9;            // Processor cycle count
-	public static final int COP0_REG_ENTRYHI = 10;         // High-order portion of the TLB entry
-	public static final int COP0_REG_COMPARE = 11;         // Timer interrupt control
-	public static final int COP0_REG_STATUS = 12;          // Processor status and control
-	public static final int COP0_REG_CAUSE = 13;           // Cause of last exception
-	public static final int COP0_REG_EPC = 14;             // Program counter at last exception
-	public static final int COP0_REG_PRID = 15;            // Processor identification and revision
-	public static final int COP0_REG_CONFIG = 16;          // Configuration registers
-	public static final int COP0_REG_LLADDR = 17;          // Load linked address
-	public static final int COP0_REG_WATCHLO = 18;         // Watchpoint address(low order)
-	public static final int COP0_REG_WATCHHI = 19;         // Watchpoint address(high order) and mask
-	public static final int COP0_REG_RESERVED2 = 20;       // Reserved
-	public static final int COP0_REG_RESERVED3 = 21;       // Reserved
-	public static final int COP0_REG_RESERVED4 = 22;       // Reserved
-	public static final int COP0_REG_DEBUG = 23;           // Debug control and exception status
-	public static final int COP0_REG_DEPC = 24;            // Program counter at last debug exception
-	public static final int COP0_REG_RESERVED5 = 25;       // Reserved
-	public static final int COP0_REG_ERRCTRL = 26;         // Control access to data for CACHE instruction
-	public static final int COP0_REG_RESERVED6 = 27;       // Reserved
-	public static final int COP0_REG_TAGLO = 28;           // Low-order portion of cache tag interface
-	public static final int COP0_REG_RESERVED7 = 29;       // Reserved
-	public static final int COP0_REG_ERROREPC = 30;        // Program counter at last error
-	public static final int COP0_REG_DESAVE = 31;          // Debug handler scratchpad register
+	public static final int COP0_INDEX = 0;         // Index into TLB array
+	public static final int COP0_RANDOM = 1;        // Random generated index into the TLB array
+	public static final int COP0_ENTRYLO0 = 2;      // Low portion of the TLB entry for even virtual pages
+	public static final int COP0_ENTRYLO1 = 3;      // Low portion of the TLB entry for odd virtual pages
+	public static final int COP0_CONTEXT = 4;       // Pointer to page table entry in memory
+	public static final int COP0_PAGEMASK = 5;      // Controls the page sizes in TLB entries
+	public static final int COP0_WIRED = 6;         // Controls the number of fixed TLB entries
+	public static final int COP0_RESERVED1 = 7;     // Reserved
+	public static final int COP0_BADVADDR = 8;      // ASddress for the most recent address-related exception
+	public static final int COP0_COUNT = 9;         // Processor cycle count
+	public static final int COP0_ENTRYHI = 10;      // High-order portion of the TLB entry
+	public static final int COP0_COMPARE = 11;      // Timer interrupt control
+	public static final int COP0_STATUS = 12;       // Processor status and control
+	public static final int COP0_CAUSE = 13;        // Cause of last exception
+	public static final int COP0_EPC = 14;          // Program counter at last exception
+	public static final int COP0_PRID = 15;         // Processor identification and revision
+	public static final int COP0_CONFIG = 16;       // Configuration registers
+	public static final int COP0_LLADDR = 17;       // Load linked address
+	public static final int COP0_WATCHLO = 18;      // Watchpoint address(low order)
+	public static final int COP0_WATCHHI = 19;      // Watchpoint address(high order) and mask
+	public static final int COP0_RESERVED2 = 20;    // Reserved
+	public static final int COP0_RESERVED3 = 21;    // Reserved
+	public static final int COP0_RESERVED4 = 22;    // Reserved
+	public static final int COP0_DEBUG = 23;        // Debug control and exception status
+	public static final int COP0_DEPC = 24;         // Program counter at last debug exception
+	public static final int COP0_RESERVED5 = 25;    // Reserved
+	public static final int COP0_ERRCTRL = 26;      // Control access to data for CACHE instruction
+	public static final int COP0_RESERVED6 = 27;    // Reserved
+	public static final int COP0_TAGLO = 28;        // Low-order portion of cache tag interface
+	public static final int COP0_RESERVED7 = 29;    // Reserved
+	public static final int COP0_ERROREPC = 30;     // Program counter at last error
+	public static final int COP0_DESAVE = 31;       // Debug handler scratchpad register
 
 	// The name of the Coprocessor0 registers
 	public static final String[] COP0_REGISTER_NAMES = {
@@ -83,6 +83,36 @@ public class Mips {
 		"BadVAddr", "Count", "EntryHi", "Compare", "Status", "Cause", "EPC", "PRId",
 		"Config", "LLAddr", "WatchLo", "WatchHi", "Resv2", "Resv3", "Resv4", "Debug",
 		"DEPC", "Resv5", "ErrCtl", "Resv6", "TagLo", "Resv7", "ErrorEPC", "DeSave"
+	};
+
+	// Exception codes
+	public static final int EXCEPTION_CODE_INT = 0;        // Interrupt
+	public static final int EXCEPTION_CODE_MOD = 1;        // TLB modification exception
+	public static final int EXCEPTION_CODE_TLBL = 2;       // TLB exception (load or instruction fetch)
+	public static final int EXCEPTION_CODE_TLBS = 3;       // TLB exception (store)
+	public static final int EXCEPTION_CODE_ADEL = 4;       // Address error exception (load or instruction fetch)
+	public static final int EXCEPTION_CODE_ADES = 5;       // Address error exception (store)
+	public static final int EXCEPTION_CODE_IBE = 6;        // Bus Error exception (instruction fetch)
+	public static final int EXCEPTION_CODE_DBE = 7;        // Bus Error exception (data reference: load or store)
+	public static final int EXCEPTION_CODE_SYS = 8;        // Syscall exception
+	public static final int EXCEPTION_CODE_BP = 9;         // Breakpoint exception
+	public static final int EXCEPTION_CODE_RI = 10;        // Reserved Instruction exception
+	public static final int EXCEPTION_CODE_CPU = 11;       // Coprocessor Unusable exception
+	public static final int EXCEPTION_CODE_OV = 12;        // Overflow exception
+	public static final int EXCEPTION_CODE_TR = 13;        // Trap exception
+	public static final int EXCEPTION_CODE_WATCH = 23;     // Refrence to WatchHi/WatchLo address
+	public static final int EXCEPTION_CODE_MCHECK = 24;    // Machine check exception
+
+	// The description of the exception codes
+	public static final String[] COP0_EXCEPTION_NAMES = {
+		"Interrupt exception", "TLB Modification Exception", "TLB exception (load or fetch)", "TLB exception (store)",
+		"Address exception (load or fetch)", "Address exception (store)", "Bus Error Exception (instruction fetch)", "Bus Error Exception (load or store)",
+		"Syscall exception", "Breakpoint exception", "Reserved Instruction exception", " Coprocessor Unusable exception",
+		"Overflow exception", "Trap exception", "(unknown14)", "(unknown exception: 15)",
+		"(unknown exception: 16)", "(unknown exception: 17)", "(unknown exception: 18)", "(unknown exception: 19)",
+		"(unknown exception: 20)", "(unknown exception: 21)", "(unknown exception: 22)", "Watch exception",
+		"Machine Check exception", "(unknown exception: 25)", "(unknown exception: 26)", "(unknown exception: 27)",
+		"(unknown exception: 28)", "(unknown exception: 29)", "(unknown exception: 30)", "(unknown exception: 31)"
 	};
 
 	// Auxiliary functions to decode the opcode
@@ -142,14 +172,14 @@ public class Mips {
 		return (opcode & 0x07);
 	}
 
+
+	// Disassemble functions
 	private static void printInsn(StringBuilder sb, String insn) {
 		sb.append(insn);
 		for (int i = insn.length(); i < 16; i++)
 			sb.append(" ");
 	}
 
-
-	// Disassemble functions
 	private static void disassembleSyscallAndBreak(StringBuilder sb, int opcode) {
 		int code = I_SYSCALLCODE(opcode);
 		if (code != 0) sb.append(String.format("0x%X", code));
@@ -263,8 +293,8 @@ public class Mips {
 		sb.append(REGISTER_NAMES[I_RT(opcode)]).append(", ");
 		int sel = I_COP0SEL(opcode);
 		int rd = I_RD(opcode);
-		if (sel == 1 && (rd == COP0_REG_CONFIG || rd == COP0_REG_TAGLO)) {
-			if (rd == COP0_REG_CONFIG)
+		if (sel == 1 && (rd == COP0_CONFIG || rd == COP0_TAGLO)) {
+			if (rd == COP0_CONFIG)
 				sb.append("Config1");
 			else
 				sb.append("DataLo");

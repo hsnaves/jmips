@@ -343,11 +343,11 @@ public final class GdbStub {
 		if (reg < 32) return cpu.getGpr(reg);
 
 		switch (reg) {
-		case 32: return cpu.getCop0Reg(Mips.COP0_REG_STATUS, 0);
+		case 32: return cpu.getCop0Reg(Mips.COP0_STATUS, 0);
 		case 33: return cpu.getLo();
 		case 34: return cpu.getHi();
-		case 35: return cpu.getCop0Reg(Mips.COP0_REG_BADVADDR, 0);
-		case 36: return cpu.getCop0Reg(Mips.COP0_REG_CAUSE, 0);
+		case 35: return cpu.getCop0Reg(Mips.COP0_BADVADDR, 0);
+		case 36: return cpu.getCop0Reg(Mips.COP0_CAUSE, 0);
 		case 37: return cpu.getPc();
 		default: return 0;
 		}
@@ -361,11 +361,11 @@ public final class GdbStub {
 		}
 
 		switch (reg) {
-		case 32: cpu.setCop0Reg(Mips.COP0_REG_STATUS, 0, val); break;
+		case 32: cpu.setCop0Reg(Mips.COP0_STATUS, 0, val); break;
 		case 33: cpu.setLo(val); break;
 		case 34: cpu.setHi(val); break;
-		case 35: cpu.setCop0Reg(Mips.COP0_REG_BADVADDR, 0, val); break;
-		case 36: cpu.setCop0Reg(Mips.COP0_REG_CAUSE, 0, val); break;
+		case 35: cpu.setCop0Reg(Mips.COP0_BADVADDR, 0, val); break;
+		case 36: cpu.setCop0Reg(Mips.COP0_CAUSE, 0, val); break;
 		case 37: cpu.setPc(val); break;
 		}
 	}

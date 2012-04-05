@@ -4,24 +4,6 @@ package jmips.cpu;
  * Java implementation of a MIPS32 4Kc processor
  */
 public final class Cpu {
-	// Exception codes
-	public static final int EXCEPTION_CODE_INT = 0;        // Interrupt
-	public static final int EXCEPTION_CODE_MOD = 1;        // TLB modification exception
-	public static final int EXCEPTION_CODE_TLBL = 2;       // TLB exception (load or instruction fetch)
-	public static final int EXCEPTION_CODE_TLBS = 3;       // TLB exception (store)
-	public static final int EXCEPTION_CODE_ADEL = 4;       // Address error exception (load or instruction fetch)
-	public static final int EXCEPTION_CODE_ADES = 5;       // Address error exception (store)
-	public static final int EXCEPTION_CODE_IBE = 6;        // Bus Error exception (instruction fetch)
-	public static final int EXCEPTION_CODE_DBE = 7;        // Bus Error exception (data reference: load or store)
-	public static final int EXCEPTION_CODE_SYS = 8;        // Syscall exception
-	public static final int EXCEPTION_CODE_BP = 9;         // Breakpoint exception
-	public static final int EXCEPTION_CODE_RI = 10;        // Reserved Instruction exception
-	public static final int EXCEPTION_CODE_CPU = 11;       // Coprocessor Unusable exception
-	public static final int EXCEPTION_CODE_OV = 12;        // Overflow exception
-	public static final int EXCEPTION_CODE_TR = 13;        // Trap exception
-	public static final int EXCEPTION_CODE_WATCH = 23;     // Refrence to WatchHi/WatchLo address
-	public static final int EXCEPTION_CODE_MCHECK = 24;    // Machine check exception
-
 	// Number of TLB entries in Cop0
 	public static final int NUM_TLB_ENTRIES = 16;
 
@@ -1746,109 +1728,109 @@ public final class Cpu {
 
 	public void setCop0Reg(int reg, int sel, int value) {
 		switch(reg) {
-		case Mips.COP0_REG_INDEX:
+		case Mips.COP0_INDEX:
 			Index = changeValue(Index, value, INDEX_MASK);
 			break;
-		case Mips.COP0_REG_RANDOM:
+		case Mips.COP0_RANDOM:
 			// Ignore random writes
 			break;
-		case Mips.COP0_REG_ENTRYLO0:
+		case Mips.COP0_ENTRYLO0:
 			EntryLo0 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case Mips.COP0_REG_ENTRYLO1:
+		case Mips.COP0_ENTRYLO1:
 			EntryLo1 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case Mips.COP0_REG_CONTEXT:
+		case Mips.COP0_CONTEXT:
 			Context = changeValue(Context, value, CONTEXT_WRITE_MASK);
 			break;
-		case Mips.COP0_REG_PAGEMASK:
+		case Mips.COP0_PAGEMASK:
 			PageMask = value & 0x01FFE000;
 			break;
-		case Mips.COP0_REG_WIRED:
+		case Mips.COP0_WIRED:
 			Wired = value & INDEX_MASK;
 			break;
-		case Mips.COP0_REG_RESERVED1:
+		case Mips.COP0_RESERVED1:
 			Reserved1 = value;
 			break;
-		case Mips.COP0_REG_BADVADDR:
+		case Mips.COP0_BADVADDR:
 			// Ignore BadVAddr writes
 			break;
-		case Mips.COP0_REG_COUNT:
+		case Mips.COP0_COUNT:
 			checkTimerInterrupt(beforeCounter, getCounter());
 			setCounter(value);
 			beforeCounter = value;
 			break;
-		case Mips.COP0_REG_ENTRYHI:
+		case Mips.COP0_ENTRYHI:
 			EntryHi = value & ENTRYHI_WRITE_MASK;
 			ASID = value & ENTRYHI_ASID_MASK;
 			break;
-		case Mips.COP0_REG_COMPARE:
+		case Mips.COP0_COMPARE:
 			Compare = value;
 			beforeCounter = getCounter();
 			lowerIrq(TIMER_IRQ);
 			break;
-		case Mips.COP0_REG_STATUS:
+		case Mips.COP0_STATUS:
 			writeStatus(value);
 			break;
-		case Mips.COP0_REG_CAUSE:
+		case Mips.COP0_CAUSE:
 			Cause = changeValue(Cause, value, CAUSE_WRITE_MASK);
 			break;
-		case Mips.COP0_REG_EPC:
+		case Mips.COP0_EPC:
 			EPC = value;
 			break;
-		case Mips.COP0_REG_PRID:
+		case Mips.COP0_PRID:
 			// Ignore PRId writes
 			break;
-		case Mips.COP0_REG_CONFIG:
+		case Mips.COP0_CONFIG:
 			if (sel == 0) {
 				Config = changeValue(Config,  value, 0x07);
 			}
 			// Ignores Config1 writes
 			break;
-		case Mips.COP0_REG_LLADDR:
+		case Mips.COP0_LLADDR:
 			// Ignore LLAddr writes
 			break;
-		case Mips.COP0_REG_WATCHLO:
+		case Mips.COP0_WATCHLO:
 			WatchLo = value;
 			break;
-		case Mips.COP0_REG_WATCHHI:
+		case Mips.COP0_WATCHHI:
 			WatchHi = value;
 			break;
-		case Mips.COP0_REG_RESERVED2:
+		case Mips.COP0_RESERVED2:
 			Reserved2 = value;
 			break;
-		case Mips.COP0_REG_RESERVED3:
+		case Mips.COP0_RESERVED3:
 			Reserved3 = value;
 			break;
-		case Mips.COP0_REG_RESERVED4:
+		case Mips.COP0_RESERVED4:
 			Reserved4 = value;
 			break;
-		case Mips.COP0_REG_DEBUG:
+		case Mips.COP0_DEBUG:
 			Debug = value;
 			break;
-		case Mips.COP0_REG_DEPC:
+		case Mips.COP0_DEPC:
 			DEPC = value;
 			break;
-		case Mips.COP0_REG_RESERVED5:
+		case Mips.COP0_RESERVED5:
 			Reserved5 = value;
 			break;
-		case Mips.COP0_REG_ERRCTRL:
+		case Mips.COP0_ERRCTRL:
 			ErrCtrl = value;
 			break;
-		case Mips.COP0_REG_RESERVED6:
+		case Mips.COP0_RESERVED6:
 			Reserved6 = value;
 			break;
-		case Mips.COP0_REG_TAGLO:
+		case Mips.COP0_TAGLO:
 			if (sel == 0) TagLo = value;
 			else DataLo = value;
 			break;
-		case Mips.COP0_REG_RESERVED7:
+		case Mips.COP0_RESERVED7:
 			Reserved7 = value;
 			break;
-		case Mips.COP0_REG_ERROREPC:
+		case Mips.COP0_ERROREPC:
 			ErrorEPC = value;
 			break;
-		case Mips.COP0_REG_DESAVE:
+		case Mips.COP0_DESAVE:
 			DESAVE = value;
 			break;
 		}
@@ -1857,103 +1839,103 @@ public final class Cpu {
 	public int getCop0Reg(int reg, int sel) {
 		int retval = 0;
 		switch(reg) {
-		case Mips.COP0_REG_INDEX:
+		case Mips.COP0_INDEX:
 			retval = Index;
 			break;
-		case Mips.COP0_REG_RANDOM:
+		case Mips.COP0_RANDOM:
 			retval = readRegisterRandom();
 			break;
-		case Mips.COP0_REG_ENTRYLO0:
+		case Mips.COP0_ENTRYLO0:
 			retval = EntryLo0;
 			break;
-		case Mips.COP0_REG_ENTRYLO1:
+		case Mips.COP0_ENTRYLO1:
 			retval = EntryLo1;
 			break;
-		case Mips.COP0_REG_CONTEXT:
+		case Mips.COP0_CONTEXT:
 			retval = Context;
 			break;
-		case Mips.COP0_REG_PAGEMASK:
+		case Mips.COP0_PAGEMASK:
 			retval = PageMask;
 			break;
-		case Mips.COP0_REG_WIRED:
+		case Mips.COP0_WIRED:
 			retval = Wired;
 			break;
-		case Mips.COP0_REG_RESERVED1:
+		case Mips.COP0_RESERVED1:
 			retval = Reserved1;
 			break;
-		case Mips.COP0_REG_BADVADDR:
+		case Mips.COP0_BADVADDR:
 			retval = BadVAddr;
 			break;
-		case Mips.COP0_REG_COUNT:
+		case Mips.COP0_COUNT:
 			retval = getCounter();
 			break;
-		case Mips.COP0_REG_ENTRYHI:
+		case Mips.COP0_ENTRYHI:
 			retval = EntryHi;
 			break;
-		case Mips.COP0_REG_COMPARE:
+		case Mips.COP0_COMPARE:
 			retval = Compare;
 			break;
-		case Mips.COP0_REG_STATUS:
+		case Mips.COP0_STATUS:
 			retval = Status;
 			break;
-		case Mips.COP0_REG_CAUSE:
+		case Mips.COP0_CAUSE:
 			checkTimerInterrupt(beforeCounter, getCounter());
 			retval = Cause;
 			break;
-		case Mips.COP0_REG_EPC:
+		case Mips.COP0_EPC:
 			retval = EPC;
 			break;
-		case Mips.COP0_REG_PRID:
+		case Mips.COP0_PRID:
 			retval = PRId;
 			break;
-		case Mips.COP0_REG_CONFIG:
+		case Mips.COP0_CONFIG:
 			if (sel == 0) retval = Config;
 			else retval = Config1;
 			break;
-		case Mips.COP0_REG_LLADDR:
+		case Mips.COP0_LLADDR:
 			retval = LLAddr;
 			break;
-		case Mips.COP0_REG_WATCHLO:
+		case Mips.COP0_WATCHLO:
 			retval = WatchLo;
 			break;
-		case Mips.COP0_REG_WATCHHI:
+		case Mips.COP0_WATCHHI:
 			retval = WatchHi;
 			break;
-		case Mips.COP0_REG_RESERVED2:
+		case Mips.COP0_RESERVED2:
 			retval = Reserved2;
 			break;
-		case Mips.COP0_REG_RESERVED3:
+		case Mips.COP0_RESERVED3:
 			retval = Reserved3;
 			break;
-		case Mips.COP0_REG_RESERVED4:
+		case Mips.COP0_RESERVED4:
 			retval = Reserved4;
 			break;
-		case Mips.COP0_REG_DEBUG:
+		case Mips.COP0_DEBUG:
 			retval = Debug;
 			break;
-		case Mips.COP0_REG_DEPC:
+		case Mips.COP0_DEPC:
 			retval = DEPC;
 			break;
-		case Mips.COP0_REG_RESERVED5:
+		case Mips.COP0_RESERVED5:
 			retval = Reserved5;
 			break;
-		case Mips.COP0_REG_ERRCTRL:
+		case Mips.COP0_ERRCTRL:
 			retval = ErrCtrl;
 			break;
-		case Mips.COP0_REG_RESERVED6:
+		case Mips.COP0_RESERVED6:
 			retval = Reserved6;
 			break;
-		case Mips.COP0_REG_TAGLO:
+		case Mips.COP0_TAGLO:
 			if (sel == 0) retval = TagLo;
 			else retval = DataLo;
 			break;
-		case Mips.COP0_REG_RESERVED7:
+		case Mips.COP0_RESERVED7:
 			retval = Reserved7;
 			break;
-		case Mips.COP0_REG_ERROREPC:
+		case Mips.COP0_ERROREPC:
 			retval = ErrorEPC;
 			break;
-		case Mips.COP0_REG_DESAVE:
+		case Mips.COP0_DESAVE:
 			retval = DESAVE;
 			break;
 		}
@@ -2006,7 +1988,7 @@ public final class Cpu {
 			}
 			if (offsetToZero) {
 				vectorOffset = 0;
-			} else if (code == EXCEPTION_CODE_INT && ((Cause & CAUSE_IV) != 0)) {
+			} else if (code == Mips.EXCEPTION_CODE_INT && ((Cause & CAUSE_IV) != 0)) {
 				vectorOffset = 0x200;
 			} else {
 				vectorOffset = 0x180;
@@ -2025,63 +2007,63 @@ public final class Cpu {
 	}
 
 	private void exception_MCHECK() {
-		exception_GENERAL(EXCEPTION_CODE_MCHECK, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_MCHECK, 0, false);
 		Status |= STATUS_TS;
 	}
 
 	private void exception_INTERRUPT() {
-		exception_GENERAL(EXCEPTION_CODE_INT, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_INT, 0, false);
 	}
 
 	private void exception_ADDRESS_ERROR(int badVAddr, boolean load) {
-		exception_GENERAL(load ? EXCEPTION_CODE_ADEL : EXCEPTION_CODE_ADES, 0, false);
+		exception_GENERAL(load ? Mips.EXCEPTION_CODE_ADEL : Mips.EXCEPTION_CODE_ADES, 0, false);
 		BadVAddr = badVAddr;
 	}
 
 	private void exception_TLB_REFILL(int badVAddr, boolean load) {
-		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, true);
+		exception_GENERAL(load ? Mips.EXCEPTION_CODE_TLBL : Mips.EXCEPTION_CODE_TLBS, 0, true);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
 		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
 	}
 
 	private void exception_TLB_INVALID(int badVAddr, boolean load) {
-		exception_GENERAL(load ? EXCEPTION_CODE_TLBL : EXCEPTION_CODE_TLBS, 0, false);
+		exception_GENERAL(load ? Mips.EXCEPTION_CODE_TLBL : Mips.EXCEPTION_CODE_TLBS, 0, false);
 		BadVAddr = badVAddr;
 		Context = (Context & CONTEXT_PTE_MASK) | ((badVAddr & ENTRYHI_VPN2_MASK) >>> 9);
 		EntryHi = (EntryHi & ENTRYHI_ASID_MASK) | (badVAddr & ENTRYHI_VPN2_MASK);
 	}
 
 	private void exception_BUS_ERROR(boolean data) {
-		exception_GENERAL(data ? EXCEPTION_CODE_DBE : EXCEPTION_CODE_IBE, 0, false);
+		exception_GENERAL(data ? Mips.EXCEPTION_CODE_DBE : Mips.EXCEPTION_CODE_IBE, 0, false);
 	}
 
 	private void exception_SYSCALL() {
-		exception_GENERAL(EXCEPTION_CODE_SYS, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_SYS, 0, false);
 	}
 
 	private void exception_BREAK() {
-		exception_GENERAL(EXCEPTION_CODE_BP, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_BP, 0, false);
 	}
 
 	private void exception_RESERVED() {
-		exception_GENERAL(EXCEPTION_CODE_RI, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_RI, 0, false);
 	}
 
 	private void exception_COPROCESS_UNUSABLE(int copno) {
-		exception_GENERAL(EXCEPTION_CODE_CPU, copno, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_CPU, copno, false);
 	}
 
 	private void exception_INTEGER_OVERFLOW() {
-		exception_GENERAL(EXCEPTION_CODE_OV, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_OV, 0, false);
 	}
 
 	private void exception_TRAP() {
-		exception_GENERAL(EXCEPTION_CODE_TR, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_TR, 0, false);
 	}
 
 	private void exception_TLB_MOD(int badVAddr) {
-		exception_GENERAL(EXCEPTION_CODE_MOD, 0, false);
+		exception_GENERAL(Mips.EXCEPTION_CODE_MOD, 0, false);
 		BadVAddr = badVAddr;
 		Context = badVAddr;
 	}
