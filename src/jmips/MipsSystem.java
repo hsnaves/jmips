@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 
 import jmips.cpu.Cpu;
 import jmips.cpu.Device;
+import jmips.cpu.Instruction;
 import jmips.dev.BlockDevice;
 import jmips.dev.BlockDeviceController;
 import jmips.dev.RealTimeClock;
@@ -249,7 +250,7 @@ public final class MipsSystem {
 	}
 
 	public void setKernelCommandLine(String cmdLine, int address) {
-		cpu.setGpr(Cpu.GPR_A0, address);
+		cpu.setGpr(Instruction.GPR_A0, address);
 		for (int i = 0; i < cmdLine.length(); i++) {
 			byte b = (byte) cmdLine.charAt(i);
 			cpu.store8(address, b);
