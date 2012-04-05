@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
-import jmips.FileUtils;
 import jmips.cpu.Device;
+import jmips.utils.FileUtils;
 
 /**
  * A simple block device

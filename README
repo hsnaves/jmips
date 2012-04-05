@@ -1,2 +1,20 @@
 
-Emulator of the MIPS 32 4Kc in Java
+Emulator of the MIPS32 4Kc Processor in Java
+Author: Humberto Silva Naves
+
+====================
+BUILD INSTRUCTIONS
+====================
+
+In order to compile just run "ant main" on the main folder.
+If you are under linux you will probably need the MIPS toolchain to compile the files in the "asm" folder 
+
+
+====================
+HOW TO RUN
+====================
+
+Type "ant run" on the same folder (You probably need the vmlinux file and the initrd file which I didn't add to the repository yet!)
+
+
+Enjoy!

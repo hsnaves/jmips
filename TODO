@@ -1,9 +1,9 @@
 
 Todo:
-- Provide a minimal linux distro in order to test
+- Provide a minimal linux distro in order to test (on its way)
 - Implement more exhaustive tests
 - Implement dynamic recompilation
 - Implement a network device
 - Implement a real time clock device
-- Implement a storage/block device
-
+- Implement a storage/block device (almost complete)
+- Refactor the SwingTTY class (it's horrible!)

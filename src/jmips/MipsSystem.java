@@ -12,6 +12,7 @@ import jmips.dev.UartController;
 import jmips.elf.Elf32;
 import jmips.elf.Elf32Program;
 import jmips.serial.TTY;
+import jmips.utils.FileUtils;
 
 /**
  * This class implements a Mips Computer System
