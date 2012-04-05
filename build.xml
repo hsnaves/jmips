@@ -15,6 +15,10 @@
     <property name="main-class"       value="jmips.Main"/>
     <property name="command-line"     value=""/>
 
+    <condition property="build.on.linux">  
+        <os name="linux"/>
+    </condition>
+
     <property file="build.properties" />
     <property name="make"             value="/usr/bin/make"/>
 
@@ -40,7 +44,7 @@
         <dirset dir="${test-classes.dir}" />
     </path>
 
-    <target name="clean-asm">
+    <target name="clean-asm" if="build.on.linux">
         <exec executable="${make}">
             <arg value="-C"/>
             <arg value="asm"/>
@@ -48,7 +52,7 @@
         </exec>
     </target>
 
-    <target name="compile-asm">
+    <target name="compile-asm" if="build.on.linux">
         <exec executable="${make}">
             <arg value="-C"/>
             <arg value="asm"/>

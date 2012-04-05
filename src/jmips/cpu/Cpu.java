@@ -318,12 +318,12 @@ public final class Cpu {
 			if (ioController.ioError())
 				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
 		}
-		if (!bigEndian) ret = Utils.byteSwap(ret);
+		if (!bigEndian) ret = Helper.byteSwap(ret);
 		return ret;
 	}
 
 	private void _store16phys(final int physicalAddress, short value) {
-		if (!bigEndian) value = Utils.byteSwap(value);
+		if (!bigEndian) value = Helper.byteSwap(value);
 		if (physicalAddress < ram.getRamSize()) {
 			ram.write16(physicalAddress, value);
 		} else {
@@ -342,12 +342,12 @@ public final class Cpu {
 			if (ioController.ioError())
 				memoryError = MEMORY_ERROR_BUS_ERROR_DATA; 
 		}
-		if (!bigEndian) ret = Utils.byteSwap(ret);
+		if (!bigEndian) ret = Helper.byteSwap(ret);
 		return ret;
 	}
 
 	private void _store32phys(final int physicalAddress, int value) {
-		if (!bigEndian) value = Utils.byteSwap(value);
+		if (!bigEndian) value = Helper.byteSwap(value);
 		if (physicalAddress < ram.getRamSize()) {
 			ram.write32(physicalAddress, value);
 		} else {
@@ -666,7 +666,7 @@ public final class Cpu {
 					if (ioController.ioError())
 						memoryError = MEMORY_ERROR_BUS_ERROR_INSTRUCTION;
 				}
-				if (!bigEndian) ret = Utils.byteSwap(ret);
+				if (!bigEndian) ret = Helper.byteSwap(ret);
 			}
 		} else {
 			memoryError = MEMORY_ERROR_ADDRESS_ERROR_LOAD;
@@ -743,7 +743,7 @@ public final class Cpu {
 		for(int i = 0; i < count; i++) {
 			int opcode = load32(address + 4 * i);
 			if (memoryError == MEMORY_ERROR_NOERROR) {
-				sb.append(Disassemble.disassemble(address + 4 * i, opcode));
+				sb.append(Instruction.disassemble(address + 4 * i, opcode));
 			} else {
 				sb.append("Invalid memory location");
 			}
@@ -1144,13 +1144,13 @@ public final class Cpu {
 
 	private void clo(int opcode) {
 		int rs = gpr[I_RS(opcode)];
-		int result = Utils.countLeadingOnes(rs);
+		int result = Helper.countLeadingOnes(rs);
 		setGpr(I_RD(opcode), result);
 	}
 
 	private void clz(int opcode) {
 		int rs = gpr[I_RS(opcode)];
-		int result = Utils.countLeadingZeros(rs);
+		int result = Helper.countLeadingZeros(rs);
 		setGpr(I_RD(opcode), result);
 	}
 
@@ -1494,14 +1494,14 @@ public final class Cpu {
 	private void sltiu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
-		int result = (Utils.compareUnsigned(rs, imm) < 0) ? 1 : 0;
+		int result = (Helper.compareUnsigned(rs, imm) < 0) ? 1 : 0;
 		setGpr(I_RT(opcode), result);
 	}
 
 	private void sltu(int opcode) {
 		int rt = gpr[I_RT(opcode)];
 		int rs = gpr[I_RS(opcode)];
-		int result = (Utils.compareUnsigned(rs, rt) < 0) ? 1 : 0;
+		int result = (Helper.compareUnsigned(rs, rt) < 0) ? 1 : 0;
 		setGpr(I_RD(opcode), result);
 	}
 
@@ -1615,7 +1615,7 @@ public final class Cpu {
 	private void tgeiu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
-		if (Utils.compareUnsigned(rs, imm) >= 0) {
+		if (Helper.compareUnsigned(rs, imm) >= 0) {
 			exception_TRAP();
 		}
 	}
@@ -1623,7 +1623,7 @@ public final class Cpu {
 	private void tgeu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
-		if (Utils.compareUnsigned(rs, rt) >= 0) {
+		if (Helper.compareUnsigned(rs, rt) >= 0) {
 			exception_TRAP();
 		}
 	}
@@ -1671,7 +1671,7 @@ public final class Cpu {
 	private void tltiu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int imm = I_IMM16(opcode);
-		if (Utils.compareUnsigned(rs, imm) < 0) {
+		if (Helper.compareUnsigned(rs, imm) < 0) {
 			exception_TRAP();
 		}
 	}
@@ -1679,7 +1679,7 @@ public final class Cpu {
 	private void tltu(int opcode) {
 		int rs = gpr[I_RS(opcode)];
 		int rt = gpr[I_RT(opcode)];
-		if (Utils.compareUnsigned(rs, rt) < 0) {
+		if (Helper.compareUnsigned(rs, rt) < 0) {
 			exception_TRAP();
 		}
 	}

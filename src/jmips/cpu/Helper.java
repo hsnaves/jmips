@@ -1,6 +1,6 @@
 package jmips.cpu;
 
-public class Utils {
+public class Helper {
 	private static final int[] LEADING_ZEROS = {
 		8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
 		3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
