@@ -164,7 +164,7 @@ public final class Cpu {
 	}
 
 	public void setGpr(int regno, int val) {
-		if (regno != Instruction.GPR_ZR) gpr[regno] = val;
+		if (regno != Mips.GPR_ZR) gpr[regno] = val;
 	}
 
 	public int getGpr(int regno) {
@@ -674,7 +674,7 @@ public final class Cpu {
 		for(int i = 0; i < count; i++) {
 			int opcode = load32(address + 4 * i);
 			if (memoryError == MEMORY_ERROR_NOERROR) {
-				sb.append(Instruction.disassemble(address + 4 * i, opcode));
+				sb.append(Mips.disassemble(address + 4 * i, opcode));
 			} else {
 				sb.append("Invalid memory location");
 			}
@@ -686,7 +686,7 @@ public final class Cpu {
 	private void microstep(int opcode) {
 		counter++;
 
-		switch (Instruction.I_OP(opcode)) {
+		switch (Mips.I_OP(opcode)) {
 		case 0: stepSpecial(opcode); break;
 		case 1: stepRegImm(opcode); break;
 		case 2: j(opcode); break;
@@ -762,7 +762,7 @@ public final class Cpu {
 	}
 
 	private void stepSpecial(int opcode) {
-		switch(Instruction.I_FUNCT(opcode)) {
+		switch(Mips.I_FUNCT(opcode)) {
 		case 0: sll(opcode); break;
 		case 1: reserved(); break; // ???
 		case 2: srl(opcode); break;
@@ -813,7 +813,7 @@ public final class Cpu {
 	}
 
 	private void stepSpecial2(int opcode) {
-		switch(Instruction.I_FUNCT(opcode)) {
+		switch(Mips.I_FUNCT(opcode)) {
 		case 0: madd(opcode); break;
 		case 1: maddu(opcode); break;
 		case 2: mul(opcode); break;
@@ -827,7 +827,7 @@ public final class Cpu {
 	}
 
 	private void stepRegImm(int opcode) {
-		switch(Instruction.I_RT(opcode)) {
+		switch(Mips.I_RT(opcode)) {
 		case 0: bltz(opcode); break;
 		case 1: bgez(opcode); break;
 		case 2: bltzl(opcode); break;
@@ -847,7 +847,7 @@ public final class Cpu {
 	}
 
 	private void stepCop0(int opcode) {
-		switch(Instruction.I_RS(opcode)) {
+		switch(Mips.I_RS(opcode)) {
 		case 0: mfc0(opcode); break;
 		case 4: mtc0(opcode); break;
 		case 16:
@@ -871,7 +871,7 @@ public final class Cpu {
 	}
 
 	private void stepCop0Co(int opcode) {
-		switch(Instruction.I_FUNCT(opcode)) {
+		switch(Mips.I_FUNCT(opcode)) {
 		case 1: tlbr(opcode); break;
 		case 2: tlbwi(opcode); break;
 		case 6: tlbwr(opcode); break;
@@ -884,60 +884,60 @@ public final class Cpu {
 	}
 
 	private void add(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs + rt;
 		if (checkOverflow(rs, rt, result, true)) return;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void addi(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		int result = rs + imm;
 		if (checkOverflow(rs, imm, result, true)) return;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void addiu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		int result = rs + imm;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void addu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs + rt;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void and(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs & rt;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void andi(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int immu = Instruction.I_IMM16U(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int immu = Mips.I_IMM16U(opcode);
 		int result = rs & immu;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void beq(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs == rt) {
 			branch(opcode);
 		}
 	}
 
 	private void beql(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs == rt) {
 			branch(opcode);
 		} else {
@@ -946,14 +946,14 @@ public final class Cpu {
 	}
 
 	private void bgez(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs >= 0) {
 			branch(opcode);
 		}
 	}
 
 	private void bgezal(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		link();
 		if (rs >= 0) {
 			branch(opcode);
@@ -961,7 +961,7 @@ public final class Cpu {
 	}
 
 	private void bgezall(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		link();
 		if (rs >= 0) {
 			branch(opcode);
@@ -971,7 +971,7 @@ public final class Cpu {
 	}
 
 	private void bgezl(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs >= 0) {
 			branch(opcode);
 		} else {
@@ -980,14 +980,14 @@ public final class Cpu {
 	}
 
 	private void bgtz(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs > 0) {
 			branch(opcode);
 		}
 	}
 
 	private void bgtzl(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs > 0) {
 			branch(opcode);
 		} else {
@@ -996,14 +996,14 @@ public final class Cpu {
 	}
 
 	private void blez(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs <= 0) {
 			branch(opcode);
 		}
 	}
 
 	private void blezl(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs <= 0) {
 			branch(opcode);
 		} else {
@@ -1012,14 +1012,14 @@ public final class Cpu {
 	}
 
 	private void bltz(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs < 0) {
 			branch(opcode);
 		}
 	}
 
 	private void bltzal(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		link();
 		if (rs < 0) {
 			branch(opcode);
@@ -1027,7 +1027,7 @@ public final class Cpu {
 	}
 
 	private void bltzall(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		link();
 		if (rs < 0) {
 			branch(opcode);
@@ -1037,7 +1037,7 @@ public final class Cpu {
 	}
 
 	private void bltzl(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		if (rs < 0) {
 			branch(opcode);
 		} else {
@@ -1046,16 +1046,16 @@ public final class Cpu {
 	}
 
 	private void bne(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs != rt) {
 			branch(opcode);
 		}
 	}
 
 	private void bnel(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs != rt) {
 			branch(opcode);
 		} else {
@@ -1074,15 +1074,15 @@ public final class Cpu {
 	}
 
 	private void clo(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = Helper.countLeadingOnes(rs);
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void clz(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = Helper.countLeadingZeros(rs);
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void deret(int opcode) {
@@ -1090,8 +1090,8 @@ public final class Cpu {
 	}
 
 	private void div(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rt == 0) {
 			lo = hi = 0;
 		} else {
@@ -1101,8 +1101,8 @@ public final class Cpu {
 	}
 
 	private void divu(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Mips.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Mips.I_RT(opcode)] & 0xFFFFFFFFL;
 		if (rt == 0) {
 			lo = hi = 0;
 		} else {
@@ -1118,7 +1118,7 @@ public final class Cpu {
 	}
 
 	private void j(int opcode) {
-		npc = Instruction.I_JUMP(opcode, pc - 4);
+		npc = Mips.I_JUMP(opcode, pc - 4);
 		delaySlot = true;
 	}
 
@@ -1128,87 +1128,87 @@ public final class Cpu {
 	}
 
 	private void jalr(int opcode) {
-		link(Instruction.I_RD(opcode));
+		link(Mips.I_RD(opcode));
 		jr(opcode);
 	}
 
 	private void jr(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		npc = rs;
 		delaySlot = true;
 	}
 
 	private void lb(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read8(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(Instruction.I_RT(opcode), val);
+			setGpr(Mips.I_RT(opcode), val);
 		}
 	}
 
 	private void lbu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read8(address) & 0xFF;
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(Instruction.I_RT(opcode), val);
+			setGpr(Mips.I_RT(opcode), val);
 		}
 	}
 
 	private void lh(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read16(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(Instruction.I_RT(opcode), val);
+			setGpr(Mips.I_RT(opcode), val);
 		}
 	}
 
 	private void lhu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read16(address) & 0xFFFF;
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(Instruction.I_RT(opcode), val);
+			setGpr(Mips.I_RT(opcode), val);
 		}
 	}
 
 	private void ll(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read32linked(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(Instruction.I_RT(opcode), val);
+			setGpr(Mips.I_RT(opcode), val);
 		}
 	}
 
 	private void lui(int opcode) {
-		int imm = Instruction.I_IMM16(opcode);
+		int imm = Mips.I_IMM16(opcode);
 		int result = imm << 16;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void lw(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
 		int val = read32(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			setGpr(Instruction.I_RT(opcode), val);
+			setGpr(Mips.I_RT(opcode), val);
 		}
 	}
 
 	private void lwl(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = Instruction.I_RT(opcode);
+		int rt = Mips.I_RT(opcode);
 		int val = read32UnalignedLeft(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, val);
@@ -1216,10 +1216,10 @@ public final class Cpu {
 	}
 
 	private void lwr(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = Instruction.I_RT(opcode);
+		int rt = Mips.I_RT(opcode);
 		int val = read32UnalignedRight(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, val);
@@ -1227,8 +1227,8 @@ public final class Cpu {
 	}
 
 	private void madd(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)];
-		long rt = gpr[Instruction.I_RT(opcode)];
+		long rs = gpr[Mips.I_RS(opcode)];
+		long rt = gpr[Mips.I_RT(opcode)];
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo + rs * rt;
 		lo = (int) result;
@@ -1236,8 +1236,8 @@ public final class Cpu {
 	}
 
 	private void maddu(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Mips.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Mips.I_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo + rs * rt;
 		lo = (int) result;
@@ -1246,40 +1246,40 @@ public final class Cpu {
 
 	private void mfc0(int opcode) {
 		if (checkCoprocessor(0)) {
-			int rt = Instruction.I_RT(opcode);
-			int rd = Instruction.I_RD(opcode);
-			int sel = Instruction.I_COP0SEL(opcode);
+			int rt = Mips.I_RT(opcode);
+			int rd = Mips.I_RD(opcode);
+			int sel = Mips.I_COP0SEL(opcode);
 			setGpr(rt, getCop0Reg(rd, sel));
 		}
 	}
 
 	private void mfhi(int opcode) {
-		setGpr(Instruction.I_RD(opcode), hi);
+		setGpr(Mips.I_RD(opcode), hi);
 	}
 
 	private void mflo(int opcode) {
-		setGpr(Instruction.I_RD(opcode), lo);
+		setGpr(Mips.I_RD(opcode), lo);
 	}
 
 	private void movn(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rt != 0) {
-			int rs = gpr[Instruction.I_RS(opcode)];
-			setGpr(Instruction.I_RD(opcode), rs);
+			int rs = gpr[Mips.I_RS(opcode)];
+			setGpr(Mips.I_RD(opcode), rs);
 		}
 	}
 
 	private void movz(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rt == 0) {
-			int rs = gpr[Instruction.I_RS(opcode)];
-			setGpr(Instruction.I_RD(opcode), rs);
+			int rs = gpr[Mips.I_RS(opcode)];
+			setGpr(Mips.I_RD(opcode), rs);
 		}
 	}
 
 	private void msub(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)];
-		long rt = gpr[Instruction.I_RT(opcode)];
+		long rs = gpr[Mips.I_RS(opcode)];
+		long rt = gpr[Mips.I_RT(opcode)];
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo - rs * rt;
 		lo = (int) result;
@@ -1287,8 +1287,8 @@ public final class Cpu {
 	}
 
 	private void msubu(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Mips.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Mips.I_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) hi) << 32) | ((long) lo);
 		long result = hilo - rs * rt;
 		lo = (int) result;
@@ -1297,66 +1297,66 @@ public final class Cpu {
 
 	private void mtc0(int opcode) {
 		if (checkCoprocessor(0)) {
-			int rt = Instruction.I_RT(opcode);
-			int rd = Instruction.I_RD(opcode);
-			int sel = Instruction.I_COP0SEL(opcode);
+			int rt = Mips.I_RT(opcode);
+			int rd = Mips.I_RD(opcode);
+			int sel = Mips.I_COP0SEL(opcode);
 			setCop0Reg(rd, sel, gpr[rt]);
 		}
 	}
 
 	private void mthi(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		hi = rs;
 	}
 
 	private void mtlo(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		lo = rs;
 	}
 
 	private void mul(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs * rt;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 		// hi = lo = 0; // Unpredictable
 	}
 
 	private void mult(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)];
-		long rt = gpr[Instruction.I_RT(opcode)];
+		long rs = gpr[Mips.I_RS(opcode)];
+		long rt = gpr[Mips.I_RT(opcode)];
 		long result = rs * rt;
 		lo = (int) result;
 		hi = (int) (result >> 32);
 	}
 
 	private void multu(int opcode) {
-		long rs = gpr[Instruction.I_RS(opcode)] & 0xFFFFFFFFL;
-		long rt = gpr[Instruction.I_RT(opcode)] & 0xFFFFFFFFL;
+		long rs = gpr[Mips.I_RS(opcode)] & 0xFFFFFFFFL;
+		long rt = gpr[Mips.I_RT(opcode)] & 0xFFFFFFFFL;
 		long result = rs * rt;
 		lo = (int) result;
 		hi = (int) (result >> 32);
 	}
 
 	private void nor(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = ~(rs | rt);
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void or(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs | rt;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void ori(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int immu = Instruction.I_IMM16U(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int immu = Mips.I_IMM16U(opcode);
 		int result = rs | immu;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void pref(int opcode) {
@@ -1364,18 +1364,18 @@ public final class Cpu {
 	}
 
 	private void sb(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		write8(address, (byte) rt);
 	}
 
 	private void sc(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = Instruction.I_RT(opcode);
+		int rt = Mips.I_RT(opcode);
 		boolean ok = write32conditional(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
 			setGpr(rt, ok ? 1 : 0);
@@ -1387,119 +1387,119 @@ public final class Cpu {
 	}
 
 	private void sh(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		write16(address, (short) rt);
 	}
 
 	private void sll(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int sa = Instruction.I_SA(opcode);
+		int rt = gpr[Mips.I_RT(opcode)];
+		int sa = Mips.I_SA(opcode);
 		int result = rt << sa;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void sllv(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = rt << rs;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void slt(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = (rs < rt) ? 1 : 0;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void slti(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		int result = (rs < imm) ? 1 : 0;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void sltiu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		int result = (Helper.compareUnsigned(rs, imm) < 0) ? 1 : 0;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void sltu(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = (Helper.compareUnsigned(rs, rt) < 0) ? 1 : 0;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void sra(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int sa = Instruction.I_SA(opcode);
+		int rt = gpr[Mips.I_RT(opcode)];
+		int sa = Mips.I_SA(opcode);
 		int result = rt >> sa;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void srav(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = rt >> rs;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void srl(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int sa = Instruction.I_SA(opcode);
+		int rt = gpr[Mips.I_RT(opcode)];
+		int sa = Mips.I_SA(opcode);
 		int result = rt >>> sa;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void srlv(int opcode) {
-		int rt = gpr[Instruction.I_RT(opcode)];
-		int rs = gpr[Instruction.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
 		int result = rt >>> rs;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void sub(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs - rt;
 		if (checkOverflow(rs, rt, result, false)) return;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void subu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs - rt;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void sw(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		write32(address, rt);
 	}
 
 	private void swl(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		write32UnalignedLeft(address, rt);
 	}
 
 	private void swr(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int offset = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int offset = Mips.I_IMM16(opcode);
 		int address = rs + offset;
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		write32UnalignedRight(address, rt);
 	}
 
@@ -1512,48 +1512,48 @@ public final class Cpu {
 	}
 
 	private void teq(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs == rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void teqi(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		if (rs == imm) {
 			exception_TRAP();
 		}
 	}
 
 	private void tge(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs >= rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void tgei(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		if (rs >= imm) {
 			exception_TRAP();
 		}
 	}
 
 	private void tgeiu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		if (Helper.compareUnsigned(rs, imm) >= 0) {
 			exception_TRAP();
 		}
 	}
 
 	private void tgeu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (Helper.compareUnsigned(rs, rt) >= 0) {
 			exception_TRAP();
 		}
@@ -1584,48 +1584,48 @@ public final class Cpu {
 	}
 
 	private void tlt(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs < rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void tlti(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		if (rs < imm) {
 			exception_TRAP();
 		}
 	}
 
 	private void tltiu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		if (Helper.compareUnsigned(rs, imm) < 0) {
 			exception_TRAP();
 		}
 	}
 
 	private void tltu(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (Helper.compareUnsigned(rs, rt) < 0) {
 			exception_TRAP();
 		}
 	}
 
 	private void tne(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		if (rs != rt) {
 			exception_TRAP();
 		}
 	}
 
 	private void tnei(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int imm = Instruction.I_IMM16(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int imm = Mips.I_IMM16(opcode);
 		if (rs != imm) {
 			exception_TRAP();
 		}
@@ -1638,17 +1638,17 @@ public final class Cpu {
 	}
 
 	private void xor(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int rt = gpr[Instruction.I_RT(opcode)];
+		int rs = gpr[Mips.I_RS(opcode)];
+		int rt = gpr[Mips.I_RT(opcode)];
 		int result = rs ^ rt;
-		setGpr(Instruction.I_RD(opcode), result);
+		setGpr(Mips.I_RD(opcode), result);
 	}
 
 	private void xori(int opcode) {
-		int rs = gpr[Instruction.I_RS(opcode)];
-		int immu = Instruction.I_IMM16U(opcode);
+		int rs = gpr[Mips.I_RS(opcode)];
+		int immu = Mips.I_IMM16U(opcode);
 		int result = rs ^ immu;
-		setGpr(Instruction.I_RT(opcode), result);
+		setGpr(Mips.I_RT(opcode), result);
 	}
 
 	private void invalid(int copno) {
@@ -1682,12 +1682,12 @@ public final class Cpu {
 	}
 
 	private void branch(int opcode) {
-		npc = Instruction.I_BRANCH(opcode, pc - 4);
+		npc = Mips.I_BRANCH(opcode, pc - 4);
 		delaySlot = true;
 	}
 
 	private void link() {
-		link(Instruction.GPR_RA);
+		link(Mips.GPR_RA);
 	}
 
 	private void link(int regno) {
@@ -1746,109 +1746,109 @@ public final class Cpu {
 
 	public void setCop0Reg(int reg, int sel, int value) {
 		switch(reg) {
-		case Instruction.COP0_REG_INDEX:
+		case Mips.COP0_REG_INDEX:
 			Index = changeValue(Index, value, INDEX_MASK);
 			break;
-		case Instruction.COP0_REG_RANDOM:
+		case Mips.COP0_REG_RANDOM:
 			// Ignore random writes
 			break;
-		case Instruction.COP0_REG_ENTRYLO0:
+		case Mips.COP0_REG_ENTRYLO0:
 			EntryLo0 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case Instruction.COP0_REG_ENTRYLO1:
+		case Mips.COP0_REG_ENTRYLO1:
 			EntryLo1 = value & ENTRYLO_WRITE_MASK;
 			break;
-		case Instruction.COP0_REG_CONTEXT:
+		case Mips.COP0_REG_CONTEXT:
 			Context = changeValue(Context, value, CONTEXT_WRITE_MASK);
 			break;
-		case Instruction.COP0_REG_PAGEMASK:
+		case Mips.COP0_REG_PAGEMASK:
 			PageMask = value & 0x01FFE000;
 			break;
-		case Instruction.COP0_REG_WIRED:
+		case Mips.COP0_REG_WIRED:
 			Wired = value & INDEX_MASK;
 			break;
-		case Instruction.COP0_REG_RESERVED1:
+		case Mips.COP0_REG_RESERVED1:
 			Reserved1 = value;
 			break;
-		case Instruction.COP0_REG_BADVADDR:
+		case Mips.COP0_REG_BADVADDR:
 			// Ignore BadVAddr writes
 			break;
-		case Instruction.COP0_REG_COUNT:
+		case Mips.COP0_REG_COUNT:
 			checkTimerInterrupt(beforeCounter, getCounter());
 			setCounter(value);
 			beforeCounter = value;
 			break;
-		case Instruction.COP0_REG_ENTRYHI:
+		case Mips.COP0_REG_ENTRYHI:
 			EntryHi = value & ENTRYHI_WRITE_MASK;
 			ASID = value & ENTRYHI_ASID_MASK;
 			break;
-		case Instruction.COP0_REG_COMPARE:
+		case Mips.COP0_REG_COMPARE:
 			Compare = value;
 			beforeCounter = getCounter();
 			lowerIrq(TIMER_IRQ);
 			break;
-		case Instruction.COP0_REG_STATUS:
+		case Mips.COP0_REG_STATUS:
 			writeStatus(value);
 			break;
-		case Instruction.COP0_REG_CAUSE:
+		case Mips.COP0_REG_CAUSE:
 			Cause = changeValue(Cause, value, CAUSE_WRITE_MASK);
 			break;
-		case Instruction.COP0_REG_EPC:
+		case Mips.COP0_REG_EPC:
 			EPC = value;
 			break;
-		case Instruction.COP0_REG_PRID:
+		case Mips.COP0_REG_PRID:
 			// Ignore PRId writes
 			break;
-		case Instruction.COP0_REG_CONFIG:
+		case Mips.COP0_REG_CONFIG:
 			if (sel == 0) {
 				Config = changeValue(Config,  value, 0x07);
 			}
 			// Ignores Config1 writes
 			break;
-		case Instruction.COP0_REG_LLADDR:
+		case Mips.COP0_REG_LLADDR:
 			// Ignore LLAddr writes
 			break;
-		case Instruction.COP0_REG_WATCHLO:
+		case Mips.COP0_REG_WATCHLO:
 			WatchLo = value;
 			break;
-		case Instruction.COP0_REG_WATCHHI:
+		case Mips.COP0_REG_WATCHHI:
 			WatchHi = value;
 			break;
-		case Instruction.COP0_REG_RESERVED2:
+		case Mips.COP0_REG_RESERVED2:
 			Reserved2 = value;
 			break;
-		case Instruction.COP0_REG_RESERVED3:
+		case Mips.COP0_REG_RESERVED3:
 			Reserved3 = value;
 			break;
-		case Instruction.COP0_REG_RESERVED4:
+		case Mips.COP0_REG_RESERVED4:
 			Reserved4 = value;
 			break;
-		case Instruction.COP0_REG_DEBUG:
+		case Mips.COP0_REG_DEBUG:
 			Debug = value;
 			break;
-		case Instruction.COP0_REG_DEPC:
+		case Mips.COP0_REG_DEPC:
 			DEPC = value;
 			break;
-		case Instruction.COP0_REG_RESERVED5:
+		case Mips.COP0_REG_RESERVED5:
 			Reserved5 = value;
 			break;
-		case Instruction.COP0_REG_ERRCTRL:
+		case Mips.COP0_REG_ERRCTRL:
 			ErrCtrl = value;
 			break;
-		case Instruction.COP0_REG_RESERVED6:
+		case Mips.COP0_REG_RESERVED6:
 			Reserved6 = value;
 			break;
-		case Instruction.COP0_REG_TAGLO:
+		case Mips.COP0_REG_TAGLO:
 			if (sel == 0) TagLo = value;
 			else DataLo = value;
 			break;
-		case Instruction.COP0_REG_RESERVED7:
+		case Mips.COP0_REG_RESERVED7:
 			Reserved7 = value;
 			break;
-		case Instruction.COP0_REG_ERROREPC:
+		case Mips.COP0_REG_ERROREPC:
 			ErrorEPC = value;
 			break;
-		case Instruction.COP0_REG_DESAVE:
+		case Mips.COP0_REG_DESAVE:
 			DESAVE = value;
 			break;
 		}
@@ -1857,103 +1857,103 @@ public final class Cpu {
 	public int getCop0Reg(int reg, int sel) {
 		int retval = 0;
 		switch(reg) {
-		case Instruction.COP0_REG_INDEX:
+		case Mips.COP0_REG_INDEX:
 			retval = Index;
 			break;
-		case Instruction.COP0_REG_RANDOM:
+		case Mips.COP0_REG_RANDOM:
 			retval = readRegisterRandom();
 			break;
-		case Instruction.COP0_REG_ENTRYLO0:
+		case Mips.COP0_REG_ENTRYLO0:
 			retval = EntryLo0;
 			break;
-		case Instruction.COP0_REG_ENTRYLO1:
+		case Mips.COP0_REG_ENTRYLO1:
 			retval = EntryLo1;
 			break;
-		case Instruction.COP0_REG_CONTEXT:
+		case Mips.COP0_REG_CONTEXT:
 			retval = Context;
 			break;
-		case Instruction.COP0_REG_PAGEMASK:
+		case Mips.COP0_REG_PAGEMASK:
 			retval = PageMask;
 			break;
-		case Instruction.COP0_REG_WIRED:
+		case Mips.COP0_REG_WIRED:
 			retval = Wired;
 			break;
-		case Instruction.COP0_REG_RESERVED1:
+		case Mips.COP0_REG_RESERVED1:
 			retval = Reserved1;
 			break;
-		case Instruction.COP0_REG_BADVADDR:
+		case Mips.COP0_REG_BADVADDR:
 			retval = BadVAddr;
 			break;
-		case Instruction.COP0_REG_COUNT:
+		case Mips.COP0_REG_COUNT:
 			retval = getCounter();
 			break;
-		case Instruction.COP0_REG_ENTRYHI:
+		case Mips.COP0_REG_ENTRYHI:
 			retval = EntryHi;
 			break;
-		case Instruction.COP0_REG_COMPARE:
+		case Mips.COP0_REG_COMPARE:
 			retval = Compare;
 			break;
-		case Instruction.COP0_REG_STATUS:
+		case Mips.COP0_REG_STATUS:
 			retval = Status;
 			break;
-		case Instruction.COP0_REG_CAUSE:
+		case Mips.COP0_REG_CAUSE:
 			checkTimerInterrupt(beforeCounter, getCounter());
 			retval = Cause;
 			break;
-		case Instruction.COP0_REG_EPC:
+		case Mips.COP0_REG_EPC:
 			retval = EPC;
 			break;
-		case Instruction.COP0_REG_PRID:
+		case Mips.COP0_REG_PRID:
 			retval = PRId;
 			break;
-		case Instruction.COP0_REG_CONFIG:
+		case Mips.COP0_REG_CONFIG:
 			if (sel == 0) retval = Config;
 			else retval = Config1;
 			break;
-		case Instruction.COP0_REG_LLADDR:
+		case Mips.COP0_REG_LLADDR:
 			retval = LLAddr;
 			break;
-		case Instruction.COP0_REG_WATCHLO:
+		case Mips.COP0_REG_WATCHLO:
 			retval = WatchLo;
 			break;
-		case Instruction.COP0_REG_WATCHHI:
+		case Mips.COP0_REG_WATCHHI:
 			retval = WatchHi;
 			break;
-		case Instruction.COP0_REG_RESERVED2:
+		case Mips.COP0_REG_RESERVED2:
 			retval = Reserved2;
 			break;
-		case Instruction.COP0_REG_RESERVED3:
+		case Mips.COP0_REG_RESERVED3:
 			retval = Reserved3;
 			break;
-		case Instruction.COP0_REG_RESERVED4:
+		case Mips.COP0_REG_RESERVED4:
 			retval = Reserved4;
 			break;
-		case Instruction.COP0_REG_DEBUG:
+		case Mips.COP0_REG_DEBUG:
 			retval = Debug;
 			break;
-		case Instruction.COP0_REG_DEPC:
+		case Mips.COP0_REG_DEPC:
 			retval = DEPC;
 			break;
-		case Instruction.COP0_REG_RESERVED5:
+		case Mips.COP0_REG_RESERVED5:
 			retval = Reserved5;
 			break;
-		case Instruction.COP0_REG_ERRCTRL:
+		case Mips.COP0_REG_ERRCTRL:
 			retval = ErrCtrl;
 			break;
-		case Instruction.COP0_REG_RESERVED6:
+		case Mips.COP0_REG_RESERVED6:
 			retval = Reserved6;
 			break;
-		case Instruction.COP0_REG_TAGLO:
+		case Mips.COP0_REG_TAGLO:
 			if (sel == 0) retval = TagLo;
 			else retval = DataLo;
 			break;
-		case Instruction.COP0_REG_RESERVED7:
+		case Mips.COP0_REG_RESERVED7:
 			retval = Reserved7;
 			break;
-		case Instruction.COP0_REG_ERROREPC:
+		case Mips.COP0_REG_ERROREPC:
 			retval = ErrorEPC;
 			break;
-		case Instruction.COP0_REG_DESAVE:
+		case Mips.COP0_REG_DESAVE:
 			retval = DESAVE;
 			break;
 		}

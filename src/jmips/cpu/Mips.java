@@ -1,6 +1,6 @@
 package jmips.cpu;
 
-public class Instruction {
+public class Mips {
 	// General purpose register constants
 	public static final int GPR_ZR = 0;  // Constant 0
 	public static final int GPR_AT = 1;  // Assembler temporary
