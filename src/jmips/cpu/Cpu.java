@@ -660,6 +660,7 @@ public final class Cpu {
 		for(int i = 0; i < count; i++) {
 			int opcode = load32(address + 4 * i);
 			if (memoryError == MEMORY_ERROR_NOERROR) {
+				sb.append(String.format("0x%08X: ", address + 4 * i));
 				sb.append(Mips.disassemble(opcode, address + 4 * i));
 			} else {
 				sb.append("Invalid memory location");
