@@ -23,6 +23,12 @@ public class PerformanceTest {
 		long time = System.currentTimeMillis();
 		for(int i = 0; i < 40000000; i++)
 			system.step(1);
+		tty.addInputString("root\n");
+		for(int i = 0; i < 1000000; i++)
+			system.step(1);
+		tty.addInputString("cd /\nls -laF -R\n");
+		for(int i = 0; i < 400000000; i++)
+			system.step(1);
 		time = System.currentTimeMillis() - time;
 
 		byte[] out = tty.getOutputBytes();

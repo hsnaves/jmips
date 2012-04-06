@@ -34,6 +34,12 @@ public class DummyTTY implements TTY {
 		inputBytes.add(b);
 	}
 
+	public void addInputString(String str) {
+		for(int i = 0; i < str.length(); i++) {
+			addInputByte((byte) str.charAt(i));
+		}
+	}
+
 	@Override
 	public void reset() {
 		inputBytes.clear();

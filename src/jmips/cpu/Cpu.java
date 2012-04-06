@@ -1661,6 +1661,10 @@ public final class Cpu {
 		random.setSeed(seed);
 	}
 
+	public long getRangomSeed() {
+		return random.getSeed();
+	}
+
 	private static int changeValue(int oldValue, int newValue, int mask) {
 		return (oldValue & ~ mask) | (newValue & mask);
 	}
