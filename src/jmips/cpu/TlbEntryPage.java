@@ -38,6 +38,23 @@ public final class TlbEntryPage {
 		this.valid = valid;
 	}
 
+	public int convertPageToEntryLo(boolean global) {
+		int entryLo = getPFN() >>> 6;
+		entryLo |= getCacheability() << Cpu.ENTRYLO_COHERENCY_SHIFT;
+		if (isDirty()) entryLo |= Cpu.ENTRYLO_DIRTY;
+		if (isValid()) entryLo |= Cpu.ENTRYLO_VALID;
+		if (global) entryLo |= Cpu.ENTRYLO_GLOBAL;
+		return entryLo;
+	}
+
+	public void configurePageFromEntryLo(int entryLo) {
+		setPFN((entryLo << 6) & 0xFFFFF000);
+		setCacheability((entryLo & Cpu.ENTRYLO_COHERENCY_MASK) >> Cpu.ENTRYLO_COHERENCY_SHIFT);
+		setDirty((entryLo & Cpu.ENTRYLO_DIRTY) != 0);
+		setValid((entryLo & Cpu.ENTRYLO_VALID) != 0);
+	}
+
+
 	@Override
 	public String toString() {
 		return String.format("PFN: %08X Cacheability: %d %s %s", PFN,

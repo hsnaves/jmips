@@ -67,6 +67,19 @@ public final class TlbEntry {
 		return page1;
 	}
 
+	public TlbEntryPage match(int address, int ASID) {
+		if ((getPageMask() & address) == getVPN2()) {
+			if (isGlobal() || getASID() == ASID) {
+				if ((address & getSelectionBit()) == 0) {
+					return getPage0();
+				} else {
+					return getPage1();
+				}
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

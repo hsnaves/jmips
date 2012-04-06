@@ -2096,7 +2096,7 @@ public final class Cpu {
 		TlbEntry tlbEntry = (data) ? lastTlbEntryData : lastTlbEntryCode;
 
 		if (tlbEntry.isInitialized()) {
-			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID);
+			tlbEntryPage = tlbEntry.match(address, ASID);
 			if (tlbEntryPage != null) {
 				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
 			}
@@ -2107,7 +2107,7 @@ public final class Cpu {
 			tlbEntry = tlbEntries[idx];
 
 			if (!tlbEntry.isInitialized()) continue;
-			tlbEntryPage = tlbMatchEntry(tlbEntry, address, ASID); 
+			tlbEntryPage = tlbEntry.match(address, ASID); 
 			if (tlbEntryPage != null) {
 				return tlbPageTranslate(tlbEntry, tlbEntryPage, address, write, data);
 			}
@@ -2123,18 +2123,6 @@ public final class Cpu {
 		return 0;
 	}
 
-	private TlbEntryPage tlbMatchEntry(TlbEntry entry, int address, int ASID) {
-		if ((entry.getPageMask() & address) == entry.getVPN2()) {
-			if (entry.isGlobal() || entry.getASID() == ASID) {
-				if ((address & entry.getSelectionBit()) == 0) {
-					return entry.getPage0();
-				} else {
-					return entry.getPage1();
-				}
-			}
-		}
-		return null;
-	}
 
 	private int tlbPageTranslate(TlbEntry tlbEntry, TlbEntryPage tlbEntryPage,
 	                             int address, boolean write, boolean data) {
@@ -2154,22 +2142,6 @@ public final class Cpu {
 		return address;
 	}
 
-	private int convertPageToEntryLo(TlbEntryPage page, boolean global) {
-		int entry = page.getPFN() >>> 6;
-		entry |= page.getCacheability() << ENTRYLO_COHERENCY_SHIFT;
-		if (page.isDirty()) entry |= ENTRYLO_DIRTY;
-		if (page.isValid()) entry |= ENTRYLO_VALID;
-		if (global) entry |= ENTRYLO_GLOBAL;
-		return entry;
-	}
-
-	private void configurePageFromEntryLo(TlbEntryPage page, int entry) {
-		page.setPFN((entry << 6) & 0xFFFFF000);
-		page.setCacheability((entry & ENTRYLO_COHERENCY_MASK) >> ENTRYLO_COHERENCY_SHIFT);
-		page.setDirty((entry & ENTRYLO_DIRTY) != 0);
-		page.setValid((entry & ENTRYLO_VALID) != 0);
-	}
-
 	private void tlbProbe() {
 		int ASID = EntryHi & ENTRYHI_ASID_MASK;
 		int VPN2 = EntryHi & ENTRYHI_VPN2_MASK;
@@ -2179,7 +2151,7 @@ public final class Cpu {
 			TlbEntryPage tlbEntryPage;
 
 			if (!tlbEntry.isInitialized()) continue;
-			tlbEntryPage = tlbMatchEntry(tlbEntry, VPN2, ASID); 
+			tlbEntryPage = tlbEntry.match(VPN2, ASID); 
 			if (tlbEntryPage != null) {
 				Index = idx;
 				return;
@@ -2191,8 +2163,8 @@ public final class Cpu {
 		TlbEntry entry = tlbEntries[Index & INDEX_MASK];
 		PageMask = (~entry.getPageMask()) & ENTRYHI_VPN2_MASK;
 		EntryHi = entry.getVPN2() | entry.getASID();
-		EntryLo0 = convertPageToEntryLo(entry.getPage0(), entry.isGlobal());
-		EntryLo1 = convertPageToEntryLo(entry.getPage1(), entry.isGlobal());
+		EntryLo0 = entry.getPage0().convertPageToEntryLo(entry.isGlobal());
+		EntryLo1 = entry.getPage1().convertPageToEntryLo(entry.isGlobal());
 	}
 
 	private void tlbWrite(int index) {
@@ -2221,10 +2193,8 @@ public final class Cpu {
 		tlbEntry.setASID(ASID);
 		tlbEntry.setGlobal(global);
 		tlbEntry.setSelectionBit(mask ^ (mask >> 1));
-		configurePageFromEntryLo(tlbEntry.getPage0(), EntryLo0);
-		configurePageFromEntryLo(tlbEntry.getPage1(), EntryLo1);
-		//System.out.printf("Idx: %d PageMask = 0x%08X, mask = 0x%08X\n", index, PageMask, mask);
-		//System.out.println(tlbEntry);
+		tlbEntry.getPage0().configurePageFromEntryLo(EntryLo0);
+		tlbEntry.getPage1().configurePageFromEntryLo(EntryLo1);
 	}
 
 	private void tlbWriteRandom() {
