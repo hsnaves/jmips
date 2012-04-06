@@ -872,6 +872,9 @@ public class Mips {
 		case I_SDC2:
 			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
 			break;
+		default:
+			disassembleReserved(sb, opcode, pc);
+			break;
 		}
 	}
 

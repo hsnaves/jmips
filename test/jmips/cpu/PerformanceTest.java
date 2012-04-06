@@ -17,9 +17,16 @@ public class PerformanceTest {
 		assertTrue(system.setDiskFile("disk.raw"));
 		system.setKernelCommandLine("root=/dev/sb1", loadAddress);
 		system.reset();
-		for(int i = 0; i < 25000000; i++)
+		for(int i = 0; i < 1000000; i++)
 			system.step(1);
+
+		long time = System.currentTimeMillis();
+		for(int i = 0; i < 40000000; i++)
+			system.step(1);
+		time = System.currentTimeMillis() - time;
+
 		byte[] out = tty.getOutputBytes();
 		System.out.println(new String(out));
+		System.out.println(time);
 	}
 }
