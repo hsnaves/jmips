@@ -1,9 +1,7 @@
 package jmips.cpu;
 
+import static jmips.cpu.Mips.*;
 import static org.junit.Assert.*;
-
-import jmips.MipsSystem;
-import jmips.serial.DummyTTY;
 
 import org.junit.Test;
 
@@ -11,8 +9,9 @@ public class CpuTest {
 	private static final int BASE_ADDRESS = 0x80100000;
 
 	private Cpu createCpu() {
-		MipsSystem system = new MipsSystem(new DummyTTY());
-		return system.getCpu();
+		Cpu cpu = new Cpu(4 * 1024 * 1024, null);
+		reset(cpu);
+		return cpu;
 	}
 
 	private void reset(Cpu cpu) {
@@ -20,26 +19,21 @@ public class CpuTest {
 		cpu.setPc(BASE_ADDRESS);
 	}
 
+	private int executeADD(Cpu cpu, int a, int b) {
+		reset(cpu);
+		cpu.setGpr(GPR_A0, a);
+		cpu.setGpr(GPR_A1, b);
+		cpu.setGpr(GPR_V0, 0);
+		cpu.add(ENCODE_ADD(GPR_V0, GPR_A0, GPR_A1));
+		return cpu.getGpr(GPR_V0);
+	}
+
 	@Test
 	public void testADD() {
 		Cpu cpu = createCpu();
 
-		reset(cpu);
-		cpu.write32(BASE_ADDRESS, 0x00851020); // add $v0,$a0,$a1
-		cpu.setGpr(Mips.GPR_A0, 1);
-		cpu.setGpr(Mips.GPR_A1, 2);
-		cpu.setGpr(Mips.GPR_V0, 0);
-		cpu.step();
-		assertEquals(BASE_ADDRESS + 4, cpu.getPc());
-		assertFalse(cpu.isBranchDelaySlot());
-		assertEquals(3, cpu.getGpr(Mips.GPR_V0));
-
-		reset(cpu);
-		cpu.setGpr(Mips.GPR_A0, 0x7FFFFFFF);
-		cpu.setGpr(Mips.GPR_A1, 2);
-		cpu.setGpr(Mips.GPR_V0, 0);
-		cpu.step();
-		assertEquals(0, cpu.getGpr(Mips.GPR_V0));
+		int val = executeADD(cpu, 1, 2);
+		assertEquals(3, val);
 	}
 
 	@Test

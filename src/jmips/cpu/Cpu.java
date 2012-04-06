@@ -1,5 +1,7 @@
 package jmips.cpu;
 
+import jmips.utils.ReadableSeedRandom;
+
 /**
  * Java implementation of a MIPS32 4Kc processor
  */
@@ -124,7 +126,7 @@ public final class Cpu {
 
 	private boolean loadLinkedStatus = false;
 
-	private long rand = 0;
+	private final ReadableSeedRandom random = new ReadableSeedRandom(0);
 	private final TlbEntry[] tlbEntries = new TlbEntry[NUM_TLB_ENTRIES];;
 	private TlbEntry lastTlbEntryCode;
 	private TlbEntry lastTlbEntryData;
@@ -622,7 +624,8 @@ public final class Cpu {
 			//System.out.print(disassemble(1));
 
 			pc = pc + 4;
-			microstep(opcode);
+			counter++;
+			stepMips(opcode);
 
 			if (delaySlot) {
 				int nextPc = npc;
@@ -631,7 +634,8 @@ public final class Cpu {
 				opcode = fetchOpcode();
 				if (memoryError == MEMORY_ERROR_NOERROR) {
 					pc = pc + 4;
-					microstep(opcode);
+					counter++;
+					stepMips(opcode);
 					if (delaySlot) {
 						pc = nextPc;
 					}
@@ -665,9 +669,7 @@ public final class Cpu {
 		return sb.toString();
 	}
 
-	private void microstep(int opcode) {
-		counter++;
-
+	public void stepMips(int opcode) {
 		switch (Mips.DECODE_OP(opcode)) {
 		case Mips.I_SPECIAL: stepSpecial(opcode); break;
 		case Mips.I_REGIMM:  stepRegImm(opcode); break;
@@ -846,7 +848,7 @@ public final class Cpu {
 		}
 	}
 
-	private void add(int opcode) {
+	public void add(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs + rt;
@@ -854,7 +856,7 @@ public final class Cpu {
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void addi(int opcode) {
+	public void addi(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		int result = rs + imm;
@@ -862,35 +864,35 @@ public final class Cpu {
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void addiu(int opcode) {
+	public void addiu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		int result = rs + imm;
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void addu(int opcode) {
+	public void addu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs + rt;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void and(int opcode) {
+	public void and(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs & rt;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void andi(int opcode) {
+	public void andi(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int immu = Mips.DECODE_IMM16U(opcode);
 		int result = rs & immu;
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void beq(int opcode) {
+	public void beq(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs == rt) {
@@ -898,7 +900,7 @@ public final class Cpu {
 		}
 	}
 
-	private void beql(int opcode) {
+	public void beql(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs == rt) {
@@ -908,14 +910,14 @@ public final class Cpu {
 		}
 	}
 
-	private void bgez(int opcode) {
+	public void bgez(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs >= 0) {
 			branch(opcode);
 		}
 	}
 
-	private void bgezal(int opcode) {
+	public void bgezal(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		link();
 		if (rs >= 0) {
@@ -923,7 +925,7 @@ public final class Cpu {
 		}
 	}
 
-	private void bgezall(int opcode) {
+	public void bgezall(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		link();
 		if (rs >= 0) {
@@ -933,7 +935,7 @@ public final class Cpu {
 		}
 	}
 
-	private void bgezl(int opcode) {
+	public void bgezl(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs >= 0) {
 			branch(opcode);
@@ -942,14 +944,14 @@ public final class Cpu {
 		}
 	}
 
-	private void bgtz(int opcode) {
+	public void bgtz(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs > 0) {
 			branch(opcode);
 		}
 	}
 
-	private void bgtzl(int opcode) {
+	public void bgtzl(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs > 0) {
 			branch(opcode);
@@ -958,14 +960,14 @@ public final class Cpu {
 		}
 	}
 
-	private void blez(int opcode) {
+	public void blez(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs <= 0) {
 			branch(opcode);
 		}
 	}
 
-	private void blezl(int opcode) {
+	public void blezl(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs <= 0) {
 			branch(opcode);
@@ -974,14 +976,14 @@ public final class Cpu {
 		}
 	}
 
-	private void bltz(int opcode) {
+	public void bltz(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs < 0) {
 			branch(opcode);
 		}
 	}
 
-	private void bltzal(int opcode) {
+	public void bltzal(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		link();
 		if (rs < 0) {
@@ -989,7 +991,7 @@ public final class Cpu {
 		}
 	}
 
-	private void bltzall(int opcode) {
+	public void bltzall(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		link();
 		if (rs < 0) {
@@ -999,7 +1001,7 @@ public final class Cpu {
 		}
 	}
 
-	private void bltzl(int opcode) {
+	public void bltzl(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		if (rs < 0) {
 			branch(opcode);
@@ -1008,7 +1010,7 @@ public final class Cpu {
 		}
 	}
 
-	private void bne(int opcode) {
+	public void bne(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs != rt) {
@@ -1016,7 +1018,7 @@ public final class Cpu {
 		}
 	}
 
-	private void bnel(int opcode) {
+	public void bnel(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs != rt) {
@@ -1026,31 +1028,31 @@ public final class Cpu {
 		}
 	}
 
-	private void break_(int opcode) {
+	public void break_(int opcode) {
 		exception_BREAK();
 	}
 
-	private void cache(int opcode) {
+	public void cache(int opcode) {
 		// No cache emulation is done
 	}
 
-	private void clo(int opcode) {
+	public void clo(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = Helper.countLeadingOnes(rs);
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void clz(int opcode) {
+	public void clz(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = Helper.countLeadingZeros(rs);
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void deret(int opcode) {
+	public void deret(int opcode) {
 		//TODO
 	}
 
-	private void div(int opcode) {
+	public void div(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rt == 0) {
@@ -1061,7 +1063,7 @@ public final class Cpu {
 		}
 	}
 
-	private void divu(int opcode) {
+	public void divu(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)] & 0xFFFFFFFFL;
 		long rt = gpr[Mips.DECODE_RT(opcode)] & 0xFFFFFFFFL;
 		if (rt == 0) {
@@ -1072,32 +1074,32 @@ public final class Cpu {
 		}
 	}
 
-	private void eret(int opcode) {
+	public void eret(int opcode) {
 		returnFromException();
 	}
 
-	private void j(int opcode) {
+	public void j(int opcode) {
 		npc = Mips.DECODE_JUMP(opcode, pc - 4);
 		delaySlot = true;
 	}
 
-	private void jal(int opcode) {
+	public void jal(int opcode) {
 		link();
 		j(opcode);
 	}
 
-	private void jalr(int opcode) {
+	public void jalr(int opcode) {
 		link(Mips.DECODE_RD(opcode));
 		jr(opcode);
 	}
 
-	private void jr(int opcode) {
+	public void jr(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		npc = rs;
 		delaySlot = true;
 	}
 
-	private void lb(int opcode) {
+	public void lb(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1107,7 +1109,7 @@ public final class Cpu {
 		}
 	}
 
-	private void lbu(int opcode) {
+	public void lbu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1117,7 +1119,7 @@ public final class Cpu {
 		}
 	}
 
-	private void lh(int opcode) {
+	public void lh(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1127,7 +1129,7 @@ public final class Cpu {
 		}
 	}
 
-	private void lhu(int opcode) {
+	public void lhu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1137,7 +1139,7 @@ public final class Cpu {
 		}
 	}
 
-	private void ll(int opcode) {
+	public void ll(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1147,13 +1149,13 @@ public final class Cpu {
 		}
 	}
 
-	private void lui(int opcode) {
+	public void lui(int opcode) {
 		int imm = Mips.DECODE_IMM16(opcode);
 		int result = imm << 16;
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void lw(int opcode) {
+	public void lw(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1163,7 +1165,7 @@ public final class Cpu {
 		}
 	}
 
-	private void lwl(int opcode) {
+	public void lwl(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1174,7 +1176,7 @@ public final class Cpu {
 		}
 	}
 
-	private void lwr(int opcode) {
+	public void lwr(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1185,7 +1187,7 @@ public final class Cpu {
 		}
 	}
 
-	private void madd(int opcode) {
+	public void madd(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)];
 		long rt = gpr[Mips.DECODE_RT(opcode)];
 		long hilo = (((long) hi) << 32) | ((long) lo);
@@ -1194,7 +1196,7 @@ public final class Cpu {
 		hi = (int) (result >> 32);
 	}
 
-	private void maddu(int opcode) {
+	public void maddu(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)] & 0xFFFFFFFFL;
 		long rt = gpr[Mips.DECODE_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) hi) << 32) | ((long) lo);
@@ -1203,22 +1205,22 @@ public final class Cpu {
 		hi = (int) (result >> 32);
 	}
 
-	private void mfc0(int opcode) {
+	public void mfc0(int opcode) {
 		int rt = Mips.DECODE_RT(opcode);
 		int rd = Mips.DECODE_RD(opcode);
 		int sel = Mips.DECODE_COP0SEL(opcode);
 		setGpr(rt, getCop0Reg(rd, sel));
 	}
 
-	private void mfhi(int opcode) {
+	public void mfhi(int opcode) {
 		setGpr(Mips.DECODE_RD(opcode), hi);
 	}
 
-	private void mflo(int opcode) {
+	public void mflo(int opcode) {
 		setGpr(Mips.DECODE_RD(opcode), lo);
 	}
 
-	private void movn(int opcode) {
+	public void movn(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rt != 0) {
 			int rs = gpr[Mips.DECODE_RS(opcode)];
@@ -1226,7 +1228,7 @@ public final class Cpu {
 		}
 	}
 
-	private void movz(int opcode) {
+	public void movz(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rt == 0) {
 			int rs = gpr[Mips.DECODE_RS(opcode)];
@@ -1234,7 +1236,7 @@ public final class Cpu {
 		}
 	}
 
-	private void msub(int opcode) {
+	public void msub(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)];
 		long rt = gpr[Mips.DECODE_RT(opcode)];
 		long hilo = (((long) hi) << 32) | ((long) lo);
@@ -1243,7 +1245,7 @@ public final class Cpu {
 		hi = (int) (result >> 32);
 	}
 
-	private void msubu(int opcode) {
+	public void msubu(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)] & 0xFFFFFFFFL;
 		long rt = gpr[Mips.DECODE_RT(opcode)] & 0xFFFFFFFFL;
 		long hilo = (((long) hi) << 32) | ((long) lo);
@@ -1252,24 +1254,24 @@ public final class Cpu {
 		hi = (int) (result >> 32);
 	}
 
-	private void mtc0(int opcode) {
+	public void mtc0(int opcode) {
 		int rt = Mips.DECODE_RT(opcode);
 		int rd = Mips.DECODE_RD(opcode);
 		int sel = Mips.DECODE_COP0SEL(opcode);
 		setCop0Reg(rd, sel, gpr[rt]);
 	}
 
-	private void mthi(int opcode) {
+	public void mthi(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		hi = rs;
 	}
 
-	private void mtlo(int opcode) {
+	public void mtlo(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		lo = rs;
 	}
 
-	private void mul(int opcode) {
+	public void mul(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs * rt;
@@ -1277,7 +1279,7 @@ public final class Cpu {
 		// hi = lo = 0; // Unpredictable
 	}
 
-	private void mult(int opcode) {
+	public void mult(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)];
 		long rt = gpr[Mips.DECODE_RT(opcode)];
 		long result = rs * rt;
@@ -1285,7 +1287,7 @@ public final class Cpu {
 		hi = (int) (result >> 32);
 	}
 
-	private void multu(int opcode) {
+	public void multu(int opcode) {
 		long rs = gpr[Mips.DECODE_RS(opcode)] & 0xFFFFFFFFL;
 		long rt = gpr[Mips.DECODE_RT(opcode)] & 0xFFFFFFFFL;
 		long result = rs * rt;
@@ -1293,32 +1295,32 @@ public final class Cpu {
 		hi = (int) (result >> 32);
 	}
 
-	private void nor(int opcode) {
+	public void nor(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = ~(rs | rt);
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void or(int opcode) {
+	public void or(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs | rt;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void ori(int opcode) {
+	public void ori(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int immu = Mips.DECODE_IMM16U(opcode);
 		int result = rs | immu;
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void pref(int opcode) {
+	public void pref(int opcode) {
 		//TODO
 	}
 
-	private void sb(int opcode) {
+	public void sb(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1326,7 +1328,7 @@ public final class Cpu {
 		write8(address, (byte) rt);
 	}
 
-	private void sc(int opcode) {
+	public void sc(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1337,11 +1339,11 @@ public final class Cpu {
 		}
 	}
 
-	private void sdbbp(int opcode) {
+	public void sdbbp(int opcode) {
 		//TODO
 	}
 
-	private void sh(int opcode) {
+	public void sh(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1349,77 +1351,77 @@ public final class Cpu {
 		write16(address, (short) rt);
 	}
 
-	private void sll(int opcode) {
+	public void sll(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int sa = Mips.DECODE_SA(opcode);
 		int result = rt << sa;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void sllv(int opcode) {
+	public void sllv(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = rt << rs;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void slt(int opcode) {
+	public void slt(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = (rs < rt) ? 1 : 0;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void slti(int opcode) {
+	public void slti(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		int result = (rs < imm) ? 1 : 0;
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void sltiu(int opcode) {
+	public void sltiu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		int result = (Helper.compareUnsigned(rs, imm) < 0) ? 1 : 0;
 		setGpr(Mips.DECODE_RT(opcode), result);
 	}
 
-	private void sltu(int opcode) {
+	public void sltu(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = (Helper.compareUnsigned(rs, rt) < 0) ? 1 : 0;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void sra(int opcode) {
+	public void sra(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int sa = Mips.DECODE_SA(opcode);
 		int result = rt >> sa;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void srav(int opcode) {
+	public void srav(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = rt >> rs;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void srl(int opcode) {
+	public void srl(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int sa = Mips.DECODE_SA(opcode);
 		int result = rt >>> sa;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void srlv(int opcode) {
+	public void srlv(int opcode) {
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int result = rt >>> rs;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void sub(int opcode) {
+	public void sub(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs - rt;
@@ -1427,14 +1429,14 @@ public final class Cpu {
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void subu(int opcode) {
+	public void subu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs - rt;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void sw(int opcode) {
+	public void sw(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1442,7 +1444,7 @@ public final class Cpu {
 		write32(address, rt);
 	}
 
-	private void swl(int opcode) {
+	public void swl(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1450,7 +1452,7 @@ public final class Cpu {
 		write32UnalignedLeft(address, rt);
 	}
 
-	private void swr(int opcode) {
+	public void swr(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int offset = Mips.DECODE_IMM16(opcode);
 		int address = rs + offset;
@@ -1458,15 +1460,15 @@ public final class Cpu {
 		write32UnalignedRight(address, rt);
 	}
 
-	private void sync(int opcode) {
+	public void sync(int opcode) {
 		// No cache emulation is done
 	}
 
-	private void syscall(int opcode) {
+	public void syscall(int opcode) {
 		exception_SYSCALL();
 	}
 
-	private void teq(int opcode) {
+	public void teq(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs == rt) {
@@ -1474,7 +1476,7 @@ public final class Cpu {
 		}
 	}
 
-	private void teqi(int opcode) {
+	public void teqi(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		if (rs == imm) {
@@ -1482,7 +1484,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tge(int opcode) {
+	public void tge(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs >= rt) {
@@ -1490,7 +1492,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tgei(int opcode) {
+	public void tgei(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		if (rs >= imm) {
@@ -1498,7 +1500,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tgeiu(int opcode) {
+	public void tgeiu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		if (Helper.compareUnsigned(rs, imm) >= 0) {
@@ -1506,7 +1508,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tgeu(int opcode) {
+	public void tgeu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (Helper.compareUnsigned(rs, rt) >= 0) {
@@ -1514,23 +1516,23 @@ public final class Cpu {
 		}
 	}
 
-	private void tlbp(int opcode) {
+	public void tlbp(int opcode) {
 		tlbProbe();
 	}
 
-	private void tlbr(int opcode) {
+	public void tlbr(int opcode) {
 		tlbRead();
 	}
 
-	private void tlbwi(int opcode) {
+	public void tlbwi(int opcode) {
 		tlbWriteIndex();
 	}
 
-	private void tlbwr(int opcode) {
+	public void tlbwr(int opcode) {
 		tlbWriteRandom();
 	}
 
-	private void tlt(int opcode) {
+	public void tlt(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs < rt) {
@@ -1538,7 +1540,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tlti(int opcode) {
+	public void tlti(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		if (rs < imm) {
@@ -1546,7 +1548,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tltiu(int opcode) {
+	public void tltiu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		if (Helper.compareUnsigned(rs, imm) < 0) {
@@ -1554,7 +1556,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tltu(int opcode) {
+	public void tltu(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (Helper.compareUnsigned(rs, rt) < 0) {
@@ -1562,7 +1564,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tne(int opcode) {
+	public void tne(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		if (rs != rt) {
@@ -1570,7 +1572,7 @@ public final class Cpu {
 		}
 	}
 
-	private void tnei(int opcode) {
+	public void tnei(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int imm = Mips.DECODE_IMM16(opcode);
 		if (rs != imm) {
@@ -1578,18 +1580,18 @@ public final class Cpu {
 		}
 	}
 
-	private void wait(int opcode) {
+	public void wait(int opcode) {
 		halted = true;
 	}
 
-	private void xor(int opcode) {
+	public void xor(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int rt = gpr[Mips.DECODE_RT(opcode)];
 		int result = rs ^ rt;
 		setGpr(Mips.DECODE_RD(opcode), result);
 	}
 
-	private void xori(int opcode) {
+	public void xori(int opcode) {
 		int rs = gpr[Mips.DECODE_RS(opcode)];
 		int immu = Mips.DECODE_IMM16U(opcode);
 		int result = rs ^ immu;
@@ -1650,29 +1652,11 @@ public final class Cpu {
 	}
 
 	private int readRegisterRandom() {
-		return Wired + nextRandomInteger(NUM_TLB_ENTRIES - Wired);
+		return Wired + random.nextRandomInt(NUM_TLB_ENTRIES - Wired);
 	}
 
 	public void setRandomSeed(long seed) {
-		this.rand = (seed ^ 0x5DEECE66DL) & ((1L << 48) - 1);
-	}
-
-	private int nextRandom(int bits) {
-		rand = (rand * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
-		return (int) (rand >>> (48 - bits));
-	}
-
-	private int nextRandomInteger(int n) {
-		if (n <= 0)
-			throw new IllegalArgumentException("n must be positive");
-		if ((n & -n) == n) // i.e., n is a power of 2
-			return (int) ((n * (long) nextRandom(31)) >> 31);
-		int bits, val;
-		do {
-			bits = nextRandom(31);
-			val = bits % n;
-		} while (bits - val + (n - 1) < 0);
-		return val;
+		random.setSeed(seed);
 	}
 
 	private static int changeValue(int oldValue, int newValue, int mask) {

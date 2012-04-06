@@ -381,7 +381,7 @@ public class Mips {
 					break;
 				case 'A': // Sync code
 					int syncCode = DECODE_SA(opcode);
-					if (syncCode != 0) sb.append(String.format("0x%X", syncCode));
+					if (syncCode != 0) sb.append(String.format("(0x%X)", syncCode));
 					break;
 				default:
 					sb.append(c);
@@ -565,10 +565,10 @@ public class Mips {
 			disassembleInstruction(sb, "mul %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_MSUB:
-			disassembleInstruction(sb, "msub %d, %s, %t", opcode, pc);
+			disassembleInstruction(sb, "msub %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_MSUBU:
-			disassembleInstruction(sb, "msubu %d, %s, %t", opcode, pc);
+			disassembleInstruction(sb, "msubu %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_CLZ:
 			disassembleInstruction(sb, "clz %d, %s", opcode, pc);
@@ -878,7 +878,6 @@ public class Mips {
 
 	public static String disassemble(int opcode, int pc) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("0x%08X: 0x%08X ", pc, opcode));
 		disassembleMips(sb, opcode, pc);
 		return sb.toString();
 	}
@@ -1074,7 +1073,7 @@ public class Mips {
 	}
 
 	public static int ENCODE_BLEZL(int rs, int target, int pc) {
-		int opcode = ENCODE_OP(I_BLEZ);
+		int opcode = ENCODE_OP(I_BLEZL);
 		opcode |= ENCODE_RS(rs);
 		opcode |= ENCODE_BRANCH(target, pc);
 		return opcode;
@@ -1183,7 +1182,7 @@ public class Mips {
 	}
 
 	public static int ENCODE_JAL(int target, int pc) {
-		int opcode = ENCODE_OP(I_J);
+		int opcode = ENCODE_OP(I_JAL);
 		opcode |= ENCODE_JUMP(target, pc);
 		return opcode;
 	}
