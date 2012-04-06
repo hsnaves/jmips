@@ -688,22 +688,15 @@ public final class Cpu {
 		case Mips.I_LUI:     lui(opcode); break;
 
 		case Mips.I_COP0:    stepCop0(opcode); break;
-		case 17: invalid(1); break;
-		case 18: invalid(2); break;
-		case 19: invalid(3); break;
+		case Mips.I_COP1:    invalid(1); break;
+		case Mips.I_COP2:    invalid(2); break;
+		case Mips.I_COP1X:   invalid(1); break;
 		case Mips.I_BEQL:    beql(opcode); break;
 		case Mips.I_BNEL:    bnel(opcode); break;
 		case Mips.I_BLEZL:   blezl(opcode); break;
 		case Mips.I_BGTZL:   bgtzl(opcode); break;
 
-		case 24: reserved(); break;
-		case 25: reserved(); break;
-		case 26: reserved(); break;
-		case 27: reserved(); break;
 		case Mips.I_SPECIAL2: stepSpecial2(opcode); break;
-		case 29: reserved(); break;
-		case 30: reserved(); break;
-		case 31: reserved(); break;
 
 		case Mips.I_LB:      lb(opcode); break;
 		case Mips.I_LH:      lh(opcode); break;
@@ -712,40 +705,36 @@ public final class Cpu {
 		case Mips.I_LBU:     lbu(opcode); break;
 		case Mips.I_LHU:     lhu(opcode); break;
 		case Mips.I_LWR:     lwr(opcode); break;
-		case 39: reserved(); break;
 
 		case Mips.I_SB:      sb(opcode); break;
 		case Mips.I_SH:      sh(opcode); break;
 		case Mips.I_SWL:     swl(opcode); break;
 		case Mips.I_SW:      sw(opcode); break;
-		case 44: reserved(); break;
-		case 45: reserved(); break;
 		case Mips.I_SWR:     swr(opcode); break;
-		case Mips.I_CACHE:   cache(opcode); break;
+		case Mips.I_CACHE:
+			if (checkCoprocessor(0))
+				cache(opcode);
+			break;
 
 		case Mips.I_LL:      ll(opcode); break;
-		case 49: reserved(); break; // ???
-		case 50: reserved(); break; // ???
+		case Mips.I_LWC1:    invalid(1); break;
+		case Mips.I_LWC2:    invalid(2); break;
 		case Mips.I_PREF:    pref(opcode); break;
-		case 52: reserved(); break;
-		case 53: reserved(); break; // ???
-		case 54: reserved(); break; // ???
-		case 55: reserved(); break;
+		case Mips.I_LDC1:    invalid(1); break;
+		case Mips.I_LDC2:    invalid(2); break;
 
 		case Mips.I_SC:      sc(opcode); break;
-		case 57: reserved(); break; // ???
-		case 58: reserved(); break; // ???
-		case 59: reserved(); break;
-		case 60: reserved(); break;
-		case 61: reserved(); break; // ???
-		case 62: reserved(); break; // ???
-		case 63: reserved(); break;
+		case Mips.I_SWC1:    invalid(1); break;
+		case Mips.I_SWC2:    invalid(2); break;
+		case Mips.I_SDC1:    invalid(1); break;
+		case Mips.I_SDC2:    invalid(2); break;
 		}
 	}
 
 	private void stepSpecial(int opcode) {
 		switch(Mips.DECODE_FUNCT(opcode)) {
 		case Mips.I_SPEC_SLL:     sll(opcode); break;
+		case Mips.I_SPEC_COP1:    invalid(1); break;
 
 		case Mips.I_SPEC_SRL:     srl(opcode); break;
 		case Mips.I_SPEC_SRA:     sra(opcode); break;
@@ -829,16 +818,18 @@ public final class Cpu {
 	}
 
 	private void stepCop0(int opcode) {
-		int rs = Mips.DECODE_RS(opcode);
-		switch(rs) {
-		case Mips.I_COP0_MFC0: mfc0(opcode); break;
-		case Mips.I_COP0_MTC0: mtc0(opcode); break;
-		default:
-			if (rs >= Mips.I_COP0_CO_MIN && rs <= Mips.I_COP0_CO_MAX)
-				stepCop0Co(opcode);
-			else
-				reserved();
-			break;
+		if (checkCoprocessor(0)) {
+			int rs = Mips.DECODE_RS(opcode);
+			switch(rs) {
+			case Mips.I_COP0_MFC0: mfc0(opcode); break;
+			case Mips.I_COP0_MTC0: mtc0(opcode); break;
+			default:
+				if (rs >= Mips.I_COP0_CO_MIN && rs <= Mips.I_COP0_CO_MAX)
+					stepCop0Co(opcode);
+				else
+					reserved();
+				break;
+			}
 		}
 	}
 
@@ -1040,9 +1031,7 @@ public final class Cpu {
 	}
 
 	private void cache(int opcode) {
-		if (checkCoprocessor(0)) {
-			// No cache emulation is done
-		}
+		// No cache emulation is done
 	}
 
 	private void clo(int opcode) {
@@ -1084,9 +1073,7 @@ public final class Cpu {
 	}
 
 	private void eret(int opcode) {
-		if (checkCoprocessor(0)) {
-			returnFromException();
-		}
+		returnFromException();
 	}
 
 	private void j(int opcode) {
@@ -1217,12 +1204,10 @@ public final class Cpu {
 	}
 
 	private void mfc0(int opcode) {
-		if (checkCoprocessor(0)) {
-			int rt = Mips.DECODE_RT(opcode);
-			int rd = Mips.DECODE_RD(opcode);
-			int sel = Mips.DECODE_COP0SEL(opcode);
-			setGpr(rt, getCop0Reg(rd, sel));
-		}
+		int rt = Mips.DECODE_RT(opcode);
+		int rd = Mips.DECODE_RD(opcode);
+		int sel = Mips.DECODE_COP0SEL(opcode);
+		setGpr(rt, getCop0Reg(rd, sel));
 	}
 
 	private void mfhi(int opcode) {
@@ -1268,12 +1253,10 @@ public final class Cpu {
 	}
 
 	private void mtc0(int opcode) {
-		if (checkCoprocessor(0)) {
-			int rt = Mips.DECODE_RT(opcode);
-			int rd = Mips.DECODE_RD(opcode);
-			int sel = Mips.DECODE_COP0SEL(opcode);
-			setCop0Reg(rd, sel, gpr[rt]);
-		}
+		int rt = Mips.DECODE_RT(opcode);
+		int rd = Mips.DECODE_RD(opcode);
+		int sel = Mips.DECODE_COP0SEL(opcode);
+		setCop0Reg(rd, sel, gpr[rt]);
 	}
 
 	private void mthi(int opcode) {
@@ -1532,27 +1515,19 @@ public final class Cpu {
 	}
 
 	private void tlbp(int opcode) {
-		if (checkCoprocessor(0)) {
-			tlbProbe();
-		}
+		tlbProbe();
 	}
 
 	private void tlbr(int opcode) {
-		if (checkCoprocessor(0)) {
-			tlbRead();
-		}
+		tlbRead();
 	}
 
 	private void tlbwi(int opcode) {
-		if (checkCoprocessor(0)) {
-			tlbWriteIndex();
-		}
+		tlbWriteIndex();
 	}
 
 	private void tlbwr(int opcode) {
-		if (checkCoprocessor(0)) {
-			tlbWriteRandom();
-		}
+		tlbWriteRandom();
 	}
 
 	private void tlt(int opcode) {
@@ -1604,9 +1579,7 @@ public final class Cpu {
 	}
 
 	private void wait(int opcode) {
-		if (checkCoprocessor(0)) {
-			halted = true;
-		}
+		halted = true;
 	}
 
 	private void xor(int opcode) {

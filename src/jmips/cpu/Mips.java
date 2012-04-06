@@ -4,9 +4,9 @@ public class Mips {
 	// General purpose register constants
 	public static final int GPR_ZR = 0;  // Constant 0
 	public static final int GPR_AT = 1;  // Assembler temporary
-	public static final int GPR_V0 = 2;  // First return register
-	public static final int GPR_V1 = 3;  // Second return register 
-	public static final int GPR_A0 = 4;  // Function arguments
+	public static final int GPR_V0 = 2;  // Return value from a function call
+	public static final int GPR_V1 = 3;
+	public static final int GPR_A0 = 4;  // First four parameter from a function call
 	public static final int GPR_A1 = 5;
 	public static final int GPR_A2 = 6;
 	public static final int GPR_A3 = 7;
@@ -133,6 +133,9 @@ public class Mips {
 	public static final int I_XORI     = 14;
 	public static final int I_LUI      = 15;
 	public static final int I_COP0     = 16;
+	public static final int I_COP1     = 17;
+	public static final int I_COP2     = 18;
+	public static final int I_COP1X    = 19;
 
 	public static final int I_BEQL     = 20;
 	public static final int I_BNEL     = 21;
@@ -157,12 +160,22 @@ public class Mips {
 	public static final int I_SWR      = 46;
 	public static final int I_CACHE    = 47;
 	public static final int I_LL       = 48;
-
+	public static final int I_LWC1     = 49;
+	public static final int I_LWC2     = 50;
 	public static final int I_PREF     = 51;
 
+	public static final int I_LDC1     = 53;
+	public static final int I_LDC2     = 54;
+
 	public static final int I_SC       = 56;
+	public static final int I_SWC1     = 57;
+	public static final int I_SWC2     = 58;
+
+	public static final int I_SDC1     = 61;
+	public static final int I_SDC2     = 62;
 
 	public static final int I_SPEC_SLL       = 0;
+	public static final int I_SPEC_COP1      = 1;
 
 	public static final int I_SPEC_SRL       = 2;
 	public static final int I_SPEC_SRA       = 3;
@@ -383,8 +396,8 @@ public class Mips {
 		sb.append("(reserved)");
 	}
 
-	private static void disassembleCoprocessorUnusable(StringBuilder sb, int opcode, int pc) {
-		sb.append("(coprocessor unusuable)");
+	private static void disassembleCoprocessorUnusable(StringBuilder sb, int opcode, int pc, int cop) {
+		sb.append(String.format("(coprocessor unusuable %d)", cop));
 	}
 
 	private static void disassembleSpecial(StringBuilder sb, int opcode, int pc) {
@@ -396,8 +409,8 @@ public class Mips {
 				disassembleInstruction(sb, "sll %d, %t, %a", opcode, pc);
 			}
 			break;
-		case 1:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_SPEC_COP1:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
 		case I_SPEC_SRL:
 			disassembleInstruction(sb, "srl %d, %t, %a", opcode, pc);
@@ -750,14 +763,14 @@ public class Mips {
 		case I_COP0:
 			disassembleCop0(sb, opcode, pc);
 			break;
-		case 17:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_COP1:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
-		case 18:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_COP2:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
 			break;
-		case 19:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_COP1X:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
 		case I_BEQL:
 			if (DECODE_RT(opcode) == 0) {
@@ -780,29 +793,8 @@ public class Mips {
 			disassembleInstruction(sb, "bgtzl %s, %b", opcode, pc);
 			break;
 
-		case 24:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 25:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 26:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 27:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 28:
+		case I_SPECIAL2:
 			disassembleSpecial2(sb, opcode, pc);
-			break;
-		case 29:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 30:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 31:
-			disassembleReserved(sb, opcode, pc);
 			break;
 
 		case I_LB:
@@ -826,9 +818,6 @@ public class Mips {
 		case I_LWR:
 			disassembleInstruction(sb, "lwr %t, %i(%s)", opcode, pc);
 			break;
-		case 39:
-			disassembleReserved(sb, opcode, pc);
-			break;
 
 		case I_SB:
 			disassembleInstruction(sb, "sb %t, %i(%s)", opcode, pc);
@@ -842,12 +831,6 @@ public class Mips {
 		case I_SW:
 			disassembleInstruction(sb, "sw %t, %i(%s)", opcode, pc);
 			break;
-		case 44:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 45:
-			disassembleReserved(sb, opcode, pc);
-			break;
 		case I_SWR:
 			disassembleInstruction(sb, "swr %t, %i(%s)", opcode, pc);
 			break;
@@ -858,51 +841,36 @@ public class Mips {
 		case I_LL:
 			disassembleInstruction(sb, "ll %t, %i(%s)", opcode, pc);
 			break;
-		case 49:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_LWC1:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
-		case 50:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_LWC2:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
 			break;
 		case I_PREF:
 			disassembleInstruction(sb, "pref %x, %i(%s)", opcode, pc);
 			break;
-		case 52:
-			disassembleReserved(sb, opcode, pc);
+		case I_LDC1:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
-		case 53:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
-			break;
-		case 54:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
-			break;
-		case 55:
-			disassembleReserved(sb, opcode, pc);
+		case I_LDC2:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
 			break;
 
 		case I_SC:
 			disassembleInstruction(sb, "sc %t, %i(%s)", opcode, pc);
 			break;
-		case 57:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_SWC1:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
-		case 58:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
+		case I_SWC2:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
 			break;
-		case 59:
-			disassembleReserved(sb, opcode, pc);
+		case I_SDC1:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
 			break;
-		case 60:
-			disassembleReserved(sb, opcode, pc);
-			break;
-		case 61:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
-			break;
-		case 62:
-			disassembleCoprocessorUnusable(sb, opcode, pc);
-			break;
-		case 63:
-			disassembleReserved(sb, opcode, pc);
+		case I_SDC2:
+			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
 			break;
 		}
 	}
@@ -921,22 +889,27 @@ public class Mips {
 	}
 
 	public static int ENCODE_FUNCT(int funct) {
+		funct &= 0x3f;
 		return funct;
 	}
 
 	public static int ENCODE_RS(int rs) {
+		rs &= 0x1f;
 		return (rs << 21);
 	}
 
 	public static int ENCODE_RT(int rt) {
+		rt &= 0x1f;
 		return (rt << 16);
 	}
 
 	public static int ENCODE_RD(int rd) {
+		rd &= 0x1f;
 		return (rd << 11);
 	}
 
 	public static int ENCODE_SA(int sa) {
+		sa &= 0x1f;
 		return (sa << 6);
 	}
 
@@ -953,42 +926,782 @@ public class Mips {
 		return ENCODE_IMM16(diff);
 	}
 
+	public static boolean IS_BRANCH_REACHABLE(int target, int pc) {
+		int diff = (target - pc - 4) >> 2;
+		return (((short) diff) == diff);
+	}
+
 	public static int ENCODE_JUMP(int target, int pc) {
 		return ((target >> 2) & 0x3FFFFFF);
 	}
 
+	public static boolean IS_JUMP_REACHABLE(int target, int pc) {
+		return ((pc & 0xF0000000) == (target & 0xF0000000));
+	}
+
 	public static int ENCODE_SYSCALLCODE(int code) {
+		code &= 0xFFFFF;
 		return (code << 6);
 	}
 
 	public static int ENCODE_TRAPCODE(int code) {
+		code &= 0x3FF;
 		return (code << 6);
 	}
 
 	public static int ENCODE_WAITCODE(int code) {
+		code &= 0x7FFFF;
 		return (code << 6);
 	}
 
 	public static int ENCODE_COP0SEL(int sel) {
+		sel &= 0x07;
 		return (sel);
 	}
 
 	// Function to generate opcodes for Mips
-	public static int I_ADD(int rd, int rs, int rt) {
-		int opcode = ENCODE_OP(0) | ENCODE_FUNCT(32);
+	public static int ENCODE_ADD(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_ADD);
 		opcode |= ENCODE_RD(rd);
 		opcode |= ENCODE_RS(rs);
 		opcode |= ENCODE_RT(rt);
 		return opcode;
 	}
 
-	// Function to generate opcodes for Mips
-	public static int I_ADDI(int rt, int rs, int imm) {
-		int opcode = ENCODE_OP(8);
+	public static int ENCODE_ADDI(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_ADDI);
 		opcode |= ENCODE_RT(rt);
 		opcode |= ENCODE_RS(rs);
 		opcode |= ENCODE_IMM16(imm);
 		return opcode;
 	}
 
+	public static int ENCODE_ADDIU(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_ADDIU);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_ADDU(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_ADDU);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_AND(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_AND);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_ANDI(int rt, int rs, int immu) {
+		int opcode = ENCODE_OP(I_ANDI);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16U(immu);
+		return opcode;
+	}
+
+	public static int ENCODE_BEQ(int rs, int rt, int target, int pc) {
+		int opcode = ENCODE_OP(I_BEQ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BEQL(int rs, int rt, int target, int pc) {
+		int opcode = ENCODE_OP(I_BEQL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BGEZ(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BGEZ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BGEZAL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BGEZAL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BGEZALL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BGEZALL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BGEZL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BGEZL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BGTZ(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_BGTZ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BGTZL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_BGTZL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BLEZ(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_BLEZ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BLEZL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_BLEZ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BLTZ(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BLTZ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BLTZAL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BLTZAL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BLTZALL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BLTZALL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BLTZL(int rs, int target, int pc) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_BLTZL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BNE(int rs, int rt, int target, int pc) {
+		int opcode = ENCODE_OP(I_BNE);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BNEL(int rs, int rt, int target, int pc) {
+		int opcode = ENCODE_OP(I_BNEL);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_BRANCH(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_BREAK(int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_BREAK);
+		opcode |= ENCODE_SYSCALLCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_CACHE(int op, int rs, int imm) {
+		int opcode = ENCODE_OP(I_CACHE);
+		opcode |= ENCODE_RT(op);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_CLO(int rd, int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_CLO);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_CLZ(int rd, int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_CLZ);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_DERET() {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_DERET);
+		return opcode;
+	}
+
+	public static int ENCODE_DIV(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_DIV);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_DIVU(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_DIVU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_ERET() {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_ERET);
+		return opcode;
+	}
+
+	public static int ENCODE_J(int target, int pc) {
+		int opcode = ENCODE_OP(I_J);
+		opcode |= ENCODE_JUMP(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_JAL(int target, int pc) {
+		int opcode = ENCODE_OP(I_J);
+		opcode |= ENCODE_JUMP(target, pc);
+		return opcode;
+	}
+
+	public static int ENCODE_JALR(int rd, int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_JALR);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_JR(int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_JR);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_LB(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LB);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LBU(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LBU);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LH(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LH);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LHU(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LHU);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LL(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LL);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LUI(int rt, int immu) {
+		int opcode = ENCODE_OP(I_LUI);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_IMM16U(immu);
+		return opcode;
+	}
+
+	public static int ENCODE_LW(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LW);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LWL(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LWL);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_LWR(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_LWR);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+
+	public static int ENCODE_MADD(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_MADD);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MADDU(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_MADDU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MFC0(int rt, int rd, int sel) {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_MFC0);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_COP0SEL(sel);
+		return opcode;
+	}
+
+	public static int ENCODE_MFHI(int rd) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MFHI);
+		opcode |= ENCODE_RD(rd);
+		return opcode;
+	}
+
+	public static int ENCODE_MFLO(int rd) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MFLO);
+		opcode |= ENCODE_RD(rd);
+		return opcode;
+	}
+
+	public static int ENCODE_MOVN(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MOVN);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MOVZ(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MOVZ);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MSUB(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_MSUB);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MSUBU(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_MSUBU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MTC0(int rt, int rd, int sel) {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_MTC0);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_COP0SEL(sel);
+		return opcode;
+	}
+
+	public static int ENCODE_MTHI(int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MTHI);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_MTLO(int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MTLO);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_MUL(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_MUL);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MULT(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MULT);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_MULTU(int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_MULTU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_NOR(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_NOR);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_OR(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_OR);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_ORI(int rt, int rs, int immu) {
+		int opcode = ENCODE_OP(I_ORI);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16U(immu);
+		return opcode;
+	}
+
+	public static int ENCODE_PREF(int op, int rs, int imm) {
+		int opcode = ENCODE_OP(I_PREF);
+		opcode |= ENCODE_RT(op);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SB(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SB);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SC(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SC);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SDBBP(int code) {
+		int opcode = ENCODE_OP(I_SPECIAL2) | ENCODE_FUNCT(I_SPEC2_SDBBP);
+		opcode |= ENCODE_SYSCALLCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_SH(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SH);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SLL(int rd, int rt, int sa) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SLL);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_SA(sa);
+		return opcode;
+	}
+
+	public static int ENCODE_SLLV(int rd, int rt, int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SLLV);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_SLT(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SLT);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_SLTI(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SLTI);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SLTIU(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SLTIU);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SLTU(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SLTU);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_SRA(int rd, int rt, int sa) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SRA);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_SA(sa);
+		return opcode;
+	}
+
+	public static int ENCODE_SRAV(int rd, int rt, int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SRAV);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_SRL(int rd, int rt, int sa) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SRL);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_SA(sa);
+		return opcode;
+	}
+
+	public static int ENCODE_SRLV(int rd, int rt, int rs) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SRLV);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		return opcode;
+	}
+
+	public static int ENCODE_SUB(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SUB);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_SUBU(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SUBU);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_SW(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SW);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SWL(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SWL);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SWR(int rt, int rs, int imm) {
+		int opcode = ENCODE_OP(I_SWR);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_SYNC(int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SYNC);
+		opcode |= ENCODE_SA(code);
+		return opcode;
+	}
+
+	public static int ENCODE_SYSCALL(int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_SYSCALL);
+		opcode |= ENCODE_SYSCALLCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TEQ(int rs, int rt, int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_TEQ);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_TRAPCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TEQI(int rs, int imm) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_TEQI);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_TGE(int rs, int rt, int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_TGE);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_TRAPCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TGEI(int rs, int imm) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_TGEI);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_TGEIU(int rs, int imm) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_TGEIU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_TGEU(int rs, int rt, int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_TGEU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_TRAPCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TLBP() {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_TLBP);
+		return opcode;
+	}
+
+	public static int ENCODE_TLBR() {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_TLBR);
+		return opcode;
+	}
+
+	public static int ENCODE_TLBWI() {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_TLBWI);
+		return opcode;
+	}
+
+	public static int ENCODE_TLBWR() {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_TLBWR);
+		return opcode;
+	}
+
+	public static int ENCODE_TLT(int rs, int rt, int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_TLT);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_TRAPCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TLTI(int rs, int imm) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_TLTI);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_TLTIU(int rs, int imm) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_TLTIU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_TLTU(int rs, int rt, int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_TLTU);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_TRAPCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TNE(int rs, int rt, int code) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_TNE);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_TRAPCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_TNEI(int rs, int imm) {
+		int opcode = ENCODE_OP(I_REGIMM) | ENCODE_RT(I_REGIMM_TNEI);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16(imm);
+		return opcode;
+	}
+
+	public static int ENCODE_WAIT(int code) {
+		int opcode = ENCODE_OP(I_COP0) | ENCODE_RS(I_COP0_CO_MIN) | ENCODE_FUNCT(I_COP0CO_WAIT);
+		opcode |= ENCODE_WAITCODE(code);
+		return opcode;
+	}
+
+	public static int ENCODE_XOR(int rd, int rs, int rt) {
+		int opcode = ENCODE_OP(I_SPECIAL) | ENCODE_FUNCT(I_SPEC_XOR);
+		opcode |= ENCODE_RD(rd);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_RT(rt);
+		return opcode;
+	}
+
+	public static int ENCODE_XORI(int rt, int rs, int immu) {
+		int opcode = ENCODE_OP(I_XORI);
+		opcode |= ENCODE_RT(rt);
+		opcode |= ENCODE_RS(rs);
+		opcode |= ENCODE_IMM16U(immu);
+		return opcode;
+	}
 }
