@@ -636,6 +636,7 @@ public final class Cpu {
 					pc = pc + 4;
 					counter++;
 					stepMips(opcode);
+					num--;
 					if (delaySlot) {
 						pc = nextPc;
 					}

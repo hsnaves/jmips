@@ -15,12 +15,12 @@ public final class Ram implements Device {
 
 	@Override
 	public int read32(int offset) {
-		return memory[offset >> 2];
+		return memory[offset >>> 2];
 	}
 
 	@Override
 	public void write32(int offset, int value) {
-		memory[offset >> 2] = value;
+		memory[offset >>> 2] = value;
 	}
 
 	@Override
