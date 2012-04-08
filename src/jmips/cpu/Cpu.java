@@ -13,7 +13,7 @@ public final class Cpu {
 	private int hi, lo;
 
 	private int pc, exceptionPc, nextPc;
-	private long counter;
+	private long counter, compare;
 
 	private boolean halted;
 	private int memoryError;
@@ -99,7 +99,11 @@ public final class Cpu {
 	}
 
 	public void setCounter(int counter) {
-		this.counter = (((long) counter) << 1);
+		this.counter = ((long) counter) << 1;
+	}
+
+	public void setCompare(int compare) {
+		this.compare = ((long) compare) << 1;
 	}
 
 	public boolean isBranchDelaySlot() {
@@ -539,19 +543,10 @@ public final class Cpu {
 
 			pc = nextPc;
 			nextPc += 4;
-
 			stepMips(opcode);
 			exceptionPc = pc;
 		}
-
-		int before = getCounter();
-		if (num > 0) counter += num;
-		int after = getCounter();
-		int diff = cop0.getCompareRegister() - before;
-		if (diff > 0 && (after - before) >= diff) {
-			raiseIrq(TIMER_IRQ, true);
-			cop0.checkInterrupts(this);
-		}
+		checkTimerInterrupt(num);
 	}
 
 	public String disassemble(int count) {
@@ -1561,14 +1556,22 @@ public final class Cpu {
 		}
 	}
 
-	public boolean checkTimerInterrupt() {
-		if (((long) cop0.getCompareRegister()) * 2  == counter) {
+	public void checkTimerInterrupt() {
+		if ((int) compare  == (int) counter) {
 			raiseIrq(TIMER_IRQ, true);
 			cop0.checkInterrupts(this);
-			return true;
-		} else {
+		}
+	}
+
+	public void checkTimerInterrupt(int num) {
+		if (num <= 0) return;
+		long before = counter & 0xFFFFFFFFL;
+		counter += num;
+		long after = counter & 0xFFFFFFFFL;
+		long compare = this.compare & 0xFFFFFFFFL;
+		if (before < compare && after >= compare) {
+			raiseIrq(TIMER_IRQ, true);
 			cop0.checkInterrupts(this);
-			return false;
 		}
 	}
 }

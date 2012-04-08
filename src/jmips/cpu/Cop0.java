@@ -97,10 +97,12 @@ public class Cop0 {
 				cpu.setCounter(value);
 				break;
 			case COP0_COMPARE:
+				cpu.setCompare(value);
 				raiseIrq(TIMER_IRQ, false);
 				break;
 			case COP0_STATUS:
 				updateModes(cpu, value);
+				checkInterrupts(cpu);
 				break;
 			case COP0_CAUSE:
 				checkInterrupts(cpu);
@@ -127,10 +129,6 @@ public class Cop0 {
 			break;
 		}
 		return retval;
-	}
-
-	public int getCompareRegister() {
-		return regs[COP0_COMPARE];
 	}
 
 	public void setLoadLinkedRegister(int address) {
@@ -284,6 +282,7 @@ public class Cop0 {
 		}
 		cpu.setPc(pc);
 		cpu.setLoadLinkedStatus(false);
+		checkInterrupts(cpu);
 	}
 
 	public void raiseIrq(int irqno, boolean raise) {
