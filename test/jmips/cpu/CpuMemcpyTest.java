@@ -15,7 +15,7 @@ public class CpuMemcpyTest {
 
 	private void reset(Cpu cpu) {
 		cpu.reset();
-		cpu.setPc(BASE_ADDRESS, true);
+		cpu.setPc(BASE_ADDRESS);
 	}
 
 	private void testMemcpyJava() {

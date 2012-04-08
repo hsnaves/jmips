@@ -366,7 +366,7 @@ public final class GdbStub {
 		case 34: cpu.setHi(val); break;
 		case 35: cpu.setCop0Reg(Mips.COP0_BADVADDR, 0, val); break;
 		case 36: cpu.setCop0Reg(Mips.COP0_CAUSE, 0, val); break;
-		case 37: cpu.setPc(val, true); break;
+		case 37: cpu.setPc(val); break;
 		}
 	}
 

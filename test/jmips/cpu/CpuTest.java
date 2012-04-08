@@ -16,7 +16,7 @@ public class CpuTest {
 
 	private void reset(Cpu cpu) {
 		cpu.reset();
-		cpu.setPc(BASE_ADDRESS, true);
+		cpu.setPc(BASE_ADDRESS);
 	}
 
 	private int executeADD(Cpu cpu, int a, int b) {

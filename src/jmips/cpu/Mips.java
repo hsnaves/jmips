@@ -1,5 +1,7 @@
 package jmips.cpu;
 
+import jmips.cpu.disasm.LabelResolver;
+
 public class Mips {
 	// General purpose register constants
 	public static final int GPR_ZR = 0;  // Constant 0
@@ -389,7 +391,22 @@ public class Mips {
 
 
 	// Disassemble functions
-	private static void disassembleInstruction(StringBuilder sb, String format, int opcode, int pc) {
+	private static void printResolvedAddress(LabelResolver resolver, StringBuilder sb, int address) {
+		if (resolver != null) {
+			int nearestAddress = resolver.findNearestSymbolAddress(address);
+			if (nearestAddress != 0) {
+				String symbolName = resolver.resolveSymbolByAddress(nearestAddress);
+				address -= nearestAddress;
+				sb.append(symbolName).append("+").append(address);
+			} else {
+				sb.append(String.format("0x%08X", address));
+			}
+		} else {
+			sb.append(String.format("0x%08X", address));
+		}
+	}
+
+	private static void disassembleInstruction(LabelResolver resolver, StringBuilder sb, String format, int opcode, int pc) {
 		for(int i = 0; i < format.length(); i++) {
 			char c = format.charAt(i);
 			if (c == '%') {
@@ -409,10 +426,10 @@ public class Mips {
 					sb.append(REGISTER_NAMES[DECODE_RD(opcode)]);
 					break;
 				case 'b': // Branch target
-					sb.append(String.format("0x%08X", DECODE_BRANCH(opcode, pc)));
+					printResolvedAddress(resolver, sb, DECODE_BRANCH(opcode, pc));
 					break;
 				case 'j': // Jump target
-					sb.append(String.format("0x%08X", DECODE_JUMP(opcode, pc)));
+					printResolvedAddress(resolver, sb, DECODE_JUMP(opcode, pc));
 					break;
 				case 'i': // Signed immediate
 					sb.append(DECODE_IMM16(opcode));
@@ -463,497 +480,507 @@ public class Mips {
 		}
 	}
 
-	private static void disassembleReserved(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleReserved(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		sb.append("(reserved)");
 	}
 
-	private static void disassembleCoprocessorUnusable(StringBuilder sb, int opcode, int pc, int cop) {
+	private static void disassembleCoprocessorUnusable(LabelResolver resolver, StringBuilder sb, int opcode, int pc, int cop) {
 		sb.append(String.format("(coprocessor unusuable %d)", cop));
 	}
 
-	private static void disassembleSpecial(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleSpecial(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		switch(DECODE_FUNCT(opcode)) {
 		case I_SPEC_SLL:
-			if (opcode == 0) disassembleInstruction(sb, "nop", opcode, pc);
-			else if (opcode == 0x40) disassembleInstruction(sb, "ssnop", opcode, pc);
+			if (opcode == 0) disassembleInstruction(resolver, sb,"nop", opcode, pc);
+			else if (opcode == 0x40) disassembleInstruction(resolver, sb,"ssnop", opcode, pc);
 			else {
-				disassembleInstruction(sb, "sll %d, %t, %a", opcode, pc);
+				disassembleInstruction(resolver, sb,"sll %d, %t, %a", opcode, pc);
 			}
 			break;
 		case I_SPEC_COP1:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_SPEC_SRL:
-			disassembleInstruction(sb, "srl %d, %t, %a", opcode, pc);
+			disassembleInstruction(resolver, sb,"srl %d, %t, %a", opcode, pc);
 			break;
 		case I_SPEC_SRA:
-			disassembleInstruction(sb, "sra %d, %t, %a", opcode, pc);
+			disassembleInstruction(resolver, sb,"sra %d, %t, %a", opcode, pc);
 			break;
 		case I_SPEC_SLLV:
-			disassembleInstruction(sb, "sllv %d, %t, %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"sllv %d, %t, %s", opcode, pc);
 			break;
 		case I_SPEC_SRLV:
-			disassembleInstruction(sb, "srlv %d, %t, %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"srlv %d, %t, %s", opcode, pc);
 			break;
 		case I_SPEC_SRAV:
-			disassembleInstruction(sb, "srav %d, %t, %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"srav %d, %t, %s", opcode, pc);
 			break;
 
 		case I_SPEC_JR:
-			disassembleInstruction(sb, "jr %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"jr %s", opcode, pc);
 			break;
 		case I_SPEC_JALR:
-			disassembleInstruction(sb, "jalr %d, %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"jalr %d, %s", opcode, pc);
 			break;
 		case I_SPEC_MOVZ:
-			disassembleInstruction(sb, "movz %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"movz %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC_MOVN:
-			disassembleInstruction(sb, "movn %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"movn %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC_SYSCALL:
-			disassembleInstruction(sb, "syscall %S", opcode, pc);
+			disassembleInstruction(resolver, sb,"syscall %S", opcode, pc);
 			break;
 		case I_SPEC_BREAK:
-			disassembleInstruction(sb, "break %S", opcode, pc);
+			disassembleInstruction(resolver, sb,"break %S", opcode, pc);
 			break;
 		case I_SPEC_SYNC:
-			disassembleInstruction(sb, "sync %A", opcode, pc);
+			disassembleInstruction(resolver, sb,"sync %A", opcode, pc);
 			break;
 
 		case I_SPEC_MFHI:
-			disassembleInstruction(sb, "mfhi %d", opcode, pc);
+			disassembleInstruction(resolver, sb,"mfhi %d", opcode, pc);
 			break;
 		case I_SPEC_MTHI:
-			disassembleInstruction(sb, "mthi %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"mthi %s", opcode, pc);
 			break;
 		case I_SPEC_MFLO:
-			disassembleInstruction(sb, "mflo %d", opcode, pc);
+			disassembleInstruction(resolver, sb,"mflo %d", opcode, pc);
 			break;
 		case I_SPEC_MTLO:
-			disassembleInstruction(sb, "mtlo %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"mtlo %s", opcode, pc);
 			break;
 
 		case I_SPEC_MULT:
-			disassembleInstruction(sb, "mult %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"mult %s, %t", opcode, pc);
 			break;
 		case I_SPEC_MULTU:
-			disassembleInstruction(sb, "multu %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"multu %s, %t", opcode, pc);
 			break;
 		case I_SPEC_DIV:
-			disassembleInstruction(sb, "div %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"div %s, %t", opcode, pc);
 			break;
 		case I_SPEC_DIVU:
-			disassembleInstruction(sb, "divu %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"divu %s, %t", opcode, pc);
 			break;
 
 		case I_SPEC_ADD:
-			disassembleInstruction(sb, "add %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"add %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC_ADDU:
 			if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "move %d, %s", opcode, pc);
+				disassembleInstruction(resolver, sb,"move %d, %s", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "addu %d, %s, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"addu %d, %s, %t", opcode, pc);
 			}
 			break;
 		case I_SPEC_SUB:
 			if (DECODE_RS(opcode) == 0) {
-				disassembleInstruction(sb, "neg %d, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"neg %d, %t", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "sub %d, %s, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"sub %d, %s, %t", opcode, pc);
 			}
 			break;
 		case I_SPEC_SUBU:
 			if (DECODE_RS(opcode) == 0) {
-				disassembleInstruction(sb, "negu %d, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"negu %d, %t", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "subu %d, %s, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"subu %d, %s, %t", opcode, pc);
 			}
 			break;
 		case I_SPEC_AND:
-			disassembleInstruction(sb, "and %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"and %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC_OR:
 			if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "move %d, %s", opcode, pc);
+				disassembleInstruction(resolver, sb,"move %d, %s", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "or %d, %s, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"or %d, %s, %t", opcode, pc);
 			}
 			break;
 		case I_SPEC_XOR:
-			disassembleInstruction(sb, "xor %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"xor %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC_NOR:
 			if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "not %d, %s", opcode, pc);
+				disassembleInstruction(resolver, sb,"not %d, %s", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "nor %d, %s, %t", opcode, pc);
+				disassembleInstruction(resolver, sb,"nor %d, %s, %t", opcode, pc);
 			}
 			break;
 
 		case I_SPEC_SLT:
-			disassembleInstruction(sb, "slt %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"slt %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC_SLTU:
-			disassembleInstruction(sb, "sltu %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"sltu %d, %s, %t", opcode, pc);
 			break;
 
 		case I_SPEC_TGE:
-			disassembleInstruction(sb, "tge %s, %t %T", opcode, pc);
+			disassembleInstruction(resolver, sb,"tge %s, %t %T", opcode, pc);
 			break;
 		case I_SPEC_TGEU:
-			disassembleInstruction(sb, "tgeu %s, %t %T", opcode, pc);
+			disassembleInstruction(resolver, sb,"tgeu %s, %t %T", opcode, pc);
 			break;
 		case I_SPEC_TLT:
-			disassembleInstruction(sb, "tlt %s, %t %T", opcode, pc);
+			disassembleInstruction(resolver, sb,"tlt %s, %t %T", opcode, pc);
 			break;
 		case I_SPEC_TLTU:
-			disassembleInstruction(sb, "tltu %s, %t %T", opcode, pc);
+			disassembleInstruction(resolver, sb,"tltu %s, %t %T", opcode, pc);
 			break;
 		case I_SPEC_TEQ:
-			disassembleInstruction(sb, "teq %s, %t %T", opcode, pc);
+			disassembleInstruction(resolver, sb,"teq %s, %t %T", opcode, pc);
 			break;
 		case I_SPEC_TNE:
-			disassembleInstruction(sb, "tne %s, %t %T", opcode, pc);
+			disassembleInstruction(resolver, sb,"tne %s, %t %T", opcode, pc);
 			break;
 
 		default:
-			disassembleReserved(sb, opcode, pc);
+			disassembleReserved(resolver, sb,opcode, pc);
 			break;
 		}
 	}
 
-	private static void disassembleSpecial2(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleSpecial2(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		switch(DECODE_FUNCT(opcode)) {
 		case I_SPEC2_MADD:
-			disassembleInstruction(sb, "madd %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"madd %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_MADDU:
-			disassembleInstruction(sb, "maddu %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"maddu %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_MUL:
-			disassembleInstruction(sb, "mul %d, %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"mul %d, %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_MSUB:
-			disassembleInstruction(sb, "msub %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"msub %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_MSUBU:
-			disassembleInstruction(sb, "msubu %s, %t", opcode, pc);
+			disassembleInstruction(resolver, sb,"msubu %s, %t", opcode, pc);
 			break;
 		case I_SPEC2_CLZ:
-			disassembleInstruction(sb, "clz %d, %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"clz %d, %s", opcode, pc);
 			break;
 		case I_SPEC2_CLO:
-			disassembleInstruction(sb, "clo %d, %s", opcode, pc);
+			disassembleInstruction(resolver, sb,"clo %d, %s", opcode, pc);
 			break;
 		case I_SPEC2_SDBBP:
-			disassembleInstruction(sb, "sdbbp %S", opcode, pc);
+			disassembleInstruction(resolver, sb,"sdbbp %S", opcode, pc);
 			break;
 		default:
-			disassembleReserved(sb, opcode, pc);
+			disassembleReserved(resolver, sb,opcode, pc);
 			break;
 		}
 	}
 
-	private static void disassembleRegImm(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleRegImm(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		switch(DECODE_RT(opcode)) {
 		case I_REGIMM_BLTZ:
-			disassembleInstruction(sb, "bltz %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bltz %s, %b", opcode, pc);
 			break;
 		case I_REGIMM_BGEZ:
 			if (DECODE_RS(opcode) == 0) {
-				disassembleInstruction(sb, "b %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"b %b", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "bgez %s, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bgez %s, %b", opcode, pc);
 			}
 			break;
 		case I_REGIMM_BLTZL:
-			disassembleInstruction(sb, "bltzl %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bltzl %s, %b", opcode, pc);
 			break;
 		case I_REGIMM_BGEZL:
-			disassembleInstruction(sb, "bgezl %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bgezl %s, %b", opcode, pc);
 			break;
 		case I_REGIMM_TGEI:
-			disassembleInstruction(sb, "tgei %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"tgei %s, %i", opcode, pc);
 			break;
 		case I_REGIMM_TGEIU:
-			disassembleInstruction(sb, "tgeiu %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"tgeiu %s, %i", opcode, pc);
 			break;
 		case I_REGIMM_TLTI:
-			disassembleInstruction(sb, "tlti %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"tlti %s, %i", opcode, pc);
 			break;
 		case I_REGIMM_TLTIU:
-			disassembleInstruction(sb, "tltiu %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"tltiu %s, %i", opcode, pc);
 			break;
 		case I_REGIMM_TEQI:
-			disassembleInstruction(sb, "teqi %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"teqi %s, %i", opcode, pc);
 			break;
 		case I_REGIMM_TNEI:
-			disassembleInstruction(sb, "tnei %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"tnei %s, %i", opcode, pc);
 			break;
 		case I_REGIMM_BLTZAL:
-			disassembleInstruction(sb, "bltzal %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bltzal %s, %b", opcode, pc);
 			break;
 		case I_REGIMM_BGEZAL:
 			if (DECODE_RS(opcode) == 0) {
-				disassembleInstruction(sb, "bal %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bal %b", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "bgezal %s, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bgezal %s, %b", opcode, pc);
 			}
 			break;
 		case I_REGIMM_BLTZALL:
-			disassembleInstruction(sb, "bltzall %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bltzall %s, %b", opcode, pc);
 			break;
 		case I_REGIMM_BGEZALL:
-			disassembleInstruction(sb, "bgezall %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bgezall %s, %b", opcode, pc);
 			break;
 		default:
-			disassembleReserved(sb, opcode, pc);
+			disassembleReserved(resolver, sb,opcode, pc);
 			break;
 		}
 	}
 
-	private static void disassembleCop0Co(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleCop0Co(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		switch(DECODE_FUNCT(opcode)) {
 		case I_COP0CO_TLBR:
-			disassembleInstruction(sb, "tlbr", opcode, pc);
+			disassembleInstruction(resolver, sb,"tlbr", opcode, pc);
 			break;
 		case I_COP0CO_TLBWI:
-			disassembleInstruction(sb, "tlbwi", opcode, pc);
+			disassembleInstruction(resolver, sb,"tlbwi", opcode, pc);
 			break;
 		case I_COP0CO_TLBWR:
-			disassembleInstruction(sb, "tlbwr", opcode, pc);
+			disassembleInstruction(resolver, sb,"tlbwr", opcode, pc);
 			break;
 		case I_COP0CO_TLBP:
-			disassembleInstruction(sb, "tlbp", opcode, pc);
+			disassembleInstruction(resolver, sb,"tlbp", opcode, pc);
 			break;
 		case I_COP0CO_ERET:
-			disassembleInstruction(sb, "eret", opcode, pc);
+			disassembleInstruction(resolver, sb,"eret", opcode, pc);
 			break;
 		case I_COP0CO_DERET:
-			disassembleInstruction(sb, "deret", opcode, pc);
+			disassembleInstruction(resolver, sb,"deret", opcode, pc);
 			break;
 		case I_COP0CO_WAIT:
-			disassembleInstruction(sb, "wait %W", opcode, pc);
+			disassembleInstruction(resolver, sb,"wait %W", opcode, pc);
 			break;
 		default:
-			disassembleReserved(sb, opcode, pc);
+			disassembleReserved(resolver, sb,opcode, pc);
 			break;
 		}
 	}
 
-	private static void disassembleCop0(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleCop0(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		int rs = DECODE_RS(opcode);
 		switch(rs) {
 		case I_COP0_MFC0:
-			disassembleInstruction(sb, "mfc0 %t, %C", opcode, pc);
+			disassembleInstruction(resolver, sb,"mfc0 %t, %C", opcode, pc);
 			break;
 		case I_COP0_MTC0:
-			disassembleInstruction(sb, "mtc0 %t, %C", opcode, pc);
+			disassembleInstruction(resolver, sb,"mtc0 %t, %C", opcode, pc);
 			break;
 		default:
 			if (rs >= I_COP0_CO_MIN && rs <= I_COP0_CO_MAX)
-				disassembleCop0Co(sb, opcode, pc);
+				disassembleCop0Co(resolver, sb,opcode, pc);
 			else
-				disassembleReserved(sb, opcode, pc);
+				disassembleReserved(resolver, sb,opcode, pc);
 			break;
 		}
 	}
 
-	private static void disassembleMips(StringBuilder sb, int opcode, int pc) {
+	private static void disassembleMips(LabelResolver resolver, StringBuilder sb, int opcode, int pc) {
 		switch (DECODE_OP(opcode)) {
 		case I_SPECIAL:
-			disassembleSpecial(sb, opcode, pc);
+			disassembleSpecial(resolver, sb,opcode, pc);
 			break;
 		case I_REGIMM:
-			disassembleRegImm(sb, opcode, pc);
+			disassembleRegImm(resolver, sb,opcode, pc);
 			break;
 		case I_J:
-			disassembleInstruction(sb, "j %j", opcode, pc);
+			disassembleInstruction(resolver, sb,"j %j", opcode, pc);
 			break;
 		case I_JAL:
-			disassembleInstruction(sb, "jal %j", opcode, pc);
+			disassembleInstruction(resolver, sb,"jal %j", opcode, pc);
 			break;
 		case I_BEQ:
 			if (DECODE_RS(opcode) == 0 && DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "b %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"b %b", opcode, pc);
 			} else if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "beqz %s, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"beqz %s, %b", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "beq %s, %t, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"beq %s, %t, %b", opcode, pc);
 			}
 			break;
 		case I_BNE:
 			if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "bnez %s, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bnez %s, %b", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "bne %s, %t, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bne %s, %t, %b", opcode, pc);
 			}
 			break;
 		case I_BLEZ:
-			disassembleInstruction(sb, "blez %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"blez %s, %b", opcode, pc);
 			break;
 		case I_BGTZ:
-			disassembleInstruction(sb, "bgtz %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bgtz %s, %b", opcode, pc);
 			break;
 
 		case I_ADDI:
-			disassembleInstruction(sb, "addi %t, %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"addi %t, %s, %i", opcode, pc);
 			break;
 		case I_ADDIU:
 			if (DECODE_RS(opcode) == 0) {
-				disassembleInstruction(sb, "li %t, %i", opcode, pc);
+				disassembleInstruction(resolver, sb,"li %t, %i", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "addiu %t, %s, %i", opcode, pc);
+				disassembleInstruction(resolver, sb,"addiu %t, %s, %i", opcode, pc);
 			}
 			break;
 		case I_SLTI:
-			disassembleInstruction(sb, "slti %t, %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"slti %t, %s, %i", opcode, pc);
 			break;
 		case I_SLTIU:
-			disassembleInstruction(sb, "sltiu %t, %s, %i", opcode, pc);
+			disassembleInstruction(resolver, sb,"sltiu %t, %s, %i", opcode, pc);
 			break;
 		case I_ANDI:
-			disassembleInstruction(sb, "andi %t, %s, %I", opcode, pc);
+			disassembleInstruction(resolver, sb,"andi %t, %s, %I", opcode, pc);
 			break;
 		case I_ORI:
 			if (DECODE_RS(opcode) == 0) {
-				disassembleInstruction(sb, "li %t, %I", opcode, pc);
+				disassembleInstruction(resolver, sb,"li %t, %I", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "ori %t, %s, %I", opcode, pc);
+				disassembleInstruction(resolver, sb,"ori %t, %s, %I", opcode, pc);
 			}
 			break;
 		case I_XORI:
-			disassembleInstruction(sb, "xori %t, %s, %I", opcode, pc);
+			disassembleInstruction(resolver, sb,"xori %t, %s, %I", opcode, pc);
 			break;
 		case I_LUI:
-			disassembleInstruction(sb, "lui %t, %I", opcode, pc);
+			disassembleInstruction(resolver, sb,"lui %t, %I", opcode, pc);
 			break;
 
 		case I_COP0:
-			disassembleCop0(sb, opcode, pc);
+			disassembleCop0(resolver, sb,opcode, pc);
 			break;
 		case I_COP1:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_COP2:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 2);
 			break;
 		case I_COP1X:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_BEQL:
 			if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "beqzl %s, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"beqzl %s, %b", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "beql %s, %t, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"beql %s, %t, %b", opcode, pc);
 			}
 			break;
 		case I_BNEL:
 			if (DECODE_RT(opcode) == 0) {
-				disassembleInstruction(sb, "bnezl %s, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bnezl %s, %b", opcode, pc);
 			} else {
-				disassembleInstruction(sb, "bnel %s, %t, %b", opcode, pc);
+				disassembleInstruction(resolver, sb,"bnel %s, %t, %b", opcode, pc);
 			}
 			break;
 		case I_BLEZL:
-			disassembleInstruction(sb, "blezl %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"blezl %s, %b", opcode, pc);
 			break;
 		case I_BGTZL:
-			disassembleInstruction(sb, "bgtzl %s, %b", opcode, pc);
+			disassembleInstruction(resolver, sb,"bgtzl %s, %b", opcode, pc);
 			break;
 
 		case I_SPECIAL2:
-			disassembleSpecial2(sb, opcode, pc);
+			disassembleSpecial2(resolver, sb,opcode, pc);
 			break;
 
 		case I_LB:
-			disassembleInstruction(sb, "lb %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lb %t, %i(%s)", opcode, pc);
 			break;
 		case I_LH:
-			disassembleInstruction(sb, "lh %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lh %t, %i(%s)", opcode, pc);
 			break;
 		case I_LWL:
-			disassembleInstruction(sb, "lwl %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lwl %t, %i(%s)", opcode, pc);
 			break;
 		case I_LW:
-			disassembleInstruction(sb, "lw %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lw %t, %i(%s)", opcode, pc);
 			break;
 		case I_LBU:
-			disassembleInstruction(sb, "lbu %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lbu %t, %i(%s)", opcode, pc);
 			break;
 		case I_LHU:
-			disassembleInstruction(sb, "lhu %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lhu %t, %i(%s)", opcode, pc);
 			break;
 		case I_LWR:
-			disassembleInstruction(sb, "lwr %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"lwr %t, %i(%s)", opcode, pc);
 			break;
 
 		case I_SB:
-			disassembleInstruction(sb, "sb %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"sb %t, %i(%s)", opcode, pc);
 			break;
 		case I_SH:
-			disassembleInstruction(sb, "sh %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"sh %t, %i(%s)", opcode, pc);
 			break;
 		case I_SWL:
-			disassembleInstruction(sb, "swl %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"swl %t, %i(%s)", opcode, pc);
 			break;
 		case I_SW:
-			disassembleInstruction(sb, "sw %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"sw %t, %i(%s)", opcode, pc);
 			break;
 		case I_SWR:
-			disassembleInstruction(sb, "swr %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"swr %t, %i(%s)", opcode, pc);
 			break;
 		case I_CACHE:
-			disassembleInstruction(sb, "cache %x, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"cache %x, %i(%s)", opcode, pc);
 			break;
 
 		case I_LL:
-			disassembleInstruction(sb, "ll %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"ll %t, %i(%s)", opcode, pc);
 			break;
 		case I_LWC1:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_LWC2:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 2);
 			break;
 		case I_PREF:
-			disassembleInstruction(sb, "pref %x, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"pref %x, %i(%s)", opcode, pc);
 			break;
 		case I_LDC1:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_LDC2:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 2);
 			break;
 
 		case I_SC:
-			disassembleInstruction(sb, "sc %t, %i(%s)", opcode, pc);
+			disassembleInstruction(resolver, sb,"sc %t, %i(%s)", opcode, pc);
 			break;
 		case I_SWC1:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_SWC2:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 2);
 			break;
 		case I_SDC1:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 1);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 1);
 			break;
 		case I_SDC2:
-			disassembleCoprocessorUnusable(sb, opcode, pc, 2);
+			disassembleCoprocessorUnusable(resolver, sb,opcode, pc, 2);
 			break;
 		default:
-			disassembleReserved(sb, opcode, pc);
+			disassembleReserved(resolver, sb,opcode, pc);
 			break;
 		}
 	}
 
 
-	public static String disassemble(int opcode, int pc) {
+	public static String disassemble(LabelResolver resolver, int opcode, int pc, boolean printLabel) {
 		StringBuilder sb = new StringBuilder();
-		disassembleMips(sb, opcode, pc);
+		if (printLabel) {
+			printResolvedAddress(resolver, sb, pc);
+			sb.append(":");
+			for(int i = 0; i < 20 - sb.length(); i++)
+				sb.append(" ");
+		}
+		disassembleMips(resolver, sb,opcode, pc);
 		return sb.toString();
+	}
+
+	public static String disassemble(int opcode, int pc) {
+		return disassemble(null, opcode, pc, false);
 	}
 
 	// Auxiliary functions to encode the opcode

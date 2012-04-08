@@ -1,6 +1,7 @@
 package jmips.cpu;
 
 import static jmips.cpu.Mips.*;
+import jmips.cpu.disasm.LabelResolver;
 
 /**
  * Java implementation of a MIPS32 4Kc processor
@@ -23,15 +24,18 @@ public final class Cpu {
 
 	private boolean bigEndian = true;
 	private boolean loadLinkedStatus = false;
-	private boolean exceptionHappened = false;
 
+	private LabelResolver labelResolver;
 
 	public Cpu(int ramSize, Device io) {
 		this.ram = new Ram(ramSize);
 		this.cop0 = new Cop0();
 		this.ioController = io;
-		setPc(0, true);
 		hardReset();
+	}
+
+	public void setLabelResolver(LabelResolver labelResolver) {
+		this.labelResolver = labelResolver;
 	}
 
 	public void hardReset() {
@@ -79,14 +83,10 @@ public final class Cpu {
 		return halted;
 	}
 
-	public void setPc(int pc, boolean exceptionHappened) {
-		if (!exceptionHappened) {
-			assertPanic(!isBranchDelaySlot(), "setPc");
-		}
+	public void setPc(int pc) {
 		this.pc = pc;
 		this.nextPc = pc + 4;
 		this.exceptionPc = pc;
-		this.exceptionHappened = exceptionHappened;
 		this.halted = false;
 	}
 
@@ -525,51 +525,23 @@ public final class Cpu {
 	}
 
 	public void step(int num) {
-		assertPanic(pc == exceptionPc, "step1");
 		cop0.checkInterrupts(this);
 		while(num > 0 && !halted) {
 			num--;
 			counter++;
-			// I think this is always true
-			assertPanic(pc == exceptionPc, "step2");
 
-			exceptionHappened = false;
 			checkTimerInterrupt();
-			if (exceptionHappened) {
-				assertPanic(exceptionPc + 4 == nextPc, "step_5");
-				assertPanic(exceptionPc == pc, "step_6");
-			}
 
-			assertPanic(pc == exceptionPc, "step3");
-
-			//System.out.print(disassemble(1));
-
-			exceptionHappened = false;
 			int opcode = fetchOpcode();
 			if (memoryError != MEMORY_ERROR_NOERROR) {
-				assertPanic(exceptionHappened, "step4");
-				assertPanic(exceptionPc + 4 == nextPc, "step5");
-
-				assertPanic(exceptionPc == pc, "step6");
 				opcode = fetchOpcode();
-				assertPanic(memoryError == MEMORY_ERROR_NOERROR, "step7");
 			}
 
-			assertPanic(exceptionPc == pc, "step8");
 			pc = nextPc;
 			nextPc += 4;
-			exceptionHappened = false;
 
 			stepMips(opcode);
-			if (pc == exceptionPc) {
-				assertPanic(nextPc == pc + 4, "step10");
-			}
-			if (exceptionHappened) {
-				assertPanic(pc == exceptionPc, "step_9");
-				assertPanic(nextPc == pc + 4, "step_10");
-			}
 			exceptionPc = pc;
-			assertPanic(nextPc != pc, "step11");
 		}
 		if (num > 0) counter += num;
 	}
@@ -585,7 +557,7 @@ public final class Cpu {
 			int opcode = load32(address + 4 * i);
 			if (memoryError == MEMORY_ERROR_NOERROR) {
 				sb.append(String.format("0x%08X: ", address + 4 * i));
-				sb.append(Mips.disassemble(opcode, address + 4 * i));
+				sb.append(Mips.disassemble(labelResolver, opcode, address + 4 * i, true));
 			} else {
 				sb.append("Invalid memory location");
 			}
@@ -1029,10 +1001,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int val = read8(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lb1");
 			setGpr(DECODE_RT(opcode), val);
-		} else {
-			assertPanic(exceptionHappened, "lb2");
 		}
 	}
 
@@ -1042,10 +1011,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int val = read8(address) & 0xFF;
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lbu1");
 			setGpr(DECODE_RT(opcode), val);
-		} else {
-			assertPanic(exceptionHappened, "lbu2");
 		}
 	}
 
@@ -1055,10 +1021,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int val = read16(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lh1");
 			setGpr(DECODE_RT(opcode), val);
-		} else {
-			assertPanic(exceptionHappened, "lh2");
 		}
 	}
 
@@ -1068,10 +1031,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int val = read16(address) & 0xFFFF;
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lhu1");
 			setGpr(DECODE_RT(opcode), val);
-		} else {
-			assertPanic(exceptionHappened, "lhu2");
 		}
 	}
 
@@ -1081,10 +1041,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int val = read32linked(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "ll1");
 			setGpr(DECODE_RT(opcode), val);
-		} else {
-			assertPanic(exceptionHappened, "ll2");
 		}
 	}
 
@@ -1100,10 +1057,7 @@ public final class Cpu {
 		int address = rs + offset;
 		int val = read32(address);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lw1");
 			setGpr(DECODE_RT(opcode), val);
-		} else {
-			assertPanic(exceptionHappened, "lw2");
 		}
 	}
 
@@ -1114,10 +1068,7 @@ public final class Cpu {
 		int rt = DECODE_RT(opcode);
 		int val = read32UnalignedLeft(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lwl1");
 			setGpr(rt, val);
-		} else {
-			assertPanic(exceptionHappened, "lwl2");
 		}
 	}
 
@@ -1128,10 +1079,7 @@ public final class Cpu {
 		int rt = DECODE_RT(opcode);
 		int val = read32UnalignedRight(address, gpr[rt]);
 		if (memoryError == MEMORY_ERROR_NOERROR) {
-			assertPanic(!exceptionHappened, "lwr1");
 			setGpr(rt, val);
-		} else {
-			assertPanic(exceptionHappened, "lwr2");
 		}
 	}
 
@@ -1581,8 +1529,6 @@ public final class Cpu {
 	}
 
 	private void jump(int address) {
-		assertPanic(!isBranchDelaySlot(), "jump");
-		assertPanic(!exceptionHappened, "oi");
 		nextPc = address;
 	}
 
@@ -1591,12 +1537,10 @@ public final class Cpu {
 	}
 
 	private void link(int regno) {
-		assertPanic(!exceptionHappened, "link");
 		setGpr(regno, exceptionPc + 8);
 	}
 
 	private void skipDelaySlot() {
-		assertPanic(!exceptionHappened, "skipDelaySlot");
 		pc += 4;
 		nextPc = pc + 4;
 	}
@@ -1616,13 +1560,6 @@ public final class Cpu {
 			return true;
 		} else {
 			return false;
-		}
-	}
-
-	private void assertPanic(boolean condition, String message) {
-		if (!condition) {
-			System.err.println(message);
-			System.exit(1);
 		}
 	}
 }

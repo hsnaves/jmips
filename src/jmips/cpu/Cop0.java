@@ -151,7 +151,7 @@ public class Cop0 {
 		regs[COP0_WIRED] = 0;
 		regs[COP0_CONFIG] = DEFAULT_CONFIG;
 		regs[COP0_ERROREPC] = cpu.exceptionPc();
-		cpu.setPc(0xBFC00000, true);
+		cpu.setPc(0xBFC00000);
 	}
 
 	public void exceptionSoftReset(Cpu cpu) {
@@ -160,7 +160,7 @@ public class Cop0 {
 		changeStatus(cpu, statusSet, statusMask);
 
 		regs[COP0_ERROREPC] = cpu.exceptionPc();
-		cpu.setPc(0xBFC00000, true);
+		cpu.setPc(0xBFC00000);
 	}
 
 	public void exceptionNMI(Cpu cpu) {
@@ -168,7 +168,7 @@ public class Cop0 {
 		final int statusMask = STATUS_BEV | STATUS_TS | STATUS_SR | STATUS_NMI | STATUS_ERL;
 		changeStatus(cpu, statusSet, statusMask);
 		regs[COP0_ERROREPC] = cpu.exceptionPc();
-		cpu.setPc(0xBFC00000, true);
+		cpu.setPc(0xBFC00000);
 	}
 
 	private void exception(Cpu cpu, int code, int copno, boolean offsetToZero) {
@@ -197,9 +197,9 @@ public class Cop0 {
 		changeStatus(cpu, STATUS_EXL, STATUS_EXL);
 
 		if ((regs[COP0_STATUS] & STATUS_BEV) != 0) {
-			cpu.setPc(0xBFC00200 + vectorOffset, true);
+			cpu.setPc(0xBFC00200 + vectorOffset);
 		} else {
-			cpu.setPc(0x80000000 + vectorOffset, true);
+			cpu.setPc(0x80000000 + vectorOffset);
 		}
 	}
 
@@ -282,7 +282,7 @@ public class Cop0 {
 			changeStatus(cpu, 0, STATUS_EXL);
 			pc = regs[COP0_EPC];
 		}
-		cpu.setPc(pc, false);
+		cpu.setPc(pc);
 		cpu.setLoadLinkedStatus(false);
 	}
 

@@ -14,6 +14,7 @@ import jmips.elf.Elf32;
 import jmips.elf.Elf32Program;
 import jmips.serial.TTY;
 import jmips.utils.FileUtils;
+import jmips.utils.Elf32LabelResolver;
 
 /**
  * This class implements a Mips Computer System
@@ -37,6 +38,7 @@ public final class MipsSystem {
 	private final RealTimeClock rtc;
 	private final BlockDevice block;
 	private final TTY tty;
+	private final Elf32LabelResolver labelResolver;
 	private int entryPoint;
 
 	public MipsSystem(TTY tty) {
@@ -49,6 +51,8 @@ public final class MipsSystem {
 		this.rtc = createRealTimeClock();
 		this.block = createBlockDevice();
 		this.tty = tty;
+		this.labelResolver = new Elf32LabelResolver();
+		this.cpu.setLabelResolver(this.labelResolver);
 	}
 
 	private Cpu createCpu(int ramSize) {
@@ -245,7 +249,7 @@ public final class MipsSystem {
 		rtc.reset();
 		tty.reset();
 		cpu.reset();
-		cpu.setPc(entryPoint, false);
+		cpu.setPc(entryPoint);
 	}
 
 	public void setKernelCommandLine(String cmdLine, int address) {
@@ -293,6 +297,7 @@ public final class MipsSystem {
 						lastAddress = ret;
 				}
 			}
+			labelResolver.loadElf32SymbolTable(elf);
 		}
 		return lastAddress;
 	}
