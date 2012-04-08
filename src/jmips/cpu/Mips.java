@@ -115,6 +115,77 @@ public class Mips {
 		"(unknown exception: 28)", "(unknown exception: 29)", "(unknown exception: 30)", "(unknown exception: 31)"
 	};
 
+	// Number of TLB entries in Cop0
+	public static final int NUM_TLB_ENTRIES = 16;
+
+	// Some bitmasks inside Cop0 registers
+	public static final int INDEX_MASK              = NUM_TLB_ENTRIES - 1;
+	public static final int INDEX_PROBE             = 0x80000000;
+
+	public static final int WIRED_MASK              = INDEX_MASK;
+
+	public static final int ENTRYLO_GLOBAL          = 0x00000001;
+	public static final int ENTRYLO_VALID           = 0x00000002;
+	public static final int ENTRYLO_DIRTY           = 0x00000004;
+	public static final int ENTRYLO_PFN_MASK        = 0x03FFFFC0;
+	public static final int ENTRYLO_PFN_SHIFT       = 6;
+	public static final int ENTRYLO_COHERENCY_MASK  = 0x00000038;
+	public static final int ENTRYLO_COHERENCY_SHIFT = 3;
+
+	public static final int ENTRYHI_ASID_MASK       = 0x000000FF;
+	public static final int ENTRYHI_VPN2_MASK       = 0xFFFFE000;
+	public static final int ENTRYHI_VPN2_SHIFT      = 13;
+
+	public static final int STATUS_IE               = 0x00000001; // Interrupt enabled
+	public static final int STATUS_EXL              = 0x00000002; // Exception
+	public static final int STATUS_ERL              = 0x00000004; // Error
+	public static final int STATUS_UM               = 0x00000010; // User mode
+	public static final int STATUS_INT_MASK         = 0x0000FF00;
+	public static final int STATUS_INT_SHIFT        = 8;
+	public static final int STATUS_NMI              = 0x00080000; // Nmi
+	public static final int STATUS_SR               = 0x00100000; // Soft reset
+	public static final int STATUS_TS               = 0x00200000; // TLB Shutdown
+	public static final int STATUS_BEV              = 0x00400000; // Bootstrap exception vector
+	public static final int STATUS_RE               = 0x02000000; // Reverse-endian in user mode
+	public static final int STATUS_RP               = 0x08000000; // Reduced power mode
+	public static final int STATUS_COP_MASK         = 0xF0000000;
+	public static final int STATUS_COP_SHIFT        = 28;
+
+	public static final int CAUSE_EXCCODE_MASK      = 0x0000007C;
+	public static final int CAUSE_EXCCODE_SHIFT     = 2;
+	public static final int CAUSE_INTERRUPT_MASK    = 0x0000FF00;
+	public static final int CAUSE_INTERRUPT_SHIFT   = 8;
+	public static final int CAUSE_WP                = 0x00400000; // Watch exception deferred
+	public static final int CAUSE_IV                = 0x00800000; // Use special interrupt vector
+	public static final int CAUSE_CE_MASK           = 0x30000000; // Coprocessor unit
+	public static final int CAUSE_CE_SHIFT          = 28;
+	public static final int CAUSE_BD                = 0x80000000; // In delay slot
+
+	public static final int CONTEXT_PTE_MASK        = 0xFF800000;
+	public static final int CONTEXT_PTE_SHIFT       = 23;
+	public static final int CONTEXT_BADVPN2_MASK    = 0x007FFFF0;
+	public static final int CONTEXT_BADVPN2_SHIFT   = 4;
+
+	public static final int PAGEMASK_MASK           = 0x01FFE000;
+
+	public static final int CONFIG_K0_MASK          = 0x00000003; // Kseg0 coherency algorithm
+	public static final int CONFIG_K0_DEFAULT       = 2;          // Uncached Kseg0
+
+	// Memory error codes
+	public static final int MEMORY_ERROR_NOERROR = 0;                // Memory operation succeeded
+	public static final int MEMORY_ERROR_BUS_ERROR_INSTRUCTION = 1;  // I/O Bus error for opcode
+	public static final int MEMORY_ERROR_BUS_ERROR_DATA = 2;         // I/O Bus error for data
+	public static final int MEMORY_ERROR_ADDRESS_ERROR_LOAD = 3;     // Address error for store
+	public static final int MEMORY_ERROR_ADDRESS_ERROR_STORE = 4;    // Unaligned address
+	public static final int MEMORY_ERROR_TLB_INVALID_LOAD = 5;       // TLB Invalid for load
+	public static final int MEMORY_ERROR_TLB_INVALID_STORE = 6;      // TLB Invalid for store 
+	public static final int MEMORY_ERROR_TLB_REFILL_LOAD = 7;        // TLB Refill for load
+	public static final int MEMORY_ERROR_TLB_REFILL_STORE = 8;       // TLB Refill for store
+	public static final int MEMORY_ERROR_TLB_MOD = 9;                // TLB Dirty
+
+	// Timer IRQ
+	public static final int TIMER_IRQ = 7;
+
 	// Instructions
 	public static final int I_SPECIAL  = 0;
 	public static final int I_REGIMM   = 1;

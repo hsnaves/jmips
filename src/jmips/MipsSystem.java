@@ -174,8 +174,7 @@ public final class MipsSystem {
 			
 			@Override
 			public void changeIrqStatus(boolean raise) {
-				if (raise) cpu.raiseIrq(UART_IRQ);
-				else cpu.lowerIrq(UART_IRQ);
+				cpu.raiseIrq(UART_IRQ, raise);
 			}
 		};
 		Uart uart = new Uart(controller);
@@ -193,7 +192,7 @@ public final class MipsSystem {
 			public boolean readFromMemory(ByteBuffer sector, int address) {
 				while(sector.hasRemaining()) {
 					byte b = cpu.load8(address);
-					if (cpu.getLastMemoryError() != Cpu.MEMORY_ERROR_NOERROR)
+					if (cpu.getLastMemoryError() != Mips.MEMORY_ERROR_NOERROR)
 						return false;
 					sector.put(b);
 					address++;
@@ -206,7 +205,7 @@ public final class MipsSystem {
 				while(sector.hasRemaining()) {
 					byte b = sector.get();
 					cpu.store8(address, b);
-					if (cpu.getLastMemoryError() != Cpu.MEMORY_ERROR_NOERROR)
+					if (cpu.getLastMemoryError() != Mips.MEMORY_ERROR_NOERROR)
 						return false;
 					address++;
 				}
@@ -246,7 +245,7 @@ public final class MipsSystem {
 		rtc.reset();
 		tty.reset();
 		cpu.reset();
-		cpu.setPc(entryPoint);
+		cpu.setPc(entryPoint, false);
 	}
 
 	public void setKernelCommandLine(String cmdLine, int address) {

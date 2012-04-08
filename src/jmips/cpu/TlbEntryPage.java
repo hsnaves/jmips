@@ -1,5 +1,7 @@
 package jmips.cpu;
 
+import static jmips.cpu.Mips.*;
+
 public final class TlbEntryPage {
 	private int PFN;
 	private int cacheability;
@@ -40,18 +42,18 @@ public final class TlbEntryPage {
 
 	public int convertPageToEntryLo(boolean global) {
 		int entryLo = getPFN() >>> 6;
-		entryLo |= getCacheability() << Cpu.ENTRYLO_COHERENCY_SHIFT;
-		if (isDirty()) entryLo |= Cpu.ENTRYLO_DIRTY;
-		if (isValid()) entryLo |= Cpu.ENTRYLO_VALID;
-		if (global) entryLo |= Cpu.ENTRYLO_GLOBAL;
+		entryLo |= getCacheability() << ENTRYLO_COHERENCY_SHIFT;
+		if (isDirty()) entryLo |= ENTRYLO_DIRTY;
+		if (isValid()) entryLo |= ENTRYLO_VALID;
+		if (global) entryLo |= ENTRYLO_GLOBAL;
 		return entryLo;
 	}
 
 	public void configurePageFromEntryLo(int entryLo) {
 		setPFN((entryLo << 6) & 0xFFFFF000);
-		setCacheability((entryLo & Cpu.ENTRYLO_COHERENCY_MASK) >> Cpu.ENTRYLO_COHERENCY_SHIFT);
-		setDirty((entryLo & Cpu.ENTRYLO_DIRTY) != 0);
-		setValid((entryLo & Cpu.ENTRYLO_VALID) != 0);
+		setCacheability((entryLo & ENTRYLO_COHERENCY_MASK) >> ENTRYLO_COHERENCY_SHIFT);
+		setDirty((entryLo & ENTRYLO_DIRTY) != 0);
+		setValid((entryLo & ENTRYLO_VALID) != 0);
 	}
 
 

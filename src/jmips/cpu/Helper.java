@@ -179,5 +179,10 @@ public class Helper {
 		int v2 = (n >> 8) & 0xFF;
 		return (short) (v1 << 8 | v2);
 	}
+
+	public static int changeMaskedValue(int oldValue, int newValue, int mask) {
+		return (oldValue & ~ mask) | (newValue & mask);
+	}
+
 }
 

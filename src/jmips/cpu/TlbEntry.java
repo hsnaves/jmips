@@ -1,5 +1,6 @@
 package jmips.cpu;
 
+import static jmips.cpu.Mips.*;
 
 public final class TlbEntry {
 	private int pageMask; // Negation of original PageMask and'ed with ENTRYHI_VPN2_MASK
@@ -70,14 +71,29 @@ public final class TlbEntry {
 	public TlbEntryPage match(int address, int ASID) {
 		if ((getPageMask() & address) == getVPN2()) {
 			if (isGlobal() || getASID() == ASID) {
-				if ((address & getSelectionBit()) == 0) {
-					return getPage0();
-				} else {
-					return getPage1();
+				if (isInitialized()) {
+					if ((address & getSelectionBit()) == 0) {
+						return getPage0();
+					} else {
+						return getPage1();
+					}
 				}
 			}
 		}
 		return null;
+	}
+
+	public int tlbPageTranslate(TlbEntryPage tlbEntryPage, int address, boolean write) {
+		if (!tlbEntryPage.isValid()) {
+			return write ? -MEMORY_ERROR_TLB_INVALID_STORE
+					: -MEMORY_ERROR_TLB_INVALID_LOAD;
+		}
+		if (write && !tlbEntryPage.isDirty()) {
+			return -MEMORY_ERROR_TLB_MOD;
+		}
+		address &= ~(getPageMask() | getSelectionBit());
+		address |= tlbEntryPage.getPFN();
+		return address;
 	}
 
 	@Override
