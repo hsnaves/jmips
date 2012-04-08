@@ -406,9 +406,6 @@ public class Cop0 {
 	}
 
 	public void tlbWriteIndex(Cpu cpu) {
-		if ((regs[COP0_INDEX] & INDEX_PROBE) == 0)
-			tlbWrite(cpu, regs[COP0_INDEX] & INDEX_MASK);
-		else
-			tlbWriteRandom(cpu);
+		tlbWrite(cpu, regs[COP0_INDEX] & INDEX_MASK);
 	}
 }

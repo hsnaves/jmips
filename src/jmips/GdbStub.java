@@ -372,14 +372,14 @@ public final class GdbStub {
 
 	private void simulate() {
 		if (simulationRunning) {
-			for(int i = 0; i < 1000000; i++) {
+			for(int i = 0; i < 10; i++) {
 				int pc = system.getCpu().getPc();
 				if (breakPoints.contains(pc)) {
 					simulationRunning = false;
 					makePacketAndSend("S05", true);
 					break;
 				} else {
-					system.step(1);
+					system.step(100000);
 				}
 			}
 		}

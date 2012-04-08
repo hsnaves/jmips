@@ -543,7 +543,15 @@ public final class Cpu {
 			stepMips(opcode);
 			exceptionPc = pc;
 		}
+
+		int before = getCounter();
 		if (num > 0) counter += num;
+		int after = getCounter();
+		int diff = cop0.getCompareRegister() - before;
+		if (diff > 0 && (after - before) >= diff) {
+			raiseIrq(TIMER_IRQ, true);
+			cop0.checkInterrupts(this);
+		}
 	}
 
 	public String disassemble(int count) {
@@ -1559,6 +1567,7 @@ public final class Cpu {
 			cop0.checkInterrupts(this);
 			return true;
 		} else {
+			cop0.checkInterrupts(this);
 			return false;
 		}
 	}
