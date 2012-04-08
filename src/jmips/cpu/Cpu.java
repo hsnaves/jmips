@@ -530,23 +530,25 @@ public final class Cpu {
 
 	public void step(int num) {
 		cop0.checkInterrupts(this);
-		while(num > 0 && !halted) {
-			num--;
-			counter++;
+		while (num > 0) {
+			while(num > 0 && !halted) {
+				num--;
+				counter++;
 
-			checkTimerInterrupt();
+				checkTimerInterrupt();
 
-			int opcode = fetchOpcode();
-			if (memoryError != MEMORY_ERROR_NOERROR) {
-				opcode = fetchOpcode();
+				int opcode = fetchOpcode();
+				if (memoryError != MEMORY_ERROR_NOERROR) {
+					opcode = fetchOpcode();
+				}
+
+				pc = nextPc;
+				nextPc += 4;
+				stepMips(opcode);
+				exceptionPc = pc;
 			}
-
-			pc = nextPc;
-			nextPc += 4;
-			stepMips(opcode);
-			exceptionPc = pc;
+			num = checkTimerInterrupt(num);
 		}
-		checkTimerInterrupt(num);
 	}
 
 	public String disassemble(int count) {
@@ -1563,15 +1565,19 @@ public final class Cpu {
 		}
 	}
 
-	public void checkTimerInterrupt(int num) {
-		if (num <= 0) return;
+	public int checkTimerInterrupt(int num) {
+		if (num <= 0) return 0;
 		long before = counter & 0xFFFFFFFFL;
-		counter += num;
-		long after = counter & 0xFFFFFFFFL;
+		long after = (counter + num) & 0xFFFFFFFFL;
 		long compare = this.compare & 0xFFFFFFFFL;
 		if (before < compare && after >= compare) {
+			counter = compare;
 			raiseIrq(TIMER_IRQ, true);
 			cop0.checkInterrupts(this);
+			return num - ((int) (compare - before));
+		} else {
+			counter += num;
+			return 0;
 		}
 	}
 }

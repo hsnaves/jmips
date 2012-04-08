@@ -17,6 +17,7 @@ public class DummyTTY implements TTY {
 		for(int i = 0; i < array.length; i++) {
 			out[i] = (Byte) array[i];
 		}
+		outputBytes.clear();
 		return out;
 	}
 

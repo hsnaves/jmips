@@ -4,7 +4,7 @@ public class CpuMemcpyTest {
 	private static final int BASE_ADDRESS = 0x80100000;
 	private static final int RAM_SIZE = 4 * 1024 * 1024;
 	private static final int COPY_SIZE = 256 * 1024;
-	private static final int REPEAT_TIMES = 3000;
+	private static final int REPEAT_TIMES = 1000;
 
 
 	private Cpu createCpu() {

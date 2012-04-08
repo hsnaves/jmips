@@ -29,13 +29,11 @@ public class PerformanceTest {
 		DummyTTY tty = (DummyTTY) system.getTTY();
 
 		startTimer();
-		for(int i = 0; i < 41000000; i++)
-			system.step(1);
+		system.step(50000000);
 		tty.addInputString("root\n");
-		for(int i = 0; i < 1000000; i++)
-			system.step(1);
+		system.step(100);
+		system.step(50000000);
 		long time = stopTimer();
-		time = System.currentTimeMillis() - time;
 		System.out.println("Login in time: " + time + "ms");
 	}
 
@@ -47,33 +45,18 @@ public class PerformanceTest {
 		tty.addInputString("cd /\npython\n");
 
 		startTimer();
-		for(int i = 0; i < 100000000; i++)
-			system.step(1);
+		system.step(100);
+		system.step(140000000);
 		long time = stopTimer();
 
-		//byte[] out = tty.getOutputBytes();
-		//System.out.println(new String(out));
+		byte[] out = tty.getOutputBytes();
+		System.out.println(new String(out));
 		System.out.println("Python in time: " + time + "ms");
-	}
-
-	private void testRunLinuxAndWhetstone() {
-		MipsSystem system = createMipsSytem();
-		DummyTTY tty = (DummyTTY) system.getTTY();
-		doLogin(system);
-
-		tty.addInputString("cd /\nwhetstone\n");
-		startTimer();
-		for(int i = 0; i < 100000000; i++)
-			system.step(1);
-		long time = stopTimer();
-
-		System.out.println("Whetstone in time: " + time + "ms");
 	}
 
 	public static void main(String[] args) {
 		PerformanceTest test = new PerformanceTest();
 		test.testRunLinuxAndPython();
-		test.testRunLinuxAndWhetstone();
 	}
 
 }
