@@ -1516,7 +1516,7 @@ public final class Cpu {
 		return true;
 	}
 
-	private boolean checkOverflow(int a, int b, int result, boolean sum) {
+	public boolean checkOverflow(int a, int b, int result, boolean sum) {
 		boolean overflow = false;
 		if (sum) {
 			overflow = ((a < 0) && (b < 0) && (result > 0)) ||
