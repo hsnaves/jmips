@@ -544,7 +544,7 @@ public final class Cpu {
 
 				pc = nextPc;
 				nextPc += 4;
-				stepMips(opcode);
+				stepInstruction(opcode);
 				exceptionPc = pc;
 			}
 			num = checkTimerInterrupt(num);
@@ -571,7 +571,7 @@ public final class Cpu {
 		return sb.toString();
 	}
 
-	public void stepMips(int opcode) {
+	public void stepInstruction(int opcode) {
 		switch (DECODE_OP(opcode)) {
 		case I_SPECIAL: stepSpecial(opcode); break;
 		case I_REGIMM:  stepRegImm(opcode); break;

@@ -2,30 +2,41 @@ package jmips.cpu.dynrec;
 
 import static jmips.cpu.Mips.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import jmips.cpu.Cpu;
+import jmips.cpu.Mips;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.Printer;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceMethodVisitor;
 
 public class DynamicRecompiler extends ClassLoader {
 	public static final int BLOCK_SIZE = 4096;
 
 	private static final int VAR_CPU = 1;
 	private static final int VAR_NUM_CYCLES = 2;
-	private static final int VAR_TEMP_INTEGER1 = 3;
-	private static final int VAR_TEMP_INTEGER2 = 4;
-	private static final int VAR_TEMP_INTEGER3 = 5;
+	private static final int VAR_PC = 3;
+	private static final int VAR_TEMP_INTEGER1 = 4;
+	private static final int VAR_TEMP_INTEGER2 = 5;
+	private static final int VAR_TEMP_INTEGER3 = 6;
 
 	private static final AtomicInteger counter = new AtomicInteger();
 
 	private MethodVisitor mv;
+	private Printer printer;
 	private Label labels[];
+	private Label returnLabel, jumpLabel;
 	private Cpu cpu;
 
+	
 	public RecompiledBlock recompile(Cpu cpu, int blockPhysicalAddress) {
 		int id;
 		byte[] b;
@@ -42,8 +53,20 @@ public class DynamicRecompiler extends ClassLoader {
 		try {
 			return (RecompiledBlock) clazz.newInstance();
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			return null;
 		}
+	}
+
+	private void createConstructor(ClassWriter cw) {
+		MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(Opcodes.ALOAD, 0);
+		mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
+				"jmips/cpu/dynrec/RecompiledBlock", "<init>", "()V");
+		mv.visitInsn(Opcodes.RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
 	}
 
 	private byte[] recompileBlock(int id, int blockPhysicalAddress) {
@@ -51,21 +74,16 @@ public class DynamicRecompiler extends ClassLoader {
 		cw.visit(Opcodes.V1_4, Opcodes.ACC_FINAL + Opcodes.ACC_PUBLIC,
 				"jmips/cpu/dynrec/Block_" + id, null,
 				"jmips/cpu/dynrec/RecompiledBlock", null);
-
-		mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
-		mv.visitCode();
-		mv.visitVarInsn(Opcodes.ALOAD, 0);
-		mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
-				"jmips/cpu/dynrec/RecompiledBlock", "<init>", "()V");
-		mv.visitInsn(Opcodes.RETURN);
-		mv.visitMaxs(1, 1);
-		mv.visitEnd();
+		createConstructor(cw);
 
 		mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "execute",
 				"(Ljmips/cpu/Cpu;I)I", null, null);
+		printer = new Textifier();
+		mv = new TraceMethodVisitor(mv, printer);
 		mv.visitCode();
 
-		Label defaultLabel = new Label();
+		returnLabel = new Label();
+
 		labels = new Label[BLOCK_SIZE / 4];
 		int[] switchValues = new int[BLOCK_SIZE / 4];
 		for(int i = 0; i < BLOCK_SIZE / 4; i++) {
@@ -73,27 +91,48 @@ public class DynamicRecompiler extends ClassLoader {
 			switchValues[i] = i;
 		}
 
-		mv.visitLdcInsn(2);
 		extractPc();
+		mv.visitVarInsn(Opcodes.ISTORE, VAR_PC);
+
+		mv.visitVarInsn(Opcodes.ILOAD, VAR_NUM_CYCLES);
+		mv.visitJumpInsn(Opcodes.IFLE, returnLabel);
+
+		mv.visitVarInsn(Opcodes.ILOAD, VAR_PC);
+		mv.visitLdcInsn(2);
 		mv.visitInsn(Opcodes.ISHR);
 		mv.visitLdcInsn(0x03FF);
 		mv.visitInsn(Opcodes.IAND);
 
-		mv.visitLookupSwitchInsn(defaultLabel, switchValues, labels);
+		mv.visitLookupSwitchInsn(returnLabel, switchValues, labels);
 		for(int i = 0; i < BLOCK_SIZE / 4; i++) {
 			int physicalAddress = blockPhysicalAddress + 4 * i;
-			int opcode = cpu.load8phys(physicalAddress);
+			int opcode = cpu.load32phys(physicalAddress);
 			mv.visitLabel(labels[i]);
-			recompileMips(opcode);
+			appendText("    // 0x%08X: 0x%08X %s\n", physicalAddress, opcode, Mips.disassemble(opcode, physicalAddress));
+			recompileInstruction(opcode);
 		}
 
-		mv.visitLabel(defaultLabel);
-		mv.visitInsn(Opcodes.RETURN);
+		mv.visitLabel(returnLabel);
+
+		mv.visitVarInsn(Opcodes.ILOAD, VAR_PC);
+		updatePc();
+
+		mv.visitVarInsn(Opcodes.ILOAD, VAR_NUM_CYCLES);
+		mv.visitInsn(Opcodes.IRETURN);
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
 
+		StringWriter sw = new StringWriter();
+		printer.print(new PrintWriter(sw));
+		System.out.println(sw.toString());
 		cw.visitEnd();
 		return cw.toByteArray();
+	}
+
+	private void appendText(String format, Object... args) {
+		@SuppressWarnings("unchecked")
+		List<String> text = (List<String>) printer.text;
+		text.add(String.format(format, args));
 	}
 
 	private void extractPc() {
@@ -110,8 +149,8 @@ public class DynamicRecompiler extends ClassLoader {
 		if (reg == 0) {
 			mv.visitInsn(Opcodes.ICONST_0);
 		} else {
-			mv.visitLdcInsn(reg);
 			mv.visitVarInsn(Opcodes.ALOAD, VAR_CPU);
+			mv.visitLdcInsn(reg);
 			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "jmips/cpu/Cpu", "getGpr", "(I)I");
 		}
 	}
@@ -119,9 +158,11 @@ public class DynamicRecompiler extends ClassLoader {
 	private void updateGpr(int reg) {
 		if (reg == 0) {
 		} else {
-			mv.visitLdcInsn(reg);
 			mv.visitVarInsn(Opcodes.ALOAD, VAR_CPU);
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "jmips/cpu/Cpu", "setGpr", "(I)V");
+			mv.visitInsn(Opcodes.SWAP);
+			mv.visitLdcInsn(reg);
+			mv.visitInsn(Opcodes.SWAP);
+			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "jmips/cpu/Cpu", "setGpr", "(II)V");
 		}
 	}
 
@@ -134,14 +175,26 @@ public class DynamicRecompiler extends ClassLoader {
 		mv.visitLdcInsn(sum);
 		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "jmips/cpu/Cpu", "checkOverflow", "(IIIZ)Z");
 
-		Label overflowLabel = new Label();
-		mv.visitJumpInsn(Opcodes.IFEQ, overflowLabel);
+		Label notOverflowLabel = new Label();
+		mv.visitJumpInsn(Opcodes.IFEQ, notOverflowLabel);
 
-		// TODO: Check this
-		mv.visitInsn(Opcodes.RETURN);
+		// TODO: Call overflow
+
+		mv.visitLabel(notOverflowLabel);
 	}
 
-	private void recompileMips(int opcode) {
+	private void setOnCondition(int opcodeCondition) {
+		Label trueLabel = new Label();
+		Label endLabel = new Label();
+		mv.visitJumpInsn(opcodeCondition, trueLabel);
+		mv.visitInsn(Opcodes.ICONST_0);
+		mv.visitJumpInsn(Opcodes.GOTO, endLabel);
+		mv.visitLabel(trueLabel);
+		mv.visitInsn(Opcodes.ICONST_1);
+		mv.visitLabel(endLabel);
+	}
+
+	private void recompileInstruction(int opcode) {
 		switch (DECODE_OP(opcode)) {
 		case I_SPECIAL: recompileSpecial(opcode); break;
 		case I_REGIMM:  recompileRegImm(opcode); break;
@@ -326,7 +379,6 @@ public class DynamicRecompiler extends ClassLoader {
 		mv.visitInsn(Opcodes.IADD);
 		mv.visitVarInsn(Opcodes.ISTORE, VAR_TEMP_INTEGER3);
 
-	
 		callCheckOverflow(true);
 
 		mv.visitVarInsn(Opcodes.ILOAD, VAR_TEMP_INTEGER3);
@@ -343,7 +395,6 @@ public class DynamicRecompiler extends ClassLoader {
 		mv.visitInsn(Opcodes.IADD);
 		mv.visitVarInsn(Opcodes.ISTORE, VAR_TEMP_INTEGER3);
 
-	
 		callCheckOverflow(true);
 
 		mv.visitVarInsn(Opcodes.ILOAD, VAR_TEMP_INTEGER3);
@@ -478,6 +529,9 @@ public class DynamicRecompiler extends ClassLoader {
 	}
 
 	private void lui(int opcode) {
+		int val = DECODE_IMM16(opcode) << 16;
+		mv.visitLdcInsn(val);
+		updateGpr(DECODE_RT(opcode));
 	}
 
 	private void lw(int opcode) {
@@ -595,14 +649,7 @@ public class DynamicRecompiler extends ClassLoader {
 		extractGpr(DECODE_RS(opcode));
 		extractGpr(DECODE_RT(opcode));
 
-		Label falseLabel = new Label();
-		Label endLabel = new Label();
-		mv.visitJumpInsn(Opcodes.IF_ICMPGE, falseLabel);
-		mv.visitInsn(Opcodes.ICONST_1);
-		mv.visitJumpInsn(Opcodes.GOTO, endLabel);
-		mv.visitLabel(falseLabel);
-		mv.visitInsn(Opcodes.ICONST_0);
-		mv.visitLabel(endLabel);
+		setOnCondition(Opcodes.IF_ICMPLT);
 		updateGpr(DECODE_RD(opcode));
 	}
 
@@ -610,14 +657,7 @@ public class DynamicRecompiler extends ClassLoader {
 		extractGpr(DECODE_RS(opcode));
 		mv.visitLdcInsn(DECODE_IMM16(opcode));
 
-		Label falseLabel = new Label();
-		Label endLabel = new Label();
-		mv.visitJumpInsn(Opcodes.IF_ICMPGE, falseLabel);
-		mv.visitInsn(Opcodes.ICONST_1);
-		mv.visitJumpInsn(Opcodes.GOTO, endLabel);
-		mv.visitLabel(falseLabel);
-		mv.visitInsn(Opcodes.ICONST_0);
-		mv.visitLabel(endLabel);
+		setOnCondition(Opcodes.IF_ICMPLT);
 		updateGpr(DECODE_RT(opcode));
 	}
 
@@ -625,15 +665,8 @@ public class DynamicRecompiler extends ClassLoader {
 		extractGpr(DECODE_RS(opcode));
 		mv.visitLdcInsn(DECODE_IMM16(opcode));
 
-		Label falseLabel = new Label();
-		Label endLabel = new Label();
 		mv.visitMethodInsn(Opcodes.INVOKESTATIC, "jmips/cpu/Helper", "compareUnsigned", "(II)I");
-		mv.visitJumpInsn(Opcodes.IFGE, falseLabel);
-		mv.visitInsn(Opcodes.ICONST_1);
-		mv.visitJumpInsn(Opcodes.GOTO, endLabel);
-		mv.visitLabel(falseLabel);
-		mv.visitInsn(Opcodes.ICONST_0);
-		mv.visitLabel(endLabel);
+		setOnCondition(Opcodes.IFLT);
 		updateGpr(DECODE_RT(opcode));
 	}
 
@@ -641,15 +674,8 @@ public class DynamicRecompiler extends ClassLoader {
 		extractGpr(DECODE_RS(opcode));
 		extractGpr(DECODE_RT(opcode));
 
-		Label falseLabel = new Label();
-		Label endLabel = new Label();
 		mv.visitMethodInsn(Opcodes.INVOKESTATIC, "jmips/cpu/Helper", "compareUnsigned", "(II)I");
-		mv.visitJumpInsn(Opcodes.IFGE, falseLabel);
-		mv.visitInsn(Opcodes.ICONST_1);
-		mv.visitJumpInsn(Opcodes.GOTO, endLabel);
-		mv.visitLabel(falseLabel);
-		mv.visitInsn(Opcodes.ICONST_0);
-		mv.visitLabel(endLabel);
+		setOnCondition(Opcodes.IFLT);
 		updateGpr(DECODE_RD(opcode));
 	}
 

@@ -1,5 +1,7 @@
 package jmips.cpu;
 
+import static jmips.cpu.Mips.*;
+
 public class CpuMemcpyTest {
 	private static final int BASE_ADDRESS = 0x80100000;
 	private static final int RAM_SIZE = 4 * 1024 * 1024;
@@ -57,15 +59,15 @@ public class CpuMemcpyTest {
 	private void testMemcpyCpuSimulatedFast(Cpu cpu) {
 		for(int i = 0; i < REPEAT_TIMES; i++) {
 			reset(cpu);
-			cpu.setGpr(Mips.GPR_A0, 0x80000000);
-			cpu.setGpr(Mips.GPR_A1, 0x80010000 + 4 * COPY_SIZE);
-			cpu.setGpr(Mips.GPR_A2, COPY_SIZE);
-			while(cpu.getGpr(Mips.GPR_A2) != 0) {
-				cpu.setGpr(Mips.GPR_T0, cpu.read32(cpu.getGpr(Mips.GPR_A0)));
-				cpu.setGpr(Mips.GPR_A0, cpu.getGpr(Mips.GPR_A0) + 4);
-				cpu.write32(cpu.getGpr(Mips.GPR_A1),  cpu.getGpr(Mips.GPR_T0));
-				cpu.setGpr(Mips.GPR_A1, cpu.getGpr(Mips.GPR_A1) + 4);
-				cpu.setGpr(Mips.GPR_A2, cpu.getGpr(Mips.GPR_A2) - 1);
+			cpu.setGpr(GPR_A0, 0x80000000);
+			cpu.setGpr(GPR_A1, 0x80010000 + 4 * COPY_SIZE);
+			cpu.setGpr(GPR_A2, COPY_SIZE);
+			while(cpu.getGpr(GPR_A2) != 0) {
+				cpu.setGpr(GPR_T0, cpu.read32(cpu.getGpr(GPR_A0)));
+				cpu.setGpr(GPR_A0, cpu.getGpr(GPR_A0) + 4);
+				cpu.write32(cpu.getGpr(GPR_A1),  cpu.getGpr(GPR_T0));
+				cpu.setGpr(GPR_A1, cpu.getGpr(GPR_A1) + 4);
+				cpu.setGpr(GPR_A2, cpu.getGpr(GPR_A2) - 1);
 			}
 		}
 	}
@@ -73,16 +75,16 @@ public class CpuMemcpyTest {
 	private void testMemcpyCpuSimulatedFastWithWhileTrue(Cpu cpu) {
 		for(int i = 0; i < REPEAT_TIMES; i++) {
 			reset(cpu);
-			cpu.setGpr(Mips.GPR_A0, 0x80000000);
-			cpu.setGpr(Mips.GPR_A1, 0x80010000 + 4 * COPY_SIZE);
-			cpu.setGpr(Mips.GPR_A2, COPY_SIZE);
+			cpu.setGpr(GPR_A0, 0x80000000);
+			cpu.setGpr(GPR_A1, 0x80010000 + 4 * COPY_SIZE);
+			cpu.setGpr(GPR_A2, COPY_SIZE);
 			while(true) {
-				cpu.setGpr(Mips.GPR_T0, cpu.read32(cpu.getGpr(Mips.GPR_A0)));
-				cpu.setGpr(Mips.GPR_A0, cpu.getGpr(Mips.GPR_A0) + 4);
-				cpu.write32(cpu.getGpr(Mips.GPR_A1),  cpu.getGpr(Mips.GPR_T0));
-				cpu.setGpr(Mips.GPR_A1, cpu.getGpr(Mips.GPR_A1) + 4);
-				cpu.setGpr(Mips.GPR_A2, cpu.getGpr(Mips.GPR_A2) - 1);
-				if (cpu.getGpr(Mips.GPR_A2) == 0) break;
+				cpu.setGpr(GPR_T0, cpu.read32(cpu.getGpr(GPR_A0)));
+				cpu.setGpr(GPR_A0, cpu.getGpr(GPR_A0) + 4);
+				cpu.write32(cpu.getGpr(GPR_A1),  cpu.getGpr(GPR_T0));
+				cpu.setGpr(GPR_A1, cpu.getGpr(GPR_A1) + 4);
+				cpu.setGpr(GPR_A2, cpu.getGpr(GPR_A2) - 1);
+				if (cpu.getGpr(GPR_A2) == 0) break;
 			}
 		}
 	}
@@ -90,81 +92,81 @@ public class CpuMemcpyTest {
 	private void testMemcpyCpuSimulated(Cpu cpu) {
 		for(int i = 0; i < REPEAT_TIMES; i++) {
 			reset(cpu);
-			cpu.setGpr(Mips.GPR_A0, 0x80000000);
-			cpu.setGpr(Mips.GPR_A1, 0x80010000 + 4 * COPY_SIZE);
-			cpu.setGpr(Mips.GPR_A2, COPY_SIZE);
+			cpu.setGpr(GPR_A0, 0x80000000);
+			cpu.setGpr(GPR_A1, 0x80010000 + 4 * COPY_SIZE);
+			cpu.setGpr(GPR_A2, COPY_SIZE);
 			for(int j = 0; j < COPY_SIZE; j++) {
-				cpu.lw(Mips.ENCODE_LW(Mips.GPR_T0, Mips.GPR_A0, 0));
-				cpu.addiu(Mips.ENCODE_ADDIU(Mips.GPR_A0, Mips.GPR_A0, 4));
-				cpu.sw(Mips.ENCODE_SW(Mips.GPR_T0, Mips.GPR_A1, 0));
-				cpu.addiu(Mips.ENCODE_ADDIU(Mips.GPR_A1, Mips.GPR_A1, 4));
-				cpu.addiu(Mips.ENCODE_ADDIU(Mips.GPR_A2, Mips.GPR_A2, -1));
-				cpu.bne(Mips.ENCODE_BNE(Mips.GPR_A2, Mips.GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
-				cpu.sll(Mips.ENCODE_SLL(0, 0, 0));
+				cpu.lw(ENCODE_LW(GPR_T0, GPR_A0, 0));
+				cpu.addiu(ENCODE_ADDIU(GPR_A0, GPR_A0, 4));
+				cpu.sw(ENCODE_SW(GPR_T0, GPR_A1, 0));
+				cpu.addiu(ENCODE_ADDIU(GPR_A1, GPR_A1, 4));
+				cpu.addiu(ENCODE_ADDIU(GPR_A2, GPR_A2, -1));
+				cpu.bne(ENCODE_BNE(GPR_A2, GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
+				cpu.sll(ENCODE_SLL(0, 0, 0));
 			}
 		}
 	}
 
 	private void testMemcpyCpuInterpretedFast(Cpu cpu) {
-		cpu.store32(BASE_ADDRESS, Mips.ENCODE_LW(Mips.GPR_T0, Mips.GPR_A0, 0));
-		cpu.store32(BASE_ADDRESS + 4, Mips.ENCODE_ADDIU(Mips.GPR_A0, Mips.GPR_A0, 4));
-		cpu.store32(BASE_ADDRESS + 8, Mips.ENCODE_SW(Mips.GPR_T0, Mips.GPR_A1, 0));
-		cpu.store32(BASE_ADDRESS + 12, Mips.ENCODE_ADDIU(Mips.GPR_A1, Mips.GPR_A1, 4));
-		cpu.store32(BASE_ADDRESS + 16, Mips.ENCODE_ADDIU(Mips.GPR_A2, Mips.GPR_A2, -1));
-		cpu.store32(BASE_ADDRESS + 20, Mips.ENCODE_BNE(Mips.GPR_A2, Mips.GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
-		cpu.store32(BASE_ADDRESS + 24, Mips.ENCODE_SLL(0, 0, 0));
-		cpu.store32(BASE_ADDRESS + 28, Mips.ENCODE_WAIT(0));
-		cpu.store32(BASE_ADDRESS + 32, Mips.ENCODE_J(BASE_ADDRESS + 28, BASE_ADDRESS + 32));
-		cpu.store32(BASE_ADDRESS + 36, Mips.ENCODE_SLL(0, 0, 0));
+		cpu.store32(BASE_ADDRESS, ENCODE_LW(GPR_T0, GPR_A0, 0));
+		cpu.store32(BASE_ADDRESS + 4, ENCODE_ADDIU(GPR_A0, GPR_A0, 4));
+		cpu.store32(BASE_ADDRESS + 8, ENCODE_SW(GPR_T0, GPR_A1, 0));
+		cpu.store32(BASE_ADDRESS + 12, ENCODE_ADDIU(GPR_A1, GPR_A1, 4));
+		cpu.store32(BASE_ADDRESS + 16, ENCODE_ADDIU(GPR_A2, GPR_A2, -1));
+		cpu.store32(BASE_ADDRESS + 20, ENCODE_BNE(GPR_A2, GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
+		cpu.store32(BASE_ADDRESS + 24, ENCODE_SLL(0, 0, 0));
+		cpu.store32(BASE_ADDRESS + 28, ENCODE_WAIT(0));
+		cpu.store32(BASE_ADDRESS + 32, ENCODE_J(BASE_ADDRESS + 28, BASE_ADDRESS + 32));
+		cpu.store32(BASE_ADDRESS + 36, ENCODE_SLL(0, 0, 0));
 
 		for(int i = 0; i < REPEAT_TIMES; i++) {
 			reset(cpu);
-			cpu.setGpr(Mips.GPR_A0, 0x80000000);
-			cpu.setGpr(Mips.GPR_A1, 0x80010000 + 4 * COPY_SIZE);
-			cpu.setGpr(Mips.GPR_A2, COPY_SIZE);
+			cpu.setGpr(GPR_A0, 0x80000000);
+			cpu.setGpr(GPR_A1, 0x80010000 + 4 * COPY_SIZE);
+			cpu.setGpr(GPR_A2, COPY_SIZE);
 			cpu.step(7 * COPY_SIZE + 2);
 		}
 	}
 
 	private void testMemcpyCpuInterpreted(Cpu cpu) {
-		cpu.store32(BASE_ADDRESS, Mips.ENCODE_LW(Mips.GPR_T0, Mips.GPR_A0, 0));
-		cpu.store32(BASE_ADDRESS + 4, Mips.ENCODE_ADDIU(Mips.GPR_A0, Mips.GPR_A0, 4));
-		cpu.store32(BASE_ADDRESS + 8, Mips.ENCODE_SW(Mips.GPR_T0, Mips.GPR_A1, 0));
-		cpu.store32(BASE_ADDRESS + 12, Mips.ENCODE_ADDIU(Mips.GPR_A1, Mips.GPR_A1, 4));
-		cpu.store32(BASE_ADDRESS + 16, Mips.ENCODE_ADDIU(Mips.GPR_A2, Mips.GPR_A2, -1));
-		cpu.store32(BASE_ADDRESS + 20, Mips.ENCODE_BNE(Mips.GPR_A2, Mips.GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
-		cpu.store32(BASE_ADDRESS + 24, Mips.ENCODE_SLL(0, 0, 0));
-		cpu.store32(BASE_ADDRESS + 28, Mips.ENCODE_WAIT(0));
-		cpu.store32(BASE_ADDRESS + 32, Mips.ENCODE_J(BASE_ADDRESS + 28, BASE_ADDRESS + 32));
-		cpu.store32(BASE_ADDRESS + 36, Mips.ENCODE_SLL(0, 0, 0));
+		cpu.store32(BASE_ADDRESS, ENCODE_LW(GPR_T0, GPR_A0, 0));
+		cpu.store32(BASE_ADDRESS + 4, ENCODE_ADDIU(GPR_A0, GPR_A0, 4));
+		cpu.store32(BASE_ADDRESS + 8, ENCODE_SW(GPR_T0, GPR_A1, 0));
+		cpu.store32(BASE_ADDRESS + 12, ENCODE_ADDIU(GPR_A1, GPR_A1, 4));
+		cpu.store32(BASE_ADDRESS + 16, ENCODE_ADDIU(GPR_A2, GPR_A2, -1));
+		cpu.store32(BASE_ADDRESS + 20, ENCODE_BNE(GPR_A2, GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
+		cpu.store32(BASE_ADDRESS + 24, ENCODE_SLL(0, 0, 0));
+		cpu.store32(BASE_ADDRESS + 28, ENCODE_WAIT(0));
+		cpu.store32(BASE_ADDRESS + 32, ENCODE_J(BASE_ADDRESS + 28, BASE_ADDRESS + 32));
+		cpu.store32(BASE_ADDRESS + 36, ENCODE_SLL(0, 0, 0));
 
 		for(int i = 0; i < REPEAT_TIMES; i++) {
 			reset(cpu);
-			cpu.setGpr(Mips.GPR_A0, 0x80000000);
-			cpu.setGpr(Mips.GPR_A1, 0x80010000 + 4 * COPY_SIZE);
-			cpu.setGpr(Mips.GPR_A2, COPY_SIZE);
+			cpu.setGpr(GPR_A0, 0x80000000);
+			cpu.setGpr(GPR_A1, 0x80010000 + 4 * COPY_SIZE);
+			cpu.setGpr(GPR_A2, COPY_SIZE);
 			while(!cpu.isHalted())
 				cpu.step(1);
 		}
 	}
 
 	private void testMemcpyCpuInterpretedWithWhileTrue(Cpu cpu) {
-		cpu.store32(BASE_ADDRESS, Mips.ENCODE_LW(Mips.GPR_T0, Mips.GPR_A0, 0));
-		cpu.store32(BASE_ADDRESS + 4, Mips.ENCODE_ADDIU(Mips.GPR_A0, Mips.GPR_A0, 4));
-		cpu.store32(BASE_ADDRESS + 8, Mips.ENCODE_SW(Mips.GPR_T0, Mips.GPR_A1, 0));
-		cpu.store32(BASE_ADDRESS + 12, Mips.ENCODE_ADDIU(Mips.GPR_A1, Mips.GPR_A1, 4));
-		cpu.store32(BASE_ADDRESS + 16, Mips.ENCODE_ADDIU(Mips.GPR_A2, Mips.GPR_A2, -1));
-		cpu.store32(BASE_ADDRESS + 20, Mips.ENCODE_BNE(Mips.GPR_A2, Mips.GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
-		cpu.store32(BASE_ADDRESS + 24, Mips.ENCODE_SLL(0, 0, 0));
-		cpu.store32(BASE_ADDRESS + 28, Mips.ENCODE_WAIT(0));
-		cpu.store32(BASE_ADDRESS + 32, Mips.ENCODE_J(BASE_ADDRESS + 28, BASE_ADDRESS + 32));
-		cpu.store32(BASE_ADDRESS + 36, Mips.ENCODE_SLL(0, 0, 0));
+		cpu.store32(BASE_ADDRESS, ENCODE_LW(GPR_T0, GPR_A0, 0));
+		cpu.store32(BASE_ADDRESS + 4, ENCODE_ADDIU(GPR_A0, GPR_A0, 4));
+		cpu.store32(BASE_ADDRESS + 8, ENCODE_SW(GPR_T0, GPR_A1, 0));
+		cpu.store32(BASE_ADDRESS + 12, ENCODE_ADDIU(GPR_A1, GPR_A1, 4));
+		cpu.store32(BASE_ADDRESS + 16, ENCODE_ADDIU(GPR_A2, GPR_A2, -1));
+		cpu.store32(BASE_ADDRESS + 20, ENCODE_BNE(GPR_A2, GPR_ZR, BASE_ADDRESS, BASE_ADDRESS + 20));
+		cpu.store32(BASE_ADDRESS + 24, ENCODE_SLL(0, 0, 0));
+		cpu.store32(BASE_ADDRESS + 28, ENCODE_WAIT(0));
+		cpu.store32(BASE_ADDRESS + 32, ENCODE_J(BASE_ADDRESS + 28, BASE_ADDRESS + 32));
+		cpu.store32(BASE_ADDRESS + 36, ENCODE_SLL(0, 0, 0));
 
 		for(int i = 0; i < REPEAT_TIMES; i++) {
 			reset(cpu);
-			cpu.setGpr(Mips.GPR_A0, 0x80000000);
-			cpu.setGpr(Mips.GPR_A1, 0x80010000 + 4 * COPY_SIZE);
-			cpu.setGpr(Mips.GPR_A2, COPY_SIZE);
+			cpu.setGpr(GPR_A0, 0x80000000);
+			cpu.setGpr(GPR_A1, 0x80010000 + 4 * COPY_SIZE);
+			cpu.setGpr(GPR_A2, COPY_SIZE);
 			while(true) {
 				cpu.step(1);
 				if (cpu.isHalted()) break;

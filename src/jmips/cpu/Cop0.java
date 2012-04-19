@@ -1,5 +1,8 @@
 package jmips.cpu;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jmips.utils.ReadableSeedRandom;
 import static jmips.cpu.Mips.*;
 
@@ -49,6 +52,7 @@ public class Cop0 {
 
 	private boolean kernelMode;
 	private final TlbEntry[] tlbEntries = new TlbEntry[NUM_TLB_ENTRIES];
+	private final Map<Integer, TlbEntry> tlbCache = new HashMap<Integer, TlbEntry>(129);
 
 	private final ReadableSeedRandom random = new ReadableSeedRandom(0);
 
@@ -311,6 +315,7 @@ public class Cop0 {
 	public void resetTlb() {
 		for(int i = 0; i < NUM_TLB_ENTRIES; i++)
 			tlbEntries[i].setInitialized(false);
+		tlbCache.clear();
 	}
 
 	public int translate(int address, boolean write) {
@@ -327,10 +332,9 @@ public class Cop0 {
 
 		final int ASID = regs[COP0_ENTRYHI] & ENTRYHI_ASID_MASK;
 
-		// Perform the TLB search
-		for(int idx = 0; idx < NUM_TLB_ENTRIES; idx++) {
-			TlbEntry tlbEntry = tlbEntries[idx];
-			TlbEntryPage tlbEntryPage = tlbEntry.match(address, ASID); 
+		TlbEntry tlbEntry = tlbCache.get(ASID | (address & 0xFFFFE000));
+		if (tlbEntry != null) {
+			TlbEntryPage tlbEntryPage = tlbEntry.match(address, ASID);
 			if (tlbEntryPage != null) {
 				return tlbEntry.tlbPageTranslate(tlbEntryPage, address, write);
 			}
@@ -390,6 +394,11 @@ public class Cop0 {
 		}
 
 		tlbEntry = tlbEntries[index];
+		if (tlbEntry.isInitialized()) {
+			if (tlbCache.remove(tlbEntry.getVPN2() | tlbEntry.getASID()) != tlbEntry) {
+				System.exit(1);
+			}
+		}
 		tlbEntry.setInitialized(true);
 		tlbEntry.setPageMask(mask);
 		tlbEntry.setVPN2(VPN2);
@@ -398,6 +407,7 @@ public class Cop0 {
 		tlbEntry.setSelectionBit(mask ^ (mask >> 1));
 		tlbEntry.getPage0().configurePageFromEntryLo(regs[COP0_ENTRYLO0]);
 		tlbEntry.getPage1().configurePageFromEntryLo(regs[COP0_ENTRYLO1]);
+		tlbCache.put(VPN2 | ASID, tlbEntry);
 	}
 
 	public void tlbWriteRandom(Cpu cpu) {
