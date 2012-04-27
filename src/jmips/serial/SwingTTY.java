@@ -35,7 +35,7 @@ public class SwingTTY extends JComponent implements TTY {
 	private int cursorDisplayColumn;
 	private int cursorRowDifference;
 	private int displayRow, baseRow;
-	
+
 	private int currentForegroundColor;
 	private int currentBackgroundColor;
 	private int inputState;

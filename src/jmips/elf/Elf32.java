@@ -50,8 +50,8 @@ public class Elf32 {
 		byte EI_DATA = bb.get();
 		byte EI_VERSION = bb.get();
 
-		if (EI_CLASS != ELFCLASS32) return 0;
-		if (EI_VERSION != EV_CURRENT) return 0;
+		if (EI_CLASS != ELFCLASS32) return ELFDATANONE;
+		if (EI_VERSION != EV_CURRENT) return ELFDATANONE;
 		if (EI_DATA != ELFDATA2LSB && EI_DATA != ELFDATA2MSB) return ELFDATANONE;
 		for(int i = 0; i < EI_PADSIZE; i++) {
 			byte b = bb.get();

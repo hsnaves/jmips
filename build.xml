@@ -44,28 +44,30 @@
         <dirset dir="${test-classes.dir}" />
     </path>
 
-    <target name="clean-asm" if="build.on.linux">
+    <target name="clean-test-os" if="build.on.linux">
         <exec executable="${make}">
             <arg value="-C"/>
-            <arg value="asm"/>
+            <arg value="test-os"/>
             <arg value="clean"/>
         </exec>
     </target>
 
-    <target name="compile-asm" if="build.on.linux">
+    <target name="compile-test-os" if="build.on.linux">
         <exec executable="${make}">
             <arg value="-C"/>
-            <arg value="asm"/>
+            <arg value="test-os"/>
         </exec>
     </target>
 
-    <target name="clean" depends="clean-asm">
+    <target name="clean" depends="clean-test-os">
         <delete dir="${build.dir}"/>
     </target>
 
     <target name="compile">
         <mkdir dir="${classes.dir}"/>
-        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false" debug="true"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false" debug="true">
+            <classpath refid="base.path" />
+        </javac>
     </target>
 
     <target name="compile-tests" depends="compile">
@@ -104,12 +106,12 @@
         </junitreport>
     </target>
 
-    <target name="run" depends="compile-asm,jar">
+    <target name="run" depends="compile-test-os,jar">
         <java jar="${jar.dir}/${ant.project.name}.jar" fork="true">
             <arg line="${command-line}"/>
         </java>
     </target>
 
     <target name="clean-build" depends="clean,jar"/>
-    <target name="main" depends="clean,test,report,jar,compile-asm"/>
+    <target name="main" depends="clean,test,report,jar,compile-test-os"/>
 </project>

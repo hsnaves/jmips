@@ -2,14 +2,18 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-extern int putchar (int c);
+#include "libc.h"
+
+
+static putchar_callback _putchar = NULL;
 static char *std_out = NULL;
 
 static
-void print_char (char **out, size_t *size, int c)
+void print_char (char **out, size_t *size, char c)
 {
   if (out == &std_out) {
-    putchar (c);
+    if (_putchar != NULL)
+      (*_putchar) (c);
   } else if (out && (*size) > 1) {
     (*out)[0] = c;
     ++(*out);
@@ -173,7 +177,7 @@ int print (char **out, size_t size, const char *format, va_list args)
         continue;
       }
       if (*format == 'c') {
-        /* char are converted to int then pushed on the stack */
+        /* chars are converted to int then pushed on the stack */
         scr[0] = (char) va_arg (args, int);
         scr[1] = '\0';
         count += print_string (out, &size, scr, width, align_right, ' ');
@@ -190,40 +194,46 @@ int print (char **out, size_t size, const char *format, va_list args)
   return count;
 }
 
-int vsnprintf (char *str, size_t size, const char *format, va_list ap)
+int kvsnprintf (char *str, size_t size, const char *format, va_list ap)
 {
   return print (&str, size, format, ap);
 }
 
-int vprintf (const char *format, va_list ap)
+int kvsprintf (char *str, const char *format, va_list ap)
+{
+  return kvsnprintf (str, -1, format, ap);
+}
+
+int ksprintf (char *str, const char *format, ...)
+{
+  va_list args;
+  int ret;
+
+  va_start (args, format);
+  ret = kvsprintf (str, format, args);
+  va_end (args);
+  return ret;
+}
+
+int kvprintf (const char *format, va_list ap)
 {
   return print (&std_out, 0, format, ap);
 }
 
-int printf (const char *format, ...)
+int kprintf (const char *format, ...)
 {
   va_list args;
   int ret;
 
   va_start (args, format);
-  ret = vprintf (format, args);
+  ret = kvprintf (format, args);
   va_end (args);
   return ret;
 }
 
-int vsprintf (char *str, const char *format, va_list ap)
+putchar_callback kregister_putchar_callback (putchar_callback callback)
 {
-  return vsnprintf (str, -1, format, ap);
+  putchar_callback old = _putchar;
+  _putchar = callback;
+  return old;
 }
-
-int sprintf (char *str, const char *format, ...)
-{
-  va_list args;
-  int ret;
-
-  va_start (args, format);
-  ret = vsprintf (str, format, args);
-  va_end (args);
-  return ret;
-}
-
