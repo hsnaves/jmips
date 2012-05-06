@@ -97,8 +97,8 @@ public final class GdbStub {
 					selectedKeys.remove();
 				}
 				processCommandsAndSimulate();
-			} catch(IOException ex) {
-				ex.printStackTrace();
+			} catch(Throwable t) {
+				t.printStackTrace();
 			}
 		}
 
@@ -178,7 +178,7 @@ public final class GdbStub {
 			closeConnection = false;
 			simulationRunning = false;
 			pendingWrites.clear();
-			input.rewind();
+			input.clear();
 			sc.configureBlocking(false);
 			sc.register(key.selector(), SelectionKey.OP_READ);
 			socketChannel = sc;
