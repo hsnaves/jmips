@@ -1,9 +1,11 @@
-package jmips.serial;
+package jmips.tty;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.swing.JFrame;
+
+import jmips.tty.SwingTTY;
 
 public class SwingTTYFrame extends JFrame {
 	private static final long serialVersionUID = -316995381999163483L;

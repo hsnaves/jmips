@@ -12,7 +12,7 @@ import jmips.dev.Uart;
 import jmips.dev.UartController;
 import jmips.elf.Elf32;
 import jmips.elf.Elf32Program;
-import jmips.serial.TTY;
+import jmips.tty.TTY;
 import jmips.utils.FileUtils;
 import jmips.utils.Elf32LabelResolver;
 

@@ -1,4 +1,4 @@
-package jmips.serial;
+package jmips.tty;
 
 public interface TTY {
 	public void write(byte b);

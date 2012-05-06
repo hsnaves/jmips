@@ -2,7 +2,7 @@ package jmips.cpu;
 
 import static org.junit.Assert.*;
 import jmips.MipsSystem;
-import jmips.serial.DummyTTY;
+import jmips.tty.DummyTTY;
 
 public class PerformanceTest {
 	private long time;

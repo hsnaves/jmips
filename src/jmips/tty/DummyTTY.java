@@ -1,4 +1,4 @@
-package jmips.serial;
+package jmips.tty;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 

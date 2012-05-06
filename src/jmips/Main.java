@@ -1,7 +1,8 @@
 package jmips;
 
 import javax.swing.JFrame;
-import jmips.serial.SwingTTY;
+
+import jmips.tty.SwingTTY;
 
 public class Main {
 	private static JFrame createConsoleFrame() {
