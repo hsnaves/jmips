@@ -157,7 +157,7 @@ public class SwingTTY extends JComponent implements TTY {
 
 	private void appendString(String str) {
 		for(int index = 0; index < str.length(); index++) {
-			appendCharacter((byte) str.charAt(index));
+			inputChars.add((byte) str.charAt(index));
 		}
 	}
 
